@@ -1,0 +1,11 @@
+{
+    "app_key": "f33bdc72-f56f-4393-83f7-2b5ef042dc13",
+    "signature_secret": "t6AhrqoZ6tBQ2uh8UwBOLzPXEOWK2aEOEqplnWORjCn7PZ94i5hPkc9aXiZNHKAr",
+    "api_token": "",
+    "db_id": "",
+    "db_alias": "",
+    "session_id": "",
+    "host": "https://zeus.accurate.id",
+    "is_connected": false,
+    "last_sync": null
+}

@@ -1,0 +1,569 @@
+/* ==========================================================================
+   CSS PRINTING SISTEM BARCODE WAREHOUSE
+   Mode 1: Cetak Massal Lembar PDF/A4 (10 Pcs/Lembar & 5 Pcs 1/2 Lembar)
+   Mode 2: Cetak Thermal Roll Satuan (100 mm x 50 mm)
+   ========================================================================== */
+
+/* Ukuran Kertas Default untuk Halaman Cetak Sheet Massal A4 Portrait */
+@page {
+    size: A4 portrait;
+    margin: 5mm 6mm 5mm 6mm;
+}
+
+/* ==========================================================================
+   MODE SCREEN (LAYAR MONITOR) - KONTAINER CETAK 100% TERSEMBUNYI
+   ========================================================================== */
+@media screen {
+    #bulkPrintContainer,
+    .print-area {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+    }
+}
+
+/* ==========================================================================
+   ATURAN CETAK (PRINT / PDF EXPORT) - ZERO BLANK PAGE GUARANTEE
+   ========================================================================== */
+@media print {
+    /* 1. Reset Root & Halaman */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        background: #ffffff !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* 2. Pastikan layout induk tetap aktif, statis, dan full-width */
+    .app-layout,
+    .app-main-container,
+    .main-wrapper {
+        display: block !important;
+        visibility: visible !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        min-height: 0 !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+    }
+
+    /* 3. Sembunyikan SEMUA elemen non-cetak dari render tree (0 space, 0 height) */
+    header,
+    footer,
+    nav,
+    aside,
+    .app-sidebar,
+    .app-topbar,
+    .sidebar-backdrop,
+    .navbar,
+    .page-header,
+    .no-print,
+    .sheet-preview-backdrop,
+    .modal-backdrop,
+    .footer,
+    #sectionMassal,
+    #sectionScanTimbang,
+    #modalSheetPreview,
+    #modalReprintChoice,
+    #modalBarcodeAlreadyUsed,
+    #barcodeSvgContainer,
+    .swal2-container,
+    .swal2-popup,
+    .swal2-backdrop,
+    .main-wrapper > *:not(#bulkPrintContainer):not(.print-area) {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 4. Kontainer cetak aktif di posisi paling atas */
+    #bulkPrintContainer,
+    .print-area {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* =========================================================================
+       A. MODE CETAK MASSAL A4: 10 PCS / LEMBAR & 5 PCS PROPORSIONAL 1/2 LEMBAR
+       ========================================================================= */
+    .bulk-print-sheet {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-auto-rows: 50.5mm !important;
+        column-gap: 4mm !important;
+        row-gap: 2mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    /* Pindah halaman HANYA di antara lembar (bukan setelah lembar terakhir) */
+    .bulk-print-sheet:not(:last-child) {
+        page-break-after: always !important;
+        break-after: page !important;
+    }
+
+    .bulk-print-sheet:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    /* Sheet proporsional setengah lembar (untuk 5 pcs) */
+    .bulk-print-sheet.sheet-half {
+        grid-auto-rows: 50.5mm !important;
+        min-height: auto !important;
+    }
+
+    /* Kartu stiker barcode dalam grid A4 (Ukuran Emas: ~97 mm x 50.5 mm) */
+    .bulk-sheet-card {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        height: 50.5mm !important;
+        max-height: 50.5mm !important;
+        border: 1px solid #111111 !important;
+        border-radius: 4px !important;
+        padding: 1.5mm 3mm !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* Header Kartu: Perusahaan, Badge No Urut, dan Badge Mitra */
+    .sheet-card-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-bottom: 1px solid #000000 !important;
+        padding-bottom: 1px !important;
+        margin-bottom: 1px !important;
+    }
+
+    .sheet-card-company {
+        font-size: 7.2pt !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.3px !important;
+        color: #000000 !important;
+    }
+
+    .sheet-card-badges {
+        display: flex !important;
+        gap: 4px !important;
+        align-items: center !important;
+    }
+
+    .sheet-badge-idx {
+        font-size: 6.8pt !important;
+        font-weight: 900 !important;
+        border: 1px solid #000000 !important;
+        padding: 0 3px !important;
+        border-radius: 2px !important;
+        line-height: 1.2 !important;
+        color: #000000 !important;
+    }
+
+    .sheet-badge-mitra {
+        background: #000000 !important;
+        color: #ffffff !important;
+        font-size: 7.2pt !important;
+        font-weight: 900 !important;
+        padding: 0.5px 4px !important;
+        border-radius: 2px !important;
+        line-height: 1.2 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Item & No Surat Jalan */
+    .sheet-card-item {
+        margin: 0.5px 0 !important;
+    }
+
+    .sheet-card-name {
+        font-size: 9pt !important;
+        font-weight: 900 !important;
+        line-height: 1.1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        color: #000000 !important;
+    }
+
+    .sheet-card-meta {
+        font-size: 6.8pt !important;
+        color: #222222 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-top: 0.5px !important;
+    }
+
+    /* Status Label (Pre-Printed / Menunggu Timbang) */
+    .sheet-card-status {
+        border: 1px dashed #333333 !important;
+        padding: 0.5px 2px !important;
+        text-align: center !important;
+        font-size: 6.5pt !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.4px !important;
+        margin: 0.5px 0 !important;
+        background: #f8f8f8 !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Barcode Area Saja (Full Width 100% - Tanpa QR Code) */
+    .sheet-card-barcode-area {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 1mm 0 !important;
+        height: 25mm !important;
+        max-height: 26mm !important;
+    }
+
+    .sheet-card-bars {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+        height: 100% !important;
+    }
+
+    .sheet-barcode-svg {
+        width: 100% !important;
+        height: 20mm !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .sheet-barcode-svg svg {
+        height: 20mm !important;
+        max-height: 20mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        margin: 0 auto !important;
+    }
+
+    .sheet-barcode-text {
+        font-family: 'JetBrains Mono', Courier, monospace !important;
+        font-size: 8.5pt !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.8px !important;
+        line-height: 1 !important;
+        margin-top: 1.5mm !important;
+        color: #000000 !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+    }
+
+    /* Hilangkan QRCode dari seluruh cetakan barcode */
+    .sheet-card-qr {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+    }
+
+    .sheet-card-qr svg {
+        display: none !important;
+    }
+
+    /* Footer Kartu */
+    .sheet-card-footer {
+        border-top: 0.8px solid #000000 !important;
+        padding-top: 1px !important;
+        margin-top: 0.5px !important;
+        font-size: 6pt !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        line-height: 1 !important;
+        color: #222222 !important;
+    }
+
+    /* Garis Batas Potong 1/2 Lembar untuk 5 Pcs */
+    .half-page-cut-line {
+        grid-column: 1 / -1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        margin-top: 2mm !important;
+        padding-top: 1.5mm !important;
+        border-top: 1.5px dashed #444444 !important;
+        font-size: 7pt !important;
+        font-weight: 800 !important;
+        color: #222222 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* =========================================================================
+       B. MODE CETAK THERMAL SATUAN (ROLL 100 mm x 50 mm)
+       ========================================================================= */
+    body.print-mode-single-thermal {
+        width: 100mm !important;
+    }
+
+    body.print-mode-single-thermal .app-layout,
+    body.print-mode-single-thermal .app-main-container,
+    body.print-mode-single-thermal .main-wrapper,
+    body.print-mode-single-thermal #bulkPrintContainer,
+    body.print-mode-single-thermal .print-area {
+        width: 100mm !important;
+        max-width: 100mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .bulk-print-sheet.single-thermal-sheet {
+        grid-template-columns: 1fr !important;
+        grid-auto-rows: 50mm !important;
+        width: 100mm !important;
+        max-width: 100mm !important;
+        height: auto !important;
+    }
+
+    .print-only-label {
+        position: relative !important;
+        width: 100mm !important;
+        height: 48mm !important;
+        max-height: 48mm !important;
+        margin: 0 !important;
+        padding: 1.5mm 3.5mm !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        border: none !important;
+        box-shadow: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+
+    .print-only-label .label-header {
+        border-bottom: 1px solid #000 !important;
+        padding-bottom: 1px !important;
+        margin-bottom: 1px !important;
+    }
+    .print-only-label .label-company {
+        font-size: 8pt !important;
+        font-weight: 800 !important;
+    }
+    .print-only-label .label-mitra-box {
+        background: #000 !important;
+        color: #fff !important;
+        padding: 1px 4px !important;
+        font-size: 7.5pt !important;
+        border-radius: 2px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .print-only-label .label-item-name {
+        font-size: 11pt !important;
+        font-weight: 900 !important;
+        line-height: 1.1 !important;
+        margin: 1px 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+    }
+    .print-only-label .label-sub-info {
+        font-size: 7.5pt !important;
+        margin-bottom: 1px !important;
+    }
+    .print-only-label .label-weight-box {
+        background: #ffffff !important;
+        border: 1px solid #000 !important;
+        padding: 1px 5px !important;
+        margin: 1px 0 !important;
+        min-height: 22px !important;
+        box-sizing: border-box !important;
+    }
+    .print-only-label .label-weight-netto {
+        font-size: 15pt !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+    }
+    .print-only-label .label-barcode-area {
+        margin: 1.5mm 0 !important;
+        width: 100% !important;
+        height: 24mm !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    .print-only-label .label-barcode-bars {
+        width: 100% !important;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    .print-only-label .label-barcode-bars svg {
+        height: 20mm !important;
+        max-height: 20mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        margin: 0 auto !important;
+    }
+    .print-only-label .label-barcode-text {
+        font-size: 9pt !important;
+        font-weight: 900 !important;
+        margin-top: 1.5mm !important;
+        line-height: 1 !important;
+        letter-spacing: 0.8px !important;
+        text-align: center !important;
+    }
+    .print-only-label .label-qr-code {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    .print-only-label .label-qr-code svg {
+        display: none !important;
+    }
+    .print-only-label .label-footer {
+        border-top: 1px solid #000 !important;
+        padding-top: 1px !important;
+        margin-top: 1px !important;
+        font-size: 6.5pt !important;
+        line-height: 1 !important;
+    }
+
+    .thermal-label-wrapper {
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+}
+
+/* ==========================================================================
+   STYLING DI LAYAR BIASA (MODAL PRATINJAU LEMBAR PDF)
+   ========================================================================== */
+.sheet-preview-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.sheet-preview-dialog {
+    background: var(--bg-card, #ffffff);
+    color: var(--text-main, #0f172a);
+    border-radius: 14px;
+    width: 900px;
+    max-width: 96vw;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border, #e2e8f0);
+    overflow: hidden;
+}
+
+.sheet-preview-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-main, #f8fafc);
+}
+
+.sheet-preview-body {
+    padding: 20px;
+    overflow-y: auto;
+    background: #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.sheet-preview-page {
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    width: 210mm;
+    max-width: 100%;
+    min-height: 297mm;
+    box-sizing: border-box;
+    padding: 5mm 6mm;
+    position: relative;
+}
+
+.sheet-preview-page.page-half {
+    min-height: 148.5mm;
+}
