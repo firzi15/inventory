@@ -307,18 +307,12 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                                 <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
                             </div>
                         </a>
-                        <!-- Sub Menu Penerimaan -->
+                        <!-- Sub Menu Penerimaan (One-Stop Weigh & Tag + Riwayat) -->
                         <ul class="nav-sub-list">
                             <li>
-                                <a href="index.php?page=timbang_cetak&tab=massal" id="sidebarSubBuatCetak" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && (!isset($_GET['tab']) || $_GET['tab'] === 'massal')) ? 'active' : '' ?>">
-                                    <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
-                                    <span>Buat & Cetak Barcode</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="index.php?page=timbang_cetak&tab=scantimbang" id="sidebarSubTimbang" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && isset($_GET['tab']) && $_GET['tab'] === 'scantimbang') ? 'active' : '' ?>">
-                                    <i data-lucide="scale" style="width: 14px; height: 14px;"></i>
-                                    <span>Timbang Berat Barang Masuk</span>
+                                <a href="index.php?page=timbang_cetak" id="sidebarSubPenerimaanTimbang" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && (!isset($_GET['tab']) || $_GET['tab'] === 'timbang_cetak' || $_GET['tab'] === 'massal' || $_GET['tab'] === 'scantimbang')) ? 'active' : '' ?>">
+                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <span>Penerimaan & Timbang</span>
                                 </a>
                             </li>
                             <li>

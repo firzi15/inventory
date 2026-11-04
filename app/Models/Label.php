@@ -243,6 +243,127 @@ class Label {
     /**
      * Update bobot riil timbangan untuk barcode yang sudah dicetak (Scan Barcode & Timbang Berat)
      */
+    /**
+     * Membuat 1 label kemasan baru yang langsung memiliki bobot riil timbangan (Alur Satu Pintu Penerimaan)
+     */
+    public static function createWeighedBox(array $data): array {
+        $db = Database::getConnection();
+
+        $pemasokId = !empty($data['pemasok_id']) ? (int)$data['pemasok_id'] : 0;
+        $pemasok = $pemasokId > 0 ? Pemasok::findById($pemasokId) : null;
+        if (!$pemasok) throw new Exception("Pemasok wajib dipilih.");
+
+        $itemId = !empty($data['item_id']) ? (int)$data['item_id'] : 0;
+        $item = $itemId > 0 ? Item::findById($itemId) : null;
+        if (!$item) throw new Exception("Produk / Item wajib dipilih.");
+
+        $netto = isset($data['berat_netto']) ? round((float)$data['berat_netto'], 2) : 0.00;
+        if ($netto <= 0) {
+            throw new Exception("Bobot timbangan harus lebih besar dari 0 KG.");
+        }
+
+        $noSj = trim($data['no_surat_jalan'] ?? '');
+        if (empty($noSj)) {
+            throw new Exception("Nomor Surat Jalan wajib diisi.");
+        }
+
+        $kodePrefix = preg_replace('/[^A-Z0-9]/', '', strtoupper($pemasok['kode_pemasok']));
+        $idLabel = self::generateNextLabelId($kodePrefix, $item['kode_jenis']);
+
+        // Ambil harga beli pemasok jika ada master_harga_pemasok
+        $hargaBeliPerKg = 0.00;
+        try {
+            $stmtHrg = $db->prepare("SELECT harga_beli_per_kg FROM master_harga_pemasok WHERE pemasok_id = ? AND item_id = ? LIMIT 1");
+            $stmtHrg->execute([$pemasokId, $itemId]);
+            $hargaBeliPerKg = (float)($stmtHrg->fetchColumn() ?: 0.00);
+        } catch (\Throwable $e) {}
+
+        $totalNilai = round($netto * $hargaBeliPerKg, 2);
+        $tglProd = date('Y-m-d');
+        $operatorId = !empty($data['operator_id']) ? (int)$data['operator_id'] : (int)($_SESSION['user_login']['id'] ?? 3);
+
+        $sql = "
+            INSERT INTO labels (
+                id_label, pemasok_id, mitra_id, item_id, lokasi_id, berat_bruto, berat_tara, berat_netto,
+                harga_per_kg, total_nilai, batch_no, no_surat_jalan, tgl_produksi, status, is_timbang_selesai, operator_timbang_id, catatan
+            ) VALUES (?, ?, NULL, ?, NULL, ?, 0, ?, ?, ?, ?, ?, ?, 'AKTIF', 1, ?, ?)
+        ";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            $idLabel,
+            $pemasokId,
+            $item['id'],
+            $netto,
+            $netto,
+            $hargaBeliPerKg,
+            $totalNilai,
+            $noSj,
+            $noSj,
+            $tglProd,
+            $operatorId,
+            "Penerimaan Timbang Langsung"
+        ]);
+
+        $lbl = self::findByBarcode($idLabel);
+        if (!$lbl) throw new Exception("Gagal membuat data barcode.");
+        $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($idLabel, 65, 1.6);
+        $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($idLabel, 120);
+
+        return $lbl;
+    }
+
+    /**
+     * Mengambil ringkasan sesi penerimaan aktif berdasarkan nomor Surat Jalan
+     */
+    public static function getInboundSessionSummary(string $noSj): array {
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            SELECT 
+                l.id, l.id_label, l.berat_netto, l.created_at, l.updated_at,
+                i.id AS item_id, i.nama_item, i.kode_item,
+                j.nama_jenis,
+                p.nama_pemasok, p.kode_pemasok
+            FROM labels l
+            JOIN items i ON l.item_id = i.id
+            JOIN jenis_barang j ON i.jenis_id = j.id
+            LEFT JOIN pemasok p ON l.pemasok_id = p.id
+            WHERE l.no_surat_jalan = ?
+            ORDER BY l.id DESC
+        ");
+        $stmt->execute([trim($noSj)]);
+        $rows = $stmt->fetchAll();
+
+        $totalBox = count($rows);
+        $totalBerat = 0.0;
+        $productMap = [];
+
+        foreach ($rows as $r) {
+            $w = (float)$r['berat_netto'];
+            $totalBerat += $w;
+            $itId = $r['item_id'];
+            if (!isset($productMap[$itId])) {
+                $productMap[$itId] = [
+                    'item_id' => $itId,
+                    'nama_item' => $r['nama_item'],
+                    'kode_item' => $r['kode_item'],
+                    'nama_jenis' => $r['nama_jenis'],
+                    'box_count' => 0,
+                    'total_berat' => 0.0
+                ];
+            }
+            $productMap[$itId]['box_count']++;
+            $productMap[$itId]['total_berat'] += $w;
+        }
+
+        return [
+            'no_surat_jalan' => $noSj,
+            'total_box' => $totalBox,
+            'total_berat' => round($totalBerat, 2),
+            'products' => array_values($productMap),
+            'recent_boxes' => array_slice($rows, 0, 15)
+        ];
+    }
+
     public static function updateWeight(string $barcode, float $netto, ?int $operatorId = null): array {
         $db = Database::getConnection();
         $label = self::findByBarcode($barcode);

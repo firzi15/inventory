@@ -508,6 +508,76 @@ if ($action) {
                 ]);
                 exit;
 
+            // O1. Simpan 1 Box Penerimaan Baru Langsung dengan Bobot Riil (Alur Satu Pintu)
+            case 'save_weighed_box':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                $pemasokId  = (int)($_POST['pemasok_id'] ?? 0);
+                $itemId     = (int)($_POST['item_id'] ?? 0);
+                $beratNetto = (float)($_POST['berat_netto'] ?? 0);
+                $noSj       = trim($_POST['no_surat_jalan'] ?? '');
+                $userId     = (int)($_SESSION['user_login']['id'] ?? 3);
+
+                if ($pemasokId <= 0) throw new Exception("Pemasok wajib dipilih.");
+                if ($itemId <= 0) throw new Exception("Nama Barang / Produk wajib dipilih.");
+                if ($beratNetto <= 0) throw new Exception("Bobot timbangan harus lebih besar dari 0 KG.");
+                if (empty($noSj)) throw new Exception("Nomor Surat Jalan wajib diisi.");
+
+                $label = \App\Models\Label::createWeighedBox([
+                    'pemasok_id'     => $pemasokId,
+                    'item_id'        => $itemId,
+                    'berat_netto'    => $beratNetto,
+                    'no_surat_jalan' => $noSj,
+                    'operator_id'    => $userId
+                ]);
+
+                $sessionSummary = \App\Models\Label::getInboundSessionSummary($noSj);
+
+                Helper::jsonResponse([
+                    'success'         => true,
+                    'message'         => "Box {$label['nama_item']} ({$beratNetto} KG) berhasil disimpan dan siap dicetak.",
+                    'label'           => $label,
+                    'session_summary' => $sessionSummary
+                ]);
+                exit;
+
+            // O2. Ambil Ringkasan Sesi Penerimaan Aktif per Surat Jalan
+            case 'get_inbound_session_summary':
+                $noSj = trim($_GET['no_surat_jalan'] ?? ($_POST['no_surat_jalan'] ?? ''));
+                if (empty($noSj)) throw new Exception("Nomor Surat Jalan wajib diisi.");
+                $summary = \App\Models\Label::getInboundSessionSummary($noSj);
+                Helper::jsonResponse([
+                    'success' => true,
+                    'summary' => $summary
+                ]);
+                exit;
+
+            // O3. Selesaikan Sesi Surat Jalan Penerimaan Ini
+            case 'finish_inbound_session':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                $noSj = trim($_POST['no_surat_jalan'] ?? '');
+                $pemasokId = (int)($_POST['pemasok_id'] ?? 0);
+                if (empty($noSj)) throw new Exception("Nomor Surat Jalan wajib diisi.");
+
+                \App\Models\Label::markSuratJalanTimbangSelesai($noSj);
+
+                $pmsKode = 'PMS-01';
+                if ($pemasokId > 0) {
+                    $pmsObj = \App\Models\Pemasok::findById($pemasokId);
+                    if ($pmsObj && !empty($pmsObj['kode_pemasok'])) {
+                        $pmsKode = $pmsObj['kode_pemasok'];
+                    }
+                }
+                $nextNoSj = \App\Models\Label::generateNextSuratJalan($pmsKode);
+
+                Helper::jsonResponse([
+                    'success'          => true,
+                    'message'          => "Sesi Surat Jalan {$noSj} telah diselesaikan.",
+                    'no_surat_jalan'   => $noSj,
+                    'next_surat_jalan' => $nextNoSj,
+                    'print_bast_url'   => "index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=" . urlencode($noSj)
+                ]);
+                exit;
+
             // O. Update Bobot Riil Hasil Scan Barcode & Timbang
             case 'update_weight':
             case 'update_berat':

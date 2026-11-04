@@ -23,6 +23,23 @@ if (!$sjData) {
 $barcodeSjSvg = BarcodeService::generateCode128Svg($sjData['no_surat_jalan'], 52, 1.3);
 $labels = $sjData['all_labels'] ?? [];
 $isComplete = ($sjData['belum_ditimbang'] === 0 && $sjData['total_pcs'] > 0);
+
+// Hitung rekap per produk jika dalam 1 SJ terdapat banyak produk
+$uniqueItems = [];
+foreach ($labels as $lbl) {
+    $itemId = $lbl['item_id'] ?? 0;
+    if (!isset($uniqueItems[$itemId])) {
+        $uniqueItems[$itemId] = [
+            'nama_item' => $lbl['nama_item'] ?? '-',
+            'nama_jenis' => $lbl['nama_jenis'] ?? '-',
+            'total_pcs' => 0,
+            'total_berat' => 0.0
+        ];
+    }
+    $uniqueItems[$itemId]['total_pcs']++;
+    $uniqueItems[$itemId]['total_berat'] += (float)($lbl['berat_netto'] ?? 0);
+}
+$isMultiItem = count($uniqueItems) > 1;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -489,10 +506,21 @@ $isComplete = ($sjData['belum_ditimbang'] === 0 && $sjData['total_pcs'] > 0);
         </div>
 
         <!-- 4. Ringkasan Komoditas / Barang -->
-        <div class="summary-banner">
+        <div class="summary-banner" style="<?= $isMultiItem ? 'grid-template-columns: 2.2fr 1fr 1fr 1fr;' : '' ?>">
             <div>
-                <div class="summary-item-title">Komoditas / Nama Barang</div>
-                <div class="summary-item-val"><?= htmlspecialchars($sjData['nama_item']) ?> <small style="font-size: 12px; color: #444444; font-weight: normal;">(<?= htmlspecialchars($sjData['nama_jenis']) ?>)</small></div>
+                <div class="summary-item-title"><?= $isMultiItem ? 'Komoditas (Multi-Produk)' : 'Komoditas / Nama Barang' ?></div>
+                <div class="summary-item-val" style="font-size: <?= $isMultiItem ? '13px' : '15px' ?>;">
+                    <?php if ($isMultiItem): ?>
+                        <div style="font-weight: 800;"><?= count($uniqueItems) ?> Macam Komoditas Produk:</div>
+                        <div style="font-size: 11px; font-weight: normal; color: #222222; margin-top: 4px; line-height: 1.4;">
+                            <?php foreach ($uniqueItems as $ui): ?>
+                                <div>• <strong><?= htmlspecialchars($ui['nama_item']) ?></strong>: <?= $ui['total_pcs'] ?> Box | <?= number_format($ui['total_berat'], 2) ?> KG</div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <?= htmlspecialchars($sjData['nama_item']) ?> <small style="font-size: 12px; color: #444444; font-weight: normal;">(<?= htmlspecialchars($sjData['nama_jenis']) ?>)</small>
+                    <?php endif; ?>
+                </div>
             </div>
             <div style="text-align: center;">
                 <div class="summary-item-title">Total Keranjang</div>
@@ -514,16 +542,17 @@ $isComplete = ($sjData['belum_ditimbang'] === 0 && $sjData['total_pcs'] > 0);
                 <tr>
                     <th style="width: 38px; text-align: center;">No</th>
                     <th style="text-align: left;">ID Barcode Keranjang</th>
-                    <th style="text-align: center; width: 130px;">Status Timbang</th>
-                    <th style="text-align: center; width: 140px;">Waktu Timbang</th>
-                    <th style="text-align: left; width: 140px;">Operator Timbang</th>
+                    <th style="text-align: left;">Nama Produk</th>
+                    <th style="text-align: center; width: 110px;">Status Timbang</th>
+                    <th style="text-align: center; width: 130px;">Waktu Timbang</th>
+                    <th style="text-align: left; width: 130px;">Operator Timbang</th>
                     <th style="width: 100px; text-align: right;">Bobot Riil</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($labels)): ?>
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 18px; color: #000000;">
+                        <td colspan="7" style="text-align: center; padding: 18px; color: #000000;">
                             Tidak ada rincian kemasan barcode untuk Surat Jalan ini.
                         </td>
                     </tr>
@@ -540,6 +569,9 @@ $isComplete = ($sjData['belum_ditimbang'] === 0 && $sjData['total_pcs'] > 0);
                                 <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #000000;">
                                     <?= htmlspecialchars($lbl['id_label']) ?>
                                 </strong>
+                            </td>
+                            <td>
+                                <strong style="color: #000000; font-size: 11.5px;"><?= htmlspecialchars($lbl['nama_item'] ?? '-') ?></strong>
                             </td>
                             <td style="text-align: center;">
                                 <?php if ($isWeighed): ?>

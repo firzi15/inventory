@@ -2,6 +2,7 @@
 scratch/
 *.log
 * copy.*
+*.sqlite
 
 # OS & Environment
 .DS_Store

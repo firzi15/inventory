@@ -70,10 +70,13 @@ $countTotalAll = Label::countFiltered([]);
 $countSudahDitimbang = Label::countFiltered(['weighed_status' => 'SUDAH']);
 $countBelumDitimbang = Label::countFiltered(['weighed_status' => 'BELUM']);
 
-// Tab aktif (default ke pembuatan barcode)
-$activeTab = $_GET['tab'] ?? 'massal';
-if (!in_array($activeTab, ['massal', 'scantimbang', 'stok_gudang', 'riwayat_penerimaan'])) {
-    $activeTab = 'massal';
+// Tab aktif (default ke Penerimaan & Timbang Satu Pintu)
+$activeTab = $_GET['tab'] ?? 'timbang_cetak';
+if (!in_array($activeTab, ['timbang_cetak', 'massal', 'scantimbang', 'stok_gudang', 'riwayat_penerimaan'])) {
+    $activeTab = 'timbang_cetak';
+}
+if ($activeTab === 'scantimbang') {
+    $activeTab = 'timbang_cetak';
 }
 $prefillBarcode = trim($_GET['barcode'] ?? '');
 
@@ -175,11 +178,26 @@ $totalGudangPages = max(1, (int)ceil($totalGudangLabels / $gudangPerPage));
 require_once __DIR__ . '/layout/header.php';
 ?>
 
-<!-- Header Khusus Sub-Menu: Buat & Cetak Barcode -->
-<?php if ($activeTab === 'massal'): ?>
+<!-- Header Halaman -->
+<?php if ($activeTab === 'timbang_cetak'): ?>
 <div class="page-header no-print">
     <div>
-        <h1 class="page-title">Buat & Cetak Barcode Keranjang</h1>
+        <h1 class="page-title">Penerimaan & Timbang Barang Masuk</h1>
+        <p class="page-subtitle">Stasiun satu pintu: input/baca timbangan keranjang dan langsung cetak stiker barcode berbobot riil</p>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <span id="scaleStatusBadge" class="badge badge-success" style="font-size: 12.5px; padding: 6px 14px; font-weight: 700;">
+            ● Timbangan Siap
+        </span>
+        <span class="badge badge-purple" style="font-size: 12.5px; padding: 6px 14px; font-weight: 700;">
+            <i data-lucide="printer" style="width: 14px; height: 14px; margin-right: 4px;"></i> Stiker Thermal 100×50 mm
+        </span>
+    </div>
+</div>
+<?php elseif ($activeTab === 'massal'): ?>
+<div class="page-header no-print">
+    <div>
+        <h1 class="page-title">Buat & Cetak Barcode Keranjang (Batch Kosong)</h1>
         <p class="page-subtitle">Cetak stiker barcode untuk keranjang baru sebelum dilakukan penimbangan barang masuk</p>
     </div>
     <div style="display: flex; gap: 8px; align-items: center;">
@@ -214,23 +232,224 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 </div>
 <?php else: ?>
-<!-- Header Khusus Sub-Menu: Timbang Berat Barang Masuk -->
 <div class="page-header no-print">
     <div>
-        <h1 class="page-title">Timbang Berat Barang Masuk</h1>
-        <p class="page-subtitle">Arahkan scanner ke barcode keranjang, lalu simpan bobot riil timbangan</p>
-    </div>
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <span id="scaleStatusBadge" class="badge badge-success" style="font-size: 12.5px; padding: 6px 14px; font-weight: 700;">
-            ● Timbangan Siap
-        </span>
+        <h1 class="page-title">Penerimaan & Timbang Barang Masuk</h1>
+        <p class="page-subtitle">Stasiun satu pintu penimbangan dan pencetakan barcode barang masuk</p>
     </div>
 </div>
 <?php endif; ?>
 
+<!-- Navigasi Tab Sub-Modul Penerimaan -->
+<div class="tabs-container no-print" style="margin-bottom: 22px; display: flex; gap: 8px; border-bottom: 2px solid var(--border); padding-bottom: 10px; flex-wrap: wrap;">
+    <a href="index.php?page=timbang_cetak" class="btn <?= ($activeTab === 'timbang_cetak') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 800; border-radius: 20px; padding: 8px 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="scale" style="width: 16px; height: 16px;"></i>
+        <span>⚖️ Penerimaan & Timbang (Satu Pintu)</span>
+    </a>
+    <a href="index.php?page=timbang_cetak&tab=riwayat_penerimaan" class="btn <?= ($activeTab === 'riwayat_penerimaan') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 800; border-radius: 20px; padding: 8px 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="clipboard-list" style="width: 16px; height: 16px;"></i>
+        <span>📋 Riwayat Penerimaan (<?= number_format($totalPenerimaan) ?> Data)</span>
+    </a>
+    <a href="index.php?page=timbang_cetak&tab=stok_gudang" class="btn <?= ($activeTab === 'stok_gudang') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; border-radius: 20px; padding: 8px 16px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="package" style="width: 15px; height: 15px;"></i>
+        <span>📦 Sisa Stok Gudang</span>
+    </a>
+    <a href="index.php?page=timbang_cetak&tab=massal" class="btn <?= ($activeTab === 'massal') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; border-radius: 20px; padding: 8px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; opacity: 0.85;" title="Mode cetak massal lembar A4 kosongan tanpa bobot">
+        <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
+        <span>Cetak Massal Kosong (Opsional)</span>
+    </a>
+</div>
+
 <!-- Hidden fallback container untuk template barcode SVG -->
 <div id="barcodeSvgContainer" style="display: none;">
     <?= BarcodeService::generateCode128Svg($sampleBarcode, 65, 1.6) ?>
+</div>
+
+<!-- ========================================================================= -->
+<!-- SUB-MENU UTAMA: PENERIMAAN & TIMBANG SATU PINTU (ONE-STOP WEIGH & PRINT)   -->
+<!-- ========================================================================= -->
+<div id="sectionOneStopWeigh" style="<?= $activeTab === 'timbang_cetak' ? 'display: block;' : 'display: none;' ?>">
+    <!-- Grid Desktop 2-Kolom: Form Timbang & Stiker di Kiri, Live Rekap Surat Jalan di Kanan -->
+    <div style="display: grid; grid-template-columns: minmax(380px, 1.25fr) minmax(360px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
+        
+        <!-- KOLOM KIRI: STASIUN KERJA PENIMBANGAN & CETAK LANGSUNG -->
+        <div class="card no-print" style="box-shadow: var(--shadow-md);">
+            <div class="card-header" style="border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title" style="font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="scale" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <span>Input Timbang & Cetak Barcode</span>
+                    </h2>
+                    <div class="card-description">Pilih produk, masukkan netto timbangan, dan tekan Enter untuk cetak stiker berbobot</div>
+                </div>
+                <span class="badge badge-success" style="font-weight: 800;">● Stasiun Aktif</span>
+            </div>
+
+            <div style="padding: 16px;">
+                <!-- 1. HEADER SESI SURAT JALAN -->
+                <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🚚 Informasi Surat Jalan Pemasok (Sesi Truk Masuk)</span>
+                        <span class="badge badge-purple" style="font-size: 10px;">Multi-Produk 1 SJ</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="onestop_pemasok_id" style="font-size: 12px; margin-bottom: 4px;">Pemasok (Supplier) <span style="color:red;">*</span></label>
+                            <select id="onestop_pemasok_id" class="form-control" style="font-weight: 700; height: 42px; font-size: 13px;" onchange="onOneStopPemasokChanged()">
+                                <?php foreach ($pemasokList as $p): ?>
+                                    <option value="<?= $p['id'] ?>" data-kode="<?= htmlspecialchars($p['kode_pemasok']) ?>" data-nama="<?= htmlspecialchars($p['nama_pemasok']) ?>">
+                                        <?= htmlspecialchars($p['kode_pemasok']) ?> - <?= htmlspecialchars($p['nama_pemasok']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label class="form-label" for="onestop_no_sj" style="font-size: 12px; margin: 0;">No. Surat Jalan <span style="color:red;">*</span></label>
+                                <span class="badge badge-secondary" style="font-size: 10px; cursor: pointer;" onclick="onOneStopPemasokChanged()" title="Klik untuk refresh nomor surat jalan">Auto</span>
+                            </div>
+                            <input type="text" id="onestop_no_sj" class="form-control" value="<?= htmlspecialchars($defaultSuratJalan) ?>" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #1e40af; height: 42px; background: #ffffff; border: 1.5px solid #93c5fd; font-size: 13.5px;" placeholder="No Surat Jalan..." onchange="onOneStopSjChanged()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. PEMILIHAN KATEGORI & PRODUK + QUICK CHIPS -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; margin-bottom: 10px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="onestop_jenis_filter" style="font-size: 12px; margin-bottom: 4px;">Jenis / Kategori <span style="color:red;">*</span></label>
+                            <select id="onestop_jenis_filter" class="form-control" style="font-weight: 700; color: #8b5cf6; height: 42px; font-size: 13px;" onchange="onOneStopJenisChanged()">
+                                <option value="">-- Semua Kategori --</option>
+                                <?php foreach ($jenisList as $j): ?>
+                                    <option value="<?= $j['id'] ?>"><?= htmlspecialchars($j['nama_jenis']) ?> (<?= htmlspecialchars($j['kode_jenis']) ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="onestop_item_id" style="font-size: 12px; margin-bottom: 4px;">Nama Produk / Komoditas <span style="color:red;">*</span></label>
+                            <select id="onestop_item_id" class="form-control" style="font-weight: 800; height: 42px; font-size: 13.5px;" onchange="onOneStopProductChanged(this.value)">
+                                <option value="">-- Pilih Produk --</option>
+                                <?php foreach ($itemList as $it): ?>
+                                    <option value="<?= $it['id'] ?>" data-jenis="<?= (int)$it['jenis_id'] ?>" data-nama="<?= htmlspecialchars($it['nama_item']) ?>" data-kode="<?= htmlspecialchars($it['kode_item']) ?>">
+                                        <?= htmlspecialchars($it['nama_item']) ?> (<?= htmlspecialchars($it['kode_item']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Cepat Produk (Quick Product Chips) -->
+                    <div style="background: #faf5ff; border: 1.5px dashed #d8b4fe; border-radius: 8px; padding: 10px 12px;">
+                        <div style="font-size: 11px; font-weight: 800; color: #7e22ce; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                            <i data-lucide="zap" style="width: 13px; height: 13px;"></i>
+                            <span>Klik Cepat Produk (Tanpa Cari Dropdown):</span>
+                        </div>
+                        <div id="quickProductPills" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. DISPLAY TIMBANGAN DIGITAL & INPUT NETTO -->
+                <div style="background: #f1f5f9; border: 2.5px solid #10b981; border-radius: 12px; padding: 18px; margin-bottom: 18px; text-align: center; box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="scale" style="width: 15px; height: 15px;"></i>
+                            <span>Bobot Bersih Keranjang (Netto)</span>
+                        </span>
+                        <span id="onestop_scale_status" class="badge badge-success" style="font-size: 11px; padding: 3px 8px; font-weight: 800;">
+                            ● Timbangan Siap
+                        </span>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <input type="number" id="onestop_berat_netto" step="0.01" min="0.01" max="999.99" class="form-control" placeholder="0.00" 
+                               style="font-family: 'JetBrains Mono', monospace; font-size: 46px; font-weight: 900; text-align: center; color: #0f172a; height: 76px; width: 230px; border: 2.5px solid #10b981; border-radius: 10px; background: #ffffff; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);"
+                               onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleSaveWeighedBox(); }">
+                        <span style="font-size: 28px; font-weight: 900; color: #047857;">KG</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; font-size: 11.5px; color: #64748b; flex-wrap: wrap;">
+                        <span>Tekan <strong style="color: #0f172a; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">[ENTER]</strong> untuk simpan & cetak</span>
+                        <span>•</span>
+                        <a href="javascript:void(0)" onclick="readFromConnectedScale()" style="color: #2563eb; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>
+                            <span>Ambil dari Timbangan Serial</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. TOMBOL SIMPAN & CETAK STIKER -->
+                <button type="button" id="btnSaveWeighedBox" class="btn btn-primary" onclick="handleSaveWeighedBox()" style="width: 100%; height: 54px; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; background: #059669; border-color: #059669; box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); border-radius: 8px; cursor: pointer;">
+                    <i data-lucide="printer" style="width: 22px; height: 22px;"></i>
+                    <span id="labelBtnSaveWeighed">💾 SIMPAN & CETAK STIKER BARCODE (ENTER)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: LIVE SUMMARY SURAT JALAN & DAFTAR KERANJANG TERAKHIR -->
+        <div class="card no-print" style="box-shadow: var(--shadow-md);">
+            <div class="card-header" style="border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title" style="font-size: 16px; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: #3b82f6;"></i>
+                        <span>Ringkasan Sesi Surat Jalan</span>
+                    </h2>
+                    <div class="card-description" id="summarySjSubtitle">No. SJ: <?= htmlspecialchars($defaultSuratJalan) ?></div>
+                </div>
+                <span class="badge badge-secondary" id="badgeTotalBoxHeader">0 Box Masuk</span>
+            </div>
+
+            <div style="padding: 16px;">
+                <!-- Kartu Akumulasi Total -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                    <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 8px; padding: 12px; text-align: center;">
+                        <div style="font-size: 11px; font-weight: 800; color: #1e40af; text-transform: uppercase;">Total Keranjang / Box</div>
+                        <div id="statTotalBox" style="font-size: 26px; font-weight: 900; color: #1d4ed8; font-family: 'JetBrains Mono', monospace;">0 Pcs</div>
+                    </div>
+                    <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 8px; padding: 12px; text-align: center;">
+                        <div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">Total Berat Riil (Netto)</div>
+                        <div id="statTotalBerat" style="font-size: 26px; font-weight: 900; color: #059669; font-family: 'JetBrains Mono', monospace;">0.00 KG</div>
+                    </div>
+                </div>
+
+                <!-- Breakdown per Produk di Surat Jalan Ini -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Rincian Komoditas Produk di Truk Ini:</div>
+                    <div id="containerProductBreakdown" style="border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: #ffffff;">
+                        <div style="padding: 12px; text-align: center; font-size: 12px; color: #94a3b8;">
+                            Belum ada keranjang yang ditimbang untuk sesi Surat Jalan ini.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Feed: Daftar Keranjang yang Baru Saja Ditimbang -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Daftar Box Terakhir Ditimbang:</span>
+                        <span style="font-size: 11px; color: #94a3b8;">Terbaru di atas</span>
+                    </div>
+                    <div id="containerRecentBoxes" style="max-height: 230px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; background: #ffffff;">
+                        <div style="padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
+                            Data keranjang yang baru ditimbang akan muncul di sini.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Dokumen Penerimaan & Selesaikan Sesi -->
+                <div style="display: flex; gap: 8px; flex-direction: column;">
+                    <a id="btnCetakBASTPenerimaan" href="index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=<?= urlencode($defaultSuratJalan) ?>" target="_blank" class="btn btn-outline" style="font-weight: 800; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px solid #0284c7; color: #0284c7; border-radius: 6px;">
+                        <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
+                        <span>🖨️ Cetak Surat Jalan Penerimaan / BAST</span>
+                    </a>
+                    <button type="button" class="btn btn-secondary" onclick="handleFinishInboundSession()" style="font-weight: 800; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1e293b; color: #ffffff; border-radius: 6px; cursor: pointer;">
+                        <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+                        <span>🔒 Selesaikan Surat Jalan Ini (Truk Selesai)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ========================================================================= -->
@@ -1840,6 +2059,433 @@ require_once __DIR__ . '/layout/header.php';
     const pricesLookup = <?= $allPricesJson ?>;
     const masterItemsList = <?= json_encode($itemList) ?>;
 
+    // =========================================================================
+    // MODUL PENERIMAAN & TIMBANG SATU PINTU (ONE-STOP WEIGH & PRINT)
+    // =========================================================================
+
+    // Audio chime player
+    function playBeepSound() {
+        try {
+            if (window.scannerAudio && typeof window.scannerAudio.playSuccessBeep === 'function') {
+                window.scannerAudio.playSuccessBeep();
+                return;
+            }
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.25);
+        } catch (e) {}
+    }
+
+    // Ubah Nomor Surat Jalan saat Pemasok Berubah
+    async function onOneStopPemasokChanged() {
+        const selPemasok = document.getElementById('onestop_pemasok_id');
+        const inpSj = document.getElementById('onestop_no_sj');
+        if (!selPemasok || !inpSj) return;
+
+        const opt = selPemasok.options[selPemasok.selectedIndex];
+        const kode = opt ? (opt.dataset.kode || 'PMS01') : 'PMS01';
+
+        try {
+            const resp = await fetch('index.php?action=gen_surat_jalan&kode=' + encodeURIComponent(kode));
+            const data = await resp.json();
+            if (data && data.success && data.no_surat_jalan) {
+                inpSj.value = data.no_surat_jalan;
+            }
+        } catch (e) {
+            const d = new Date();
+            const yy = String(d.getFullYear()).slice(-2);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const rnd = Math.floor(1000 + Math.random() * 9000);
+            inpSj.value = `SJ-${kode}-${yy}${mm}${dd}-${rnd}`;
+        }
+
+        onOneStopSjChanged();
+    }
+
+    function onOneStopSjChanged() {
+        const inpSj = document.getElementById('onestop_no_sj');
+        const noSj = inpSj ? inpSj.value.trim() : '';
+        const subtitle = document.getElementById('summarySjSubtitle');
+        if (subtitle) subtitle.innerText = 'No. SJ: ' + (noSj || '-');
+
+        const btnBAST = document.getElementById('btnCetakBASTPenerimaan');
+        if (btnBAST) {
+            btnBAST.href = 'index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=' + encodeURIComponent(noSj);
+        }
+
+        fetchInboundSessionSummary();
+    }
+
+    // Filter Produk Berdasarkan Kategori
+    function onOneStopJenisChanged() {
+        const filterJenis = document.getElementById('onestop_jenis_filter')?.value;
+        const selItem = document.getElementById('onestop_item_id');
+        if (!selItem) return;
+
+        selItem.innerHTML = '<option value="">-- Pilih Produk --</option>';
+        const filtered = filterJenis
+            ? masterItemsList.filter(it => String(it.jenis_id) === String(filterJenis))
+            : masterItemsList;
+
+        filtered.forEach(it => {
+            const opt = document.createElement('option');
+            opt.value = it.id;
+            opt.setAttribute('data-jenis', it.jenis_id);
+            opt.setAttribute('data-nama', it.nama_item);
+            opt.setAttribute('data-kode', it.kode_item || '');
+            opt.textContent = `${it.nama_item} (${it.kode_item || '-'})`;
+            selItem.appendChild(opt);
+        });
+
+        if (filtered.length > 0) {
+            selItem.selectedIndex = 1;
+            onOneStopProductChanged(selItem.value);
+        }
+        renderQuickProductPills(filtered);
+    }
+
+    function onOneStopProductChanged(itemId) {
+        // Highlight pill yang sesuai
+        const pills = document.querySelectorAll('.quick-product-chip');
+        pills.forEach(p => {
+            if (p.getAttribute('data-id') === String(itemId)) {
+                p.style.background = '#7e22ce';
+                p.style.color = '#ffffff';
+                p.style.borderColor = '#7e22ce';
+            } else {
+                p.style.background = '#ffffff';
+                p.style.color = '#7e22ce';
+                p.style.borderColor = '#d8b4fe';
+            }
+        });
+
+        // Autofocus ke input timbangan
+        const inpNetto = document.getElementById('onestop_berat_netto');
+        if (inpNetto) {
+            inpNetto.focus();
+            inpNetto.select();
+        }
+    }
+
+    function renderQuickProductPills(itemsToRender) {
+        const container = document.getElementById('quickProductPills');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const list = (itemsToRender && itemsToRender.length) ? itemsToRender.slice(0, 8) : masterItemsList.slice(0, 8);
+        list.forEach(it => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quick-product-chip';
+            btn.setAttribute('data-id', it.id);
+            btn.style.cssText = 'padding: 4px 10px; font-size: 11.5px; font-weight: 700; border-radius: 6px; border: 1.5px solid #d8b4fe; background: #ffffff; color: #7e22ce; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;';
+            btn.innerHTML = `<span>${it.nama_item}</span>`;
+            btn.onclick = function() {
+                const selItem = document.getElementById('onestop_item_id');
+                if (selItem) {
+                    selItem.value = it.id;
+                    onOneStopProductChanged(it.id);
+                }
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    // Ambil Data dari Timbangan Serial (scale.js)
+    async function readFromConnectedScale() {
+        const badge = document.getElementById('onestop_scale_status');
+        if (window.weighScale && typeof window.weighScale.connectSerial === 'function') {
+            try {
+                if (badge) badge.innerText = '● Menghubungkan Timbangan...';
+                const ok = await window.weighScale.connectSerial(9600);
+                if (ok && badge) {
+                    badge.innerText = '● Timbangan Serial Aktif';
+                    badge.className = 'badge badge-success';
+                }
+            } catch (e) {
+                if (badge) badge.innerText = '● Input Manual';
+                alert('Timbangan serial belum terhubung. Silakan input bobot secara manual.');
+            }
+        } else {
+            alert('Fitur Web Serial API tidak didukung pada browser ini atau timbangan belum dicolok.');
+        }
+    }
+
+    // Simpan Box & Cetak Barcode Sekaligus
+    async function handleSaveWeighedBox() {
+        const pemasokId = document.getElementById('onestop_pemasok_id')?.value;
+        const noSj = document.getElementById('onestop_no_sj')?.value.trim();
+        const itemId = document.getElementById('onestop_item_id')?.value;
+        const inpNetto = document.getElementById('onestop_berat_netto');
+        const beratNetto = parseFloat(inpNetto?.value || 0);
+
+        if (!pemasokId) {
+            alert('Pemasok wajib dipilih.');
+            return;
+        }
+        if (!noSj) {
+            alert('Nomor Surat Jalan wajib diisi.');
+            document.getElementById('onestop_no_sj')?.focus();
+            return;
+        }
+        if (!itemId) {
+            alert('Silakan pilih produk / komoditas terlebih dahulu.');
+            document.getElementById('onestop_item_id')?.focus();
+            return;
+        }
+        if (isNaN(beratNetto) || beratNetto <= 0) {
+            alert('Bobot timbangan harus lebih besar dari 0 KG.');
+            if (inpNetto) { inpNetto.focus(); inpNetto.select(); }
+            return;
+        }
+
+        const btnSave = document.getElementById('btnSaveWeighedBox');
+        const labelBtn = document.getElementById('labelBtnSaveWeighed');
+        if (btnSave) btnSave.disabled = true;
+        if (labelBtn) labelBtn.innerText = '⏳ Menyimpan & Mencetak...';
+
+        try {
+            const fd = new FormData();
+            fd.append('pemasok_id', pemasokId);
+            fd.append('no_surat_jalan', noSj);
+            fd.append('item_id', itemId);
+            fd.append('berat_netto', beratNetto.toFixed(2));
+
+            const resp = await fetch('index.php?action=save_weighed_box', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await resp.json();
+
+            if (!data.success) {
+                alert('Gagal menyimpan: ' + (data.message || 'Terjadi kesalahan sistem.'));
+                return;
+            }
+
+            playBeepSound();
+
+            // Cetak Thermal Label 100x50 mm yang sudah ada bobot riil
+            printThermalLabelWithWeight(data.label);
+
+            // Update UI Ringkasan Sesi
+            if (data.session_summary) {
+                renderInboundSessionSummary(data.session_summary);
+            }
+
+            // Reset input berat dan fokuskan kembali untuk box berikutnya
+            if (inpNetto) {
+                inpNetto.value = '';
+                inpNetto.focus();
+            }
+
+        } catch (e) {
+            alert('Kesalahan koneksi / sistem: ' + e.message);
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (labelBtn) labelBtn.innerText = '💾 SIMPAN & CETAK STIKER BARCODE (ENTER)';
+        }
+    }
+
+    // Cetak Stiker Thermal 100x50 mm dengan Highlight Berat Tebal
+    function printThermalLabelWithWeight(lbl) {
+        if (!lbl) return;
+        const printContainer = document.getElementById('bulkPrintContainer');
+        if (!printContainer) return;
+        printContainer.removeAttribute('style');
+        printContainer.innerHTML = '';
+
+        const sheetDiv = document.createElement('div');
+        sheetDiv.className = 'bulk-print-sheet single-thermal-sheet';
+        sheetDiv.style.gridTemplateColumns = '1fr';
+        sheetDiv.style.width = '100mm';
+        sheetDiv.style.height = '50mm';
+
+        const labelDateStr = lbl.created_at ? new Date(lbl.created_at).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID');
+        const weightVal = parseFloat(lbl.berat_netto || 0).toFixed(2);
+
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'bulk-sheet-card';
+        cardDiv.style.width = '100mm';
+        cardDiv.style.height = '50mm';
+        cardDiv.innerHTML = `
+            <div class="sheet-card-header" style="border-bottom: 1.5px solid #000; padding-bottom: 2px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center;">
+                <span class="sheet-card-company" style="font-weight: 800; font-size: 11px;">LOGISTIK BERSAMA GUDANG</span>
+                <span style="font-weight: 800; font-size: 9.5px; background: #000; color: #fff; padding: 1px 6px; border-radius: 3px; text-transform: uppercase;">
+                    ${lbl.nama_jenis || 'BARANG MASUK'}
+                </span>
+            </div>
+            <div class="sheet-card-item" style="margin-bottom: 2px;">
+                <div class="sheet-card-name" style="font-size: 14px; font-weight: 900; line-height: 1.2; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${lbl.nama_item}
+                </div>
+                <div class="sheet-card-meta" style="font-size: 10px; display: flex; justify-content: space-between;">
+                    <span>SJ: <strong>${lbl.no_surat_jalan}</strong></span>
+                    <span>Pemasok: <strong>${lbl.nama_pemasok || lbl.kode_pemasok || '-'}</strong></span>
+                </div>
+            </div>
+            <div class="sheet-card-barcode-area" style="margin: 2px 0;">
+                <div class="sheet-card-bars" style="text-align: center;">
+                    <div class="sheet-barcode-svg" style="height: 38px; width: 100%;">${lbl.barcode_svg || ''}</div>
+                    <div class="sheet-barcode-text" style="font-family: monospace; font-size: 12px; font-weight: 900; letter-spacing: 1px;">${lbl.id_label}</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1.5px solid #000; padding-top: 2px; margin-top: 2px;">
+                <div style="font-size: 9.5px; line-height: 1.2;">
+                    <div>Tgl: <strong>${labelDateStr}</strong></div>
+                    <div>SKU: <strong>${lbl.kode_item || '-'}</strong></div>
+                </div>
+                <div style="text-align: right; background: #000; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 900;">
+                    <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;">BERAT NETTO</div>
+                    <div style="font-size: 19px; font-family: monospace; line-height: 1;">${weightVal} KG</div>
+                </div>
+            </div>
+        `;
+
+        sheetDiv.appendChild(cardDiv);
+        printContainer.appendChild(sheetDiv);
+
+        setPrintPageFormat('single');
+        setTimeout(() => {
+            window.print();
+        }, 150);
+    }
+
+    // Render Ringkasan Sesi Surat Jalan
+    function renderInboundSessionSummary(summary) {
+        if (!summary) return;
+
+        const statBox = document.getElementById('statTotalBox');
+        const statBerat = document.getElementById('statTotalBerat');
+        const badgeHeader = document.getElementById('badgeTotalBoxHeader');
+        if (statBox) statBox.innerText = (summary.total_box || 0) + ' Pcs';
+        if (statBerat) statBerat.innerText = parseFloat(summary.total_berat || 0).toFixed(2) + ' KG';
+        if (badgeHeader) badgeHeader.innerText = (summary.total_box || 0) + ' Box Masuk';
+
+        // Breakdown per produk
+        const breakdownDiv = document.getElementById('containerProductBreakdown');
+        if (breakdownDiv) {
+            if (!summary.products || !summary.products.length) {
+                breakdownDiv.innerHTML = '<div style="padding: 12px; text-align: center; font-size: 12px; color: #94a3b8;">Belum ada keranjang yang ditimbang untuk sesi Surat Jalan ini.</div>';
+            } else {
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+                summary.products.forEach((p, idx) => {
+                    const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    html += `
+                        <tr style="background: ${bg}; border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 8px 10px; font-weight: 800; color: #1e293b;">• ${p.nama_item}</td>
+                            <td style="padding: 8px 10px; text-align: center; font-weight: 700; color: #475569;">${p.box_count} Box</td>
+                            <td style="padding: 8px 10px; text-align: right; font-weight: 900; color: #059669; font-family: monospace;">${parseFloat(p.total_berat).toFixed(2)} KG</td>
+                        </tr>
+                    `;
+                });
+                html += '</table>';
+                breakdownDiv.innerHTML = html;
+            }
+        }
+
+        // Live Feed Recent Boxes
+        const recentDiv = document.getElementById('containerRecentBoxes');
+        if (recentDiv) {
+            if (!summary.recent_boxes || !summary.recent_boxes.length) {
+                recentDiv.innerHTML = '<div style="padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">Data keranjang yang baru ditimbang akan muncul di sini.</div>';
+            } else {
+                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">';
+                summary.recent_boxes.forEach((b, idx) => {
+                    html += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 6px 8px; font-family: monospace; font-weight: 800; color: #2563eb;">${b.id_label}</td>
+                            <td style="padding: 6px 8px; font-weight: 700; color: #1e293b;">${b.nama_item}</td>
+                            <td style="padding: 6px 8px; text-align: right; font-weight: 900; color: #059669; font-family: monospace;">${parseFloat(b.berat_netto).toFixed(2)} KG</td>
+                            <td style="padding: 6px 8px; text-align: center;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="printThermalLabelWithWeight({id_label:'${b.id_label}', nama_item:'${(b.nama_item || '').replace(/'/g, "\\'")}', berat_netto:${b.berat_netto}, no_surat_jalan:'${b.no_surat_jalan || ''}', kode_item:'${b.kode_item || ''}'})" style="padding: 2px 6px; font-size: 11px;" title="Cetak Ulang Stiker Barcode Ini">
+                                    🖨️
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                html += '</table>';
+                recentDiv.innerHTML = html;
+            }
+        }
+    }
+
+    // Ambil Summary Sesi Terkini dari Database
+    async function fetchInboundSessionSummary() {
+        const inpSj = document.getElementById('onestop_no_sj');
+        const noSj = inpSj ? inpSj.value.trim() : '';
+        if (!noSj) return;
+
+        try {
+            const resp = await fetch('index.php?action=get_inbound_session_summary&no_surat_jalan=' + encodeURIComponent(noSj));
+            const data = await resp.json();
+            if (data && data.success && data.summary) {
+                renderInboundSessionSummary(data.summary);
+            }
+        } catch (e) {}
+    }
+
+    // Selesaikan Sesi Surat Jalan Truk Ini
+    async function handleFinishInboundSession() {
+        const inpSj = document.getElementById('onestop_no_sj');
+        const noSj = inpSj ? inpSj.value.trim() : '';
+        const pemasokId = document.getElementById('onestop_pemasok_id')?.value;
+        const statBox = document.getElementById('statTotalBox')?.innerText || '0';
+
+        if (!noSj) {
+            alert('Nomor Surat Jalan tidak valid.');
+            return;
+        }
+
+        const boxCount = parseInt(statBox) || 0;
+        if (boxCount <= 0) {
+            alert('Belum ada keranjang yang ditimbang untuk Surat Jalan ini.');
+            return;
+        }
+
+        const confirmed = confirm(`Apakah seluruh pembongkaran & penimbangan truk untuk Surat Jalan ${noSj} telah selesai?\n\nTotal: ${statBox} keranjang.`);
+        if (!confirmed) return;
+
+        try {
+            const fd = new FormData();
+            fd.append('no_surat_jalan', noSj);
+            fd.append('pemasok_id', pemasokId);
+
+            const resp = await fetch('index.php?action=finish_inbound_session', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await resp.json();
+
+            if (data && data.success) {
+                // Tanyakan cetak BAST
+                const openBast = confirm(`Surat Jalan ${noSj} Berhasil Diselesaikan!\n\nBuka dokumen Surat Jalan Penerimaan / BAST untuk tanda tangan sekarang?`);
+                if (openBast && data.print_bast_url) {
+                    window.open(data.print_bast_url, '_blank');
+                }
+
+                // Perbarui ke Surat Jalan berikutnya untuk truk baru
+                if (inpSj && data.next_surat_jalan) {
+                    inpSj.value = data.next_surat_jalan;
+                    onOneStopSjChanged();
+                }
+            } else {
+                alert('Gagal menyelesaikan sesi: ' + (data.message || 'Error'));
+            }
+        } catch (e) {
+            alert('Kesalahan jaringan: ' + e.message);
+        }
+    }
+
     // Stepper Navigation (Alur 2 Langkah)
     function switchPenerimaanTab(tabName) {
         const secMassal = document.getElementById('sectionMassal');
@@ -2431,6 +3077,24 @@ require_once __DIR__ . '/layout/header.php';
 
     // Eksekusi utama setelah DOM siap
     document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi Modul Penerimaan & Timbang Satu Pintu
+        if (typeof onOneStopJenisChanged === 'function') {
+            onOneStopJenisChanged();
+        }
+        if (typeof fetchInboundSessionSummary === 'function') {
+            fetchInboundSessionSummary();
+        }
+
+        // Hubungkan timbangan digital ke input onestop
+        if (window.weighScale && typeof window.weighScale.onWeight === 'function') {
+            window.weighScale.onWeight((weightKg) => {
+                const onestopWeightInp = document.getElementById('onestop_berat_netto');
+                if (onestopWeightInp) {
+                    onestopWeightInp.value = weightKg.toFixed(2);
+                }
+            });
+        }
+
         const mitraSelect = document.getElementById('mitra_id');
         const itemSelect  = document.getElementById('item_id');
         const brutoInput  = document.getElementById('berat_bruto');
