@@ -137,7 +137,7 @@ $barcodeBast = $trx['no_bast'] ?? $trx['no_transaksi'];
             font-size: 11.5px;
             font-weight: 800;
             text-transform: uppercase;
-            color: #4f46e5;
+            color: #0284c7;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 4px;
             margin-bottom: 8px;
@@ -207,7 +207,7 @@ $barcodeBast = $trx['no_bast'] ?? $trx['no_transaksi'];
             border: none;
             text-decoration: none;
         }
-        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary { background: #0284c7; color: white; }
         .btn-outline { background: white; border: 1px solid #cbd5e1; color: #0f172a; }
         @media print {
             body { background: white; padding: 0; }

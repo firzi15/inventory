@@ -46,6 +46,7 @@ $pageInfoMap = [
     'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Utang surat jalan masuk dan pembayaran kas keluar ke pemasok'],
     'tutup_periode'        => ['title' => 'Tutup Harian', 'desc' => 'Kunci angka tiap hari setelah dicek; hari yang ditutup tidak menerima transaksi atau pembatalan'],
     'surat_jalan'          => ['title' => 'Surat Jalan', 'desc' => 'Cetak surat jalan rangkap 3 tanpa harga dan versi internal dengan harga'],
+    'backup'               => ['title' => 'Backup Data', 'desc' => 'Simpan salinan database dan bukti setoran; unduh untuk disimpan di luar komputer ini'],
     'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
     'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
     'barang_datang'        => ['title' => 'Barang Datang', 'desc' => 'Barang yang diterima gudang dari pemasok dan total nilai pembelian'],
@@ -103,6 +104,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <script>try { var t = localStorage.getItem('theme'); if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle ?? $currentPageInfo['title'] . ' - Sistem Barcode Inventory') ?></title>
     
@@ -113,10 +115,10 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
     <link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     
-    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <!-- Google Fonts: Geist & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -276,7 +278,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                 <a href="index.php?page=dashboard" class="sidebar-brand" title="Ke Halaman Beranda">
                     <div class="brand-info">
                         <span class="brand-title">AR_BAROKAH</span>
-                        <span class="brand-subtitle">BARCODE & TIMBANG</span>
+                        <span class="brand-subtitle">Inventory System</span>
                     </div>
                 </a>
                 <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" title="Tutup Menu">
@@ -302,7 +304,10 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $isSalesGroupActive = ($isSalesInvActive || $currentPage === 'sales_book');
             $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit', 'coa', 'tutup_periode']);
             $isStokMitraActive = ($currentPage === 'stok_mitra');
-            $isMasterActive = in_array($currentPage, ['master', 'master_mitra', 'master_produk', 'master_harga', 'master_harga_pemasok', 'master_harga_mitra', 'accurate_sync']);
+            $tabMasterKini = $_GET['tab'] ?? 'pemasok';
+            $isPengaturanActive = in_array($currentPage, ['backup', 'accurate_sync'], true) || ($currentPage === 'master' && in_array($tabMasterKini, ['log_harga', 'accurate'], true));
+            $isMasterActive = !$isPengaturanActive && in_array($currentPage, ['master', 'master_mitra', 'master_produk', 'master_harga', 'master_harga_pemasok', 'master_harga_mitra']);
+            $bolehBackup = strtoupper($_SESSION['user_login']['role'] ?? '') === 'ADMIN';
             ?>
             <!-- Navigasi Menu Vertikal -->
             <nav class="sidebar-nav">
@@ -343,19 +348,19 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=timbang_cetak" id="sidebarSubPenerimaanTimbang" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && (!isset($_GET['tab']) || $_GET['tab'] === 'timbang_cetak' || $_GET['tab'] === 'massal' || $_GET['tab'] === 'scantimbang')) ? 'active' : '' ?>">
-                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Penerimaan & Timbang</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=timbang_cetak&tab=riwayat_penerimaan" id="sidebarSubRiwayatPenerimaan" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && isset($_GET['tab']) && $_GET['tab'] === 'riwayat_penerimaan') ? 'active' : '' ?>" title="Daftar lengkap seluruh barcode dan timbangan penerimaan">
-                                    <i data-lucide="clipboard-list" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <i data-lucide="clipboard-list" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Riwayat Penerimaan</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=barang_datang" class="nav-sub-item <?= ($currentPage === 'barang_datang') ? 'active' : '' ?>" title="Barang yang diterima gudang dan total nilai pembelian">
-                                    <i data-lucide="package-check" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <i data-lucide="package-check" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Barang Datang</span>
                                 </a>
                             </li>
@@ -384,7 +389,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             </li>
                             <li>
                                 <a href="index.php?page=pengeluaran&tab=riwayat" class="nav-sub-item <?= ($currentPage === 'pengeluaran' && isset($_GET['tab']) && in_array($_GET['tab'], ['riwayat', 'semua_barang'])) ? 'active' : '' ?>" title="Arsip surat jalan dan rincian kemasan barang keluar">
-                                    <i data-lucide="clipboard-list" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <i data-lucide="clipboard-list" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                                     <span>Riwayat Pengeluaran</span>
                                 </a>
                             </li>
@@ -405,7 +410,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <!-- MENU UTAMA 3: STOK BARANG GUDANG & STOCK OPNAME -->
                     <li class="nav-has-submenu <?= $isStokGudangActive ? 'is-open' : '' ?>" id="menuStokGudang" data-active-page="<?= $isStokGudangActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isStokGudangActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuStokGudang', event)" role="button" aria-expanded="<?= $isStokGudangActive ? 'true' : 'false' ?>" title="Klik untuk menampilkan / menyembunyikan sub menu">
-                            <div class="nav-item-icon icon-cyan" style="background: rgba(6, 182, 212, 0.15); color: #0891b2;">
+                            <div class="nav-item-icon icon-cyan" style="background: rgba(2, 132, 199, 0.15); color: var(--aktif-fg);">
                                 <i data-lucide="boxes" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -420,13 +425,13 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=timbang_cetak&tab=stok_gudang" id="sidebarSubSisaStok" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && isset($_GET['tab']) && $_GET['tab'] === 'stok_gudang') ? 'active' : '' ?>" title="Sisa persediaan fisik gudang utama setelah penerimaan">
-                                    <i data-lucide="package" style="width: 14px; height: 14px; color: #0891b2;"></i>
+                                    <i data-lucide="package" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Sisa Stok Gudang</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=stok_opname" id="sidebarSubStockOpname" class="nav-sub-item <?= ($currentPage === 'stok_opname') ? 'active' : '' ?>" title="Stock opname barcode & audit fisik gudang">
-                                    <i data-lucide="clipboard-check" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <i data-lucide="clipboard-check" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                                     <span>Stock Opname</span>
                                 </a>
                             </li>
@@ -442,7 +447,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <!-- 2. AP AGING (UTANG USAHA) (SUBMENU) -->
                     <li class="nav-has-submenu <?= $isApAgingActive ? 'is-open' : '' ?>" id="menuApAging" data-active-page="<?= $isApAgingActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isApAgingActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuApAging', event)" role="button" aria-expanded="<?= $isApAgingActive ? 'true' : 'false' ?>" title="Pelacakan umur utang dan pembayaran cicilan ke pemasok">
-                            <div class="nav-item-icon icon-purple" style="background: rgba(139, 92, 246, 0.12); color: #8b5cf6;">
+                            <div class="nav-item-icon icon-purple" style="background: rgba(3, 105, 161, 0.12); color: var(--aktif-fg);">
                                 <i data-lucide="receipt" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -456,7 +461,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=ap_aging&tab=matriks" class="nav-sub-item <?= ($isApAgingActive && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
-                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Ringkasan per Pemasok</span>
                                 </a>
                             </li>
@@ -472,7 +477,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <!-- 1. AR AGING (PIUTANG USAHA) (SUBMENU) -->
                     <li class="nav-has-submenu <?= $isArAgingActive ? 'is-open' : '' ?>" id="menuArAging" data-active-page="<?= $isArAgingActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isArAgingActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuArAging', event)" role="button" aria-expanded="<?= $isArAgingActive ? 'true' : 'false' ?>" title="Pelacakan umur piutang dan cicilan setoran mitra">
-                            <div class="nav-item-icon icon-blue" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                            <div class="nav-item-icon icon-blue" style="background: rgba(37, 99, 235, 0.12); color: var(--aktif-fg);">
                                 <i data-lucide="hand-coins" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -486,13 +491,13 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=ar_aging&tab=matriks" class="nav-sub-item <?= ($isArAgingActive && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
-                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: #2563eb;"></i>
+                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Ringkasan per Mitra</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=ar_aging&tab=riwayat_setoran" class="nav-sub-item <?= ($isArAgingActive && $currentTab === 'riwayat_setoran') ? 'active' : '' ?>">
-                                    <i data-lucide="wallet" style="width: 14px; height: 14px; color: #f59e0b;"></i>
+                                    <i data-lucide="wallet" style="width: 14px; height: 14px; color: var(--warn-fg);"></i>
                                     <span>Riwayat Setoran</span>
                                 </a>
                             </li>
@@ -501,7 +506,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
 
                     <li class="nav-has-submenu <?= $isPurchGroupActive ? 'is-open' : '' ?>" id="menuPurchase" data-active-page="<?= $isPurchGroupActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isPurchGroupActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuPurchase', event)" role="button" aria-expanded="<?= $isPurchGroupActive ? 'true' : 'false' ?>">
-                            <div class="nav-item-icon" style="background: #10b98122; color: #10b981;">
+                            <div class="nav-item-icon" style="background: #10b98122; color: var(--ok-fg);">
                                 <i data-lucide="file-input" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -515,13 +520,13 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=ap_aging&tab=invoices" class="nav-sub-item <?= $isPurchInvActive ? 'active' : '' ?>">
-                                    <i data-lucide="file-input" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <i data-lucide="file-input" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                                     <span>Daftar Faktur</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=purchase_book" class="nav-sub-item <?= ($currentPage === 'purchase_book') ? 'active' : '' ?>">
-                                    <i data-lucide="book-marked" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <i data-lucide="book-marked" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                                     <span>Purchase Book</span>
                                 </a>
                             </li>
@@ -530,7 +535,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
 
                     <li class="nav-has-submenu <?= $isSalesGroupActive ? 'is-open' : '' ?>" id="menuSales" data-active-page="<?= $isSalesGroupActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isSalesGroupActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuSales', event)" role="button" aria-expanded="<?= $isSalesGroupActive ? 'true' : 'false' ?>">
-                            <div class="nav-item-icon" style="background: #2563eb22; color: #2563eb;">
+                            <div class="nav-item-icon" style="background: #2563eb22; color: var(--aktif-fg);">
                                 <i data-lucide="file-output" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -544,13 +549,13 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=ar_aging&tab=nota" class="nav-sub-item <?= $isSalesInvActive ? 'active' : '' ?>">
-                                    <i data-lucide="file-output" style="width: 14px; height: 14px; color: #2563eb;"></i>
+                                    <i data-lucide="file-output" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Daftar Nota</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=sales_book" class="nav-sub-item <?= ($currentPage === 'sales_book') ? 'active' : '' ?>">
-                                    <i data-lucide="book-marked" style="width: 14px; height: 14px; color: #2563eb;"></i>
+                                    <i data-lucide="book-marked" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Sales Book</span>
                                 </a>
                             </li>
@@ -560,7 +565,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <!-- LABA RUGI (SUBMENU) -->
                     <li class="nav-has-submenu <?= $isProfitActive ? 'is-open' : '' ?>" id="menuProfit" data-active-page="<?= $isProfitActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isProfitActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuProfit', event)" role="button" aria-expanded="<?= $isProfitActive ? 'true' : 'false' ?>" title="Klik untuk menampilkan / menyembunyikan menu Laba Rugi">
-                            <div class="nav-item-icon icon-green" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                            <div class="nav-item-icon icon-green" style="background: rgba(16, 185, 129, 0.15); color: var(--ok-fg);">
                                 <i data-lucide="trending-up" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -574,25 +579,25 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=coa" class="nav-sub-item <?= ($currentPage === 'coa') ? 'active' : '' ?>">
-                                    <i data-lucide="book-open" style="width: 14px; height: 14px; color: #4f46e5;"></i>
+                                    <i data-lucide="book-open" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>COA</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=profit_loss" class="nav-sub-item <?= ($currentPage === 'profit_loss' && $currentTab !== 'laba_sj' && $currentTab !== 'riwayat_sj') ? 'active' : '' ?>">
-                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Laba Rugi</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=profit_loss&tab=laba_sj" class="nav-sub-item <?= ($currentPage === 'profit_loss' && ($currentTab === 'laba_sj' || $currentTab === 'riwayat_sj')) ? 'active' : '' ?>">
-                                    <i data-lucide="receipt" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <i data-lucide="receipt" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                                     <span>Laba per Surat Jalan</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=tutup_periode" class="nav-sub-item <?= $currentPage === 'tutup_periode' ? 'active' : '' ?>">
-                                    <i data-lucide="lock" style="width: 14px; height: 14px; color: #64748b;"></i>
+                                    <i data-lucide="lock" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
                                     <span>Tutup Harian</span>
                                 </a>
                             </li>
@@ -602,7 +607,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <!-- TRANSAKSI KAS & BANK -->
                     <li>
                         <a href="index.php?page=kas_bank" class="nav-item <?= $isKasActive ? 'active' : '' ?>" title="Biaya tunai/transfer, setoran modal, dan prive">
-                            <div class="nav-item-icon icon-teal" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+                            <div class="nav-item-icon icon-teal" style="background: rgba(16, 185, 129, 0.12); color: var(--ok-fg);">
                                 <i data-lucide="wallet" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -615,7 +620,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <!-- REKONSILIASI BANK (HARIAN) -->
                     <li>
                         <a href="index.php?page=rekonsiliasi_bank" class="nav-item <?= $isRekonActive ? 'active' : '' ?>" title="Audit harian total setoran mitra dengan uang masuk di bank">
-                            <div class="nav-item-icon icon-teal" style="background: rgba(14, 165, 233, 0.12); color: #0284c7;">
+                            <div class="nav-item-icon icon-teal" style="background: rgba(14, 165, 233, 0.12); color: var(--aktif-fg);">
                                 <i data-lucide="scale" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
@@ -642,19 +647,19 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <ul class="nav-sub-list">
                             <li>
                                 <a href="index.php?page=stok_mitra&tab=rincian" class="nav-sub-item <?= ($isStokMitraActive && ($currentTab === 'rincian' || empty($currentTab))) ? 'active' : '' ?>">
-                                    <i data-lucide="table" style="width: 14px; height: 14px; color: #059669;"></i>
+                                    <i data-lucide="table" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                                     <span>Rincian Stok Barang Mitra</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=stok_mitra&tab=matriks" class="nav-sub-item <?= ($isStokMitraActive && $currentTab === 'matriks') ? 'active' : '' ?>">
-                                    <i data-lucide="grid" style="width: 14px; height: 14px; color: #3b82f6;"></i>
+                                    <i data-lucide="grid" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Matriks Stok Kategori</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=stok_mitra&tab=ringkasan" class="nav-sub-item <?= ($isStokMitraActive && $currentTab === 'ringkasan') ? 'active' : '' ?>">
-                                    <i data-lucide="credit-card" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <i data-lucide="credit-card" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Valuasi per Mitra</span>
                                 </a>
                             </li>
@@ -666,39 +671,66 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                                 <i data-lucide="settings" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
-                                <span class="nav-item-title">Master & Pengaturan</span>
-                                <span class="nav-item-desc">Data & API Accurate</span>
+                                <span class="nav-item-title">Master Data</span>
+                                <span class="nav-item-desc">Pemasok, mitra, produk, harga</span>
                             </div>
                             <div class="nav-item-chevron">
                                 <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
                             </div>
                         </a>
-                        <!-- Sub Menu Master & Pengaturan -->
+                        <!-- Sub Menu Master Data -->
                         <?php
                         $masterTabAktif = $_GET['tab'] ?? 'pemasok';
                         if ($masterTabAktif === 'harga') $masterTabAktif = 'harga_mitra';
-                        if ($currentPage === 'accurate_sync') $masterTabAktif = 'accurate';
                         $masterMenu = [
                             ['pemasok',            'Pemasok Nelayan',       'truck',            '#f59e0b'],
                             ['vendor_non_pemasok', 'Vendor Non-Pemasok',    'store',            '#3b82f6'],
-                            ['tipe_biaya',         'Tipe Biaya Operasional', 'receipt',         '#8b5cf6'],
+                            ['tipe_biaya',         'Tipe Biaya Operasional', 'receipt',         '#0369a1'],
                             ['harga_pemasok',      'Harga Pemasok',         'tag',              '#f59e0b'],
                             ['harga_mitra',        'Harga Mitra',           'badge-dollar-sign', '#10b981'],
                             ['mitra',              'Mitra Bisnis',          'building-2',       '#3b82f6'],
-                            ['produk',             'Master Produk',         'boxes',            '#8b5cf6'],
+                            ['produk',             'Master Produk',         'boxes',            '#0369a1'],
                             ['rekening_bank',      'Rekening Bank',         'landmark',         '#0ea5e9'],
-                            ['coa',                'Akun COA',              'book-open',        '#4f46e5'],
-                            ['log_harga',          'Log Harga',             'history',          '#ef4444'],
-                            ['accurate',           'Settingan API Accurate', 'key',             '#0284c7'],
+                            ['coa',                'Akun COA',              'book-open',        '#0284c7'],
                         ];
                         ?>
                         <ul class="nav-sub-list">
                             <?php foreach ($masterMenu as [$mTab, $mLabel, $mIkon, $mWarna]):
-                                $mAktif = ($currentPage === 'master' || $currentPage === 'accurate_sync') && $masterTabAktif === $mTab; ?>
+                                $mAktif = ($currentPage === 'master') && $masterTabAktif === $mTab; ?>
                             <li>
                                 <a href="index.php?page=master&tab=<?= $mTab ?>" class="nav-sub-item <?= $mAktif ? 'active' : '' ?>">
                                     <i data-lucide="<?= $mIkon ?>" style="width: 14px; height: 14px; color: <?= $mWarna ?>;"></i>
                                     <span><?= $mLabel ?></span>
+                                </a>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </li>
+                    <li class="nav-has-submenu <?= $isPengaturanActive ? 'is-open' : '' ?>" id="menuPengaturan" data-active-page="<?= $isPengaturanActive ? '1' : '' ?>">
+                        <a href="javascript:void(0)" class="nav-item <?= $isPengaturanActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuPengaturan', event)" role="button" aria-expanded="<?= $isPengaturanActive ? 'true' : 'false' ?>" title="Klik untuk menampilkan atau menyembunyikan sub menu">
+                            <div class="nav-item-icon icon-slate">
+                                <i data-lucide="settings" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title">Pengaturan</span>
+                                <span class="nav-item-desc">Backup, log, Accurate</span>
+                            </div>
+                            <div class="nav-item-chevron">
+                                <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
+                            </div>
+                        </a>
+                        <?php
+                        $menuPengaturan = [];
+                        $menuPengaturan[] = ['index.php?page=backup', 'Backup', 'database-backup', $currentPage === 'backup'];
+                        $menuPengaturan[] = ['index.php?page=master&tab=log_harga', 'Log', 'history', $currentPage === 'master' && $tabMasterKini === 'log_harga'];
+                        $menuPengaturan[] = ['index.php?page=master&tab=accurate', 'Accurate Connector', 'key', $currentPage === 'accurate_sync' || ($currentPage === 'master' && $tabMasterKini === 'accurate')];
+                        ?>
+                        <ul class="nav-sub-list">
+                            <?php foreach ($menuPengaturan as [$pUrl, $pLabel, $pIkon, $pAktif]): ?>
+                            <li>
+                                <a href="<?= $pUrl ?>" class="nav-sub-item <?= $pAktif ? 'active' : '' ?>">
+                                    <i data-lucide="<?= $pIkon ?>" style="width: 14px; height: 14px;"></i>
+                                    <span><?= $pLabel ?></span>
                                 </a>
                             </li>
                             <?php endforeach; ?>
@@ -721,7 +753,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             <div class="sidebar-footer">
                 <button type="button" class="sidebar-theme-btn" id="themeToggle" title="Ganti Mode Gelap / Terang">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="sun" id="sunIcon" style="width: 16px; height: 16px; color: #f59e0b;"></i>
+                        <i data-lucide="sun" id="sunIcon" style="width: 16px; height: 16px; color: var(--warn-fg);"></i>
                         <i data-lucide="moon" id="moonIcon" style="width: 16px; height: 16px; color: #38bdf8; display: none;"></i>
                         <span id="themeToggleText">Mode Tampilan</span>
                     </div>
@@ -762,8 +794,8 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             </div>
                             <div class="user-dropdown-divider"></div>
                             <a href="index.php?action=logout" class="user-dropdown-item dropdown-logout-btn">
-                                <i data-lucide="log-out" style="width: 15px; height: 15px; color: #ef4444;"></i>
-                                <span style="color: #ef4444; font-weight: 700;">Keluar / Logout</span>
+                                <i data-lucide="log-out" style="width: 15px; height: 15px; color: var(--bad-fg);"></i>
+                                <span style="color: var(--bad-fg); font-weight: 700;">Keluar / Logout</span>
                             </a>
                         </div>
                     </div>

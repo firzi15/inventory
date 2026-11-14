@@ -90,11 +90,11 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="font-weight: 700;"><?= htmlspecialchars($p['nama']) ?></td>
                             <td>
                                 <?php if ($tutup): ?>
-                                    <span class="badge" style="background: #e2e8f0; color: #334155; font-weight: 700;">Ditutup</span>
+                                    <span class="badge" style="background: var(--border); color: var(--text-main); font-weight: 700;">Ditutup</span>
                                 <?php elseif ($p['status'] === 'BUKA'): ?>
-                                    <span class="badge" style="background: #fef3c7; color: #b45309; font-weight: 700;">Dibuka kembali</span>
+                                    <span class="badge" style="background: var(--warn-bg); color: var(--warn-fg); font-weight: 700;">Dibuka kembali</span>
                                 <?php else: ?>
-                                    <span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 700;">Terbuka</span>
+                                    <span class="badge" style="background: var(--ok-bg); color: var(--ok-fg); font-weight: 700;">Terbuka</span>
                                 <?php endif; ?>
                             </td>
                             <td style="text-align: right;"><?= $p['transaksi'] ?></td>
@@ -172,7 +172,7 @@ require_once __DIR__ . '/layout/header.php';
         info.cek.forEach(c => {
             html += '<div style="display:flex;gap:8px;margin:5px 0;color:' + warna[c[0]] + ';"><span style="font-weight:800;width:14px;">' + ikon[c[0]] + '</span><span>' + esc(c[1]) + '</span></div>';
         });
-        if (adaPeringatan && !adaBlok) html += '<div style="margin-top:10px;font-size:12px;color:#64748b;">Peringatan tidak menghalangi penutupan, tetapi sebaiknya dibereskan lebih dulu.</div>';
+        if (adaPeringatan && !adaBlok) html += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted);">Peringatan tidak menghalangi penutupan, tetapi sebaiknya dibereskan lebih dulu.</div>';
         html += '</div>';
 
         const r = await Swal.fire({
@@ -192,7 +192,7 @@ require_once __DIR__ . '/layout/header.php';
     async function tutupSampai(tanggal) {
         const r = await Swal.fire({
             title: 'Tutup semua hari sampai ' + tglId(tanggal) + '?',
-            html: '<div style="text-align:left;font-size:13px;color:#475569;">Semua hari yang masih terbuka dari transaksi pertama sampai tanggal itu ditutup sekaligus. Hari yang jurnalnya tidak seimbang dilewati. Pastikan setoran dan rekonsiliasi hari-hari itu sudah beres.</div>',
+            html: '<div style="text-align:left;font-size:13px;color:var(--text-muted);">Semua hari yang masih terbuka dari transaksi pertama sampai tanggal itu ditutup sekaligus. Hari yang jurnalnya tidak seimbang dilewati. Pastikan setoran dan rekonsiliasi hari-hari itu sudah beres.</div>',
             input: 'text',
             inputPlaceholder: 'Catatan (opsional)',
             showCancelButton: true,
@@ -205,7 +205,7 @@ require_once __DIR__ . '/layout/header.php';
     async function bukaHari(tanggal, nama) {
         const r = await Swal.fire({
             title: 'Buka kembali ' + nama + '?',
-            html: '<div style="text-align:left;font-size:13px;color:#475569;">Transaksi dan pembatalan bertanggal hari ini akan diizinkan lagi. Angka hari ini bisa berubah. Tutup kembali setelah koreksi selesai.</div>',
+            html: '<div style="text-align:left;font-size:13px;color:var(--text-muted);">Transaksi dan pembatalan bertanggal hari ini akan diizinkan lagi. Angka hari ini bisa berubah. Tutup kembali setelah koreksi selesai.</div>',
             input: 'textarea',
             inputLabel: 'Alasan membuka kembali',
             showCancelButton: true,

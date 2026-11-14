@@ -21,7 +21,7 @@ require_once __DIR__ . '/layout/header.php';
     </div>
     <div style="display: flex; gap: 8px;">
         <a href="Manual_Book_Sistem_Barcode_Inventory_Multi_Mitra.docx" class="btn btn-outline" download style="display: flex; align-items: center; gap: 6px;">
-            <i data-lucide="file-text" style="width: 16px; height: 16px; color: #2563eb;"></i>
+            <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--aktif-fg);"></i>
             <span>Manual Book</span>
         </a>
         <button type="button" class="btn btn-outline" onclick="openGuideModal()">
@@ -117,7 +117,7 @@ require_once __DIR__ . '/layout/header.php';
                         <input type="text" id="inputDbAlias" name="db_alias" class="form-control" value="<?= htmlspecialchars($cfg['db_alias'] ?: ($cfg['db_id'] ? 'ID ' . $cfg['db_id'] : '')) ?>" placeholder="Belum ada database dipilih" readonly style="background: var(--bg-muted); font-size: 12.5px; font-weight: 700;">
                         <input type="hidden" id="inputDbId" name="db_id" value="<?= htmlspecialchars($cfg['db_id']) ?>">
                         <button type="button" class="btn btn-outline" id="btnTestConnect" onclick="testAndFetchDatabases()">
-                            <i data-lucide="radio" style="width: 15px; height: 15px; color: #0ea5e9;"></i>
+                            <i data-lucide="radio" style="width: 15px; height: 15px; color: var(--aktif-fg);"></i>
                             <span>Tes & Pilih DB</span>
                         </button>
                     </div>
@@ -218,7 +218,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <div style="display: flex; gap: 12px; background: var(--bg-muted); padding: 12px 16px; border-radius: 8px;">
-                <div style="background: #10b981; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">5</div>
+                <div style="background: var(--ok-solid); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">5</div>
                 <div>
                     <strong>Tempel Token ke Sistem Gudang</strong>
                     <div style="color: var(--text-muted); font-size: 12.5px;">Tempel token tersebut ke kolom <strong>API Token</strong> di atas, lalu klik <strong>Tes & Pilih DB</strong> untuk menyimpan database. Selesai!</div>
@@ -274,12 +274,12 @@ require_once __DIR__ . '/layout/header.php';
                             <div style="font-size: 11px; color: var(--text-muted);"><?= Helper::formatDateTime($q['created_at']) ?></div>
                         </td>
                         <td>
-                            <span class="mitra-tag <?= strtolower($q['kode_mitra']) ?>" style="background: <?= htmlspecialchars($q['warna_identitas'] ?? '#4f46e5') ?>; padding: 2px 7px; font-size: 11px;">
+                            <span class="mitra-tag <?= strtolower($q['kode_mitra']) ?>" style="background: <?= htmlspecialchars($q['warna_identitas'] ?? '#0284c7') ?>; padding: 2px 7px; font-size: 11px;">
                                 <?= htmlspecialchars($q['kode_mitra']) ?>
                             </span>
                             <span style="font-size: 12px; margin-left: 5px; font-weight: 600;"><?= htmlspecialchars($q['nama_mitra']) ?></span>
                         </td>
-                        <td style="text-align: right; font-weight: 800; color: #10b981; font-size: 14px;"><?= Helper::formatKg($q['total_kg']) ?></td>
+                        <td style="text-align: right; font-weight: 800; color: var(--ok-fg); font-size: 14px;"><?= Helper::formatKg($q['total_kg']) ?></td>
                         <td><code style="font-size: 11px;"><?= htmlspecialchars($q['endpoint']) ?></code></td>
                         <td><strong><?= $q['attempt_count'] ?></strong> / <?= $q['max_attempts'] ?></td>
                         <td>
@@ -403,7 +403,7 @@ require_once __DIR__ . '/layout/header.php';
             } else {
                 container.style.display = 'block';
                 container.innerHTML = `
-                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #dc2626; padding: 16px; border-radius: 8px;">
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--bad-solid); color: var(--bad-fg); padding: 16px; border-radius: 8px;">
                         <div style="font-weight: 800; margin-bottom: 4px;">Koneksi Gagal</div>
                         <div style="font-size: 12px;">${escapeHtml(data.message || 'Tidak ada database ditemukan atau token tidak valid.')}</div>
                     </div>
@@ -412,7 +412,7 @@ require_once __DIR__ . '/layout/header.php';
         } catch (e) {
             loading.style.display = 'none';
             container.style.display = 'block';
-            container.innerHTML = `<div style="color: #ef4444; padding: 16px;">Terjadi kesalahan: ${escapeHtml(e.message)}</div>`;
+            container.innerHTML = `<div style="color: var(--bad-fg); padding: 16px;">Terjadi kesalahan: ${escapeHtml(e.message)}</div>`;
         }
     }
 

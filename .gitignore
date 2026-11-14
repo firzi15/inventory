@@ -14,3 +14,6 @@ Thumbs.db
 .env
 demo/
 demo_ui_*.html
+
+# Halaman reset uji coba (berisi hash kata sandi)
+reset.php

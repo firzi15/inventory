@@ -125,6 +125,15 @@ if (!$isLoggedIn) {
 // 2. PENANGANAN REQUEST AJAX / API ACTION (USER TERAUTENTIKASI)
 $action = $_GET['action'] ?? null;
 
+// Backup otomatis bulanan: dijalankan setelah halaman terkirim ke browser, hanya pada pembukaan halaman biasa
+if (!$action && $isLoggedIn && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && empty($_GET['embed'])) {
+    register_shutdown_function(function () {
+        if (function_exists('fastcgi_finish_request')) { @fastcgi_finish_request(); }
+        else { ignore_user_abort(true); while (ob_get_level() > 0) { @ob_end_flush(); } @flush(); }
+        \App\Services\BackupService::otomatisBulanan();
+    });
+}
+
 if ($action) {
     try {
         switch ($action) {
@@ -1177,6 +1186,54 @@ if ($action) {
                 Helper::jsonResponse(['success' => true, 'message' => $pesanPer]);
                 exit;
 
+            // BK2. Pulihkan / unggah backup (hanya ADMIN): menimpa seluruh data
+            case 'pulihkan_backup':
+            case 'unggah_backup':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                if (!\App\Services\BackupService::bolehPulih($_SESSION['user_login']['role'] ?? '')) {
+                    Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin yang dapat memulihkan atau mengunggah backup.'], 403);
+                    exit;
+                }
+                $uidPul = (int)($_SESSION['user_login']['id'] ?? 0);
+                if ($action === 'unggah_backup') {
+                    $up = $_FILES['berkas'] ?? null;
+                    if (!$up || ($up['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new Exception('Pilih berkas backup (.zip atau .tar.gz). Ukuran maksimal mengikuti pengaturan PHP (' . ini_get('upload_max_filesize') . ').');
+                    $namaUp = \App\Services\BackupService::unggah($up['tmp_name'], (string)$up['name'], $uidPul);
+                    Helper::jsonResponse(['success' => true, 'message' => "Backup {$namaUp} diunggah dan siap dipulihkan."]);
+                    exit;
+                }
+                if (trim((string)($_POST['konfirmasi'] ?? '')) !== 'PULIHKAN') throw new Exception('Konfirmasi tidak sesuai. Ketik PULIHKAN untuk melanjutkan.');
+                $hasilPul = \App\Services\BackupService::pulihkan((string)($_POST['nama'] ?? ''), $uidPul);
+                Helper::jsonResponse(['success' => true, 'message' => $hasilPul['pesan']]);
+                exit;
+
+            // BK. Backup data (hanya ADMIN): buat, unduh, hapus
+            case 'buat_backup':
+            case 'hapus_backup':
+            case 'unduh_backup':
+                if (!\App\Services\BackupService::boleh($_SESSION['user_login']['role'] ?? '')) {
+                    Helper::jsonResponse(['success' => false, 'message' => 'Anda tidak memiliki izin mengelola backup.'], 403);
+                    exit;
+                }
+                $uidBk = (int)($_SESSION['user_login']['id'] ?? 0);
+                if ($action === 'unduh_backup') {
+                    $pathBk = \App\Services\BackupService::path((string)($_GET['nama'] ?? ''));
+                    \App\Services\BackupService::audit($uidBk, 'UNDUH_BACKUP', basename($pathBk), 'Backup diunduh');
+                    header('Content-Type: application/octet-stream');
+                    header('Content-Disposition: attachment; filename="' . basename($pathBk) . '"');
+                    header('Content-Length: ' . filesize($pathBk));
+                    readfile($pathBk);
+                    exit;
+                }
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                if ($action === 'hapus_backup') {
+                    Helper::jsonResponse(['success' => true, 'message' => \App\Services\BackupService::hapus((string)($_POST['nama'] ?? ''), $uidBk)]);
+                    exit;
+                }
+                $hasilBk = \App\Services\BackupService::buat($uidBk);
+                Helper::jsonResponse(['success' => true, 'message' => $hasilBk['pesan'], 'nama' => $hasilBk['nama']]);
+                exit;
+
             // K. Transaksi Kas & Bank: catat biaya / setoran modal / prive (ADMIN, SUPERVISOR, FINANCE)
             case 'simpan_kas':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
@@ -1298,6 +1355,7 @@ $allowedPages = [
     'kas_bank'                     => __DIR__ . '/views/kas_bank.php',
     'surat_jalan'                  => __DIR__ . '/views/surat_jalan.php',
     'tutup_periode'                => __DIR__ . '/views/tutup_periode.php',
+    'backup'                       => __DIR__ . '/views/backup.php',
     'profit_loss'                  => __DIR__ . '/views/profit_loss.php',
     'coa'                          => __DIR__ . '/views/coa.php',
     'purchase_book'                => __DIR__ . '/views/book.php',

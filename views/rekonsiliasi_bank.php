@@ -26,10 +26,10 @@ $tgl = fn($d) => date('d/m/Y', strtotime($d));
 $hariNama = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 $badge = [
-    'BELUM'   => ['Belum direkonsiliasi', 'background: #fef3c7; color: #b45309;'],
-    'SESUAI'  => ['Sesuai', 'background: #dcfce7; color: #15803d;'],
-    'SELISIH' => ['Selisih', 'background: #fee2e2; color: #b91c1c;'],
-    'BERUBAH' => ['Setoran berubah', 'background: #ffedd5; color: #c2410c;'],
+    'BELUM'   => ['Belum direkonsiliasi', 'background: var(--warn-bg); color: var(--warn-fg);'],
+    'SESUAI'  => ['Sesuai', 'background: var(--ok-bg); color: var(--ok-fg);'],
+    'SELISIH' => ['Selisih', 'background: var(--bad-bg); color: var(--bad-fg);'],
+    'BERUBAH' => ['Setoran berubah', 'background: var(--warn-bg); color: var(--warn-fg);'],
 ];
 
 require_once __DIR__ . '/layout/header.php';
@@ -177,17 +177,17 @@ require_once __DIR__ . '/layout/header.php';
                 <span>Total setoran sistem</span><span id="rekonTotalSistem">Rp 0</span>
             </div>
             <div class="form-group">
-                <label class="form-label">Total uang masuk di bank (sesuai screenshot) <span style="color: #ef4444;">*</span></label>
+                <label class="form-label">Total uang masuk di bank (sesuai screenshot) <span style="color: var(--bad-fg);">*</span></label>
                 <input type="number" id="rekonTotalBank" class="form-control" min="0" step="any" oninput="hitungSelisihRekon()" placeholder="Isi sesuai mutasi bank pada tanggal ini">
                 <div id="rekonSelisih" style="font-size: 12.5px; margin-top: 6px; font-weight: 700;"></div>
             </div>
             <div class="form-group">
-                <label class="form-label">Lampiran screenshot / slip bank <span style="color: #ef4444;">*</span></label>
+                <label class="form-label">Lampiran screenshot / slip bank <span style="color: var(--bad-fg);">*</span></label>
                 <input type="file" id="rekonFile" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf" multiple>
                 <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Boleh lebih dari satu file. JPG, PNG, WEBP, atau PDF, maksimal 8 MB per file.</div>
             </div>
             <div class="form-group">
-                <label class="form-label">Catatan <span id="rekonCatatanWajib" style="color: #ef4444; display: none;">(wajib jika ada selisih)</span></label>
+                <label class="form-label">Catatan <span id="rekonCatatanWajib" style="color: var(--bad-fg); display: none;">(wajib jika ada selisih)</span></label>
                 <input type="text" id="rekonCatatan" class="form-control" placeholder="Contoh: selisih Rp 2.500 biaya admin transfer">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
@@ -290,7 +290,7 @@ async function lihatRekon(tanggal) {
         }).join('');
         const sel = parseFloat(r.selisih);
         document.getElementById('rekonLihat').innerHTML =
-            (berubah ? '<div style="background:#ffedd5;color:#c2410c;padding:10px 12px;border-radius:8px;font-size:12.5px;font-weight:700;margin-bottom:12px;">Total setoran sekarang ' + rupiah(totalSekarang) + ' berbeda dari saat direkonsiliasi (' + rupiah(r.total_sistem) + '). Buka kembali rekonsiliasi untuk mengauditnya ulang.</div>' : '') +
+            (berubah ? '<div style="background:var(--warn-bg);color:var(--warn-fg);padding:10px 12px;border-radius:8px;font-size:12.5px;font-weight:700;margin-bottom:12px;">Total setoran sekarang ' + rupiah(totalSekarang) + ' berbeda dari saat direkonsiliasi (' + rupiah(r.total_sistem) + '). Buka kembali rekonsiliasi untuk mengauditnya ulang.</div>' : '') +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13px;margin-bottom:12px;">' +
             '<div>Total sistem<br><strong>' + rupiah(r.total_sistem) + '</strong></div>' +
             '<div>Masuk bank<br><strong>' + rupiah(r.total_bank) + '</strong></div>' +
@@ -298,7 +298,7 @@ async function lihatRekon(tanggal) {
             '<div>Diaudit<br><strong>' + esc(r.verifikator) + '</strong> &middot; ' + esc(r.verified_at) + '</div></div>' +
             (r.catatan ? '<div style="font-size:13px;margin-bottom:12px;"><strong>Catatan:</strong> ' + esc(r.catatan) + '</div>' : '') +
             '<div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">Lampiran bank</div><div>' + bukti + '</div>' +
-            <?php if ($bolehRekon): ?>'<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button type="button" class="btn btn-outline" style="color:#b91c1c;border-color:#fca5a5;" onclick="bukaKembaliRekon()">Buka kembali</button></div>'<?php else: ?>''<?php endif; ?>;
+            <?php if ($bolehRekon): ?>'<div style="display:flex;justify-content:flex-end;margin-top:14px;"><button type="button" class="btn btn-outline" style="color:var(--bad-fg);border-color:var(--border-hover);" onclick="bukaKembaliRekon()">Buka kembali</button></div>'<?php else: ?>''<?php endif; ?>;
         document.getElementById('rekonForm').style.display = 'none';
         document.getElementById('rekonLihat').style.display = '';
         document.getElementById('modalRekon').style.display = 'flex';

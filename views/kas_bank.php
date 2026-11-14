@@ -133,7 +133,7 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="max-width: 260px;">
                                 <?= htmlspecialchars($r['keterangan']) ?>
                                 <?php if ($r['no_referensi']): ?><div style="font-size: 11.5px; color: var(--text-muted);">Ref: <?= htmlspecialchars($r['no_referensi']) ?></div><?php endif; ?>
-                                <?php if ($batal): ?><div style="font-size: 11.5px; color: #b91c1c;">Batal: <?= htmlspecialchars((string)$r['alasan_batal']) ?></div><?php endif; ?>
+                                <?php if ($batal): ?><div style="font-size: 11.5px; color: var(--bad-fg);">Batal: <?= htmlspecialchars((string)$r['alasan_batal']) ?></div><?php endif; ?>
                             </td>
                             <td style="font-size: 12.5px;">
                                 <?= $r['metode'] === 'TRANSFER' ? 'Transfer' : 'Tunai' ?>
@@ -141,10 +141,10 @@ require_once __DIR__ . '/layout/header.php';
                             </td>
                             <td style="text-align: right;<?= $batal ? ' text-decoration: line-through;' : '' ?>"><?= $masuk ? $rp($r['nominal']) : '' ?></td>
                             <td style="text-align: right;<?= $batal ? ' text-decoration: line-through;' : '' ?>"><?= !$masuk ? $rp($r['nominal']) : '' ?></td>
-                            <td><span class="badge" style="<?= $batal ? 'background: #fee2e2; color: #b91c1c;' : 'background: #dcfce7; color: #15803d;' ?> font-weight: 700;"><?= $batal ? 'Dibatalkan' : 'Aktif' ?></span></td>
+                            <td><span class="badge" style="<?= $batal ? 'background: var(--bad-bg); color: var(--bad-fg);' : 'background: var(--ok-bg); color: var(--ok-fg);' ?> font-weight: 700;"><?= $batal ? 'Dibatalkan' : 'Aktif' ?></span></td>
                             <td class="no-print">
                                 <?php if (!$batal && $bolehCatat): ?>
-                                    <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: rgba(220, 38, 38, .3);"
+                                    <button type="button" class="btn btn-outline btn-sm" style="color: var(--bad-fg); border-color: rgba(220, 38, 38, .3);"
                                             onclick='batalDokumen("batal_kas", {id: <?= (int)$r['id'] ?>}, <?= json_encode('transaksi kas ' . $r['no_bukti']) ?>)'>Batalkan</button>
                                 <?php endif; ?>
                             </td>
@@ -203,7 +203,7 @@ require_once __DIR__ . '/layout/header.php';
                             <option value="<?= (int)$rk['id'] ?>"><?= htmlspecialchars(RekeningBank::label($rk)) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if (!$rekening): ?><div style="font-size: 11.5px; color: #b45309; margin-top: 4px;">Belum ada rekening. Tambahkan di Master &gt; Rekening Bank.</div><?php endif; ?>
+                    <?php if (!$rekening): ?><div style="font-size: 11.5px; color: var(--warn-fg); margin-top: 4px;">Belum ada rekening. Tambahkan di Master &gt; Rekening Bank.</div><?php endif; ?>
                 </div>
             </div>
             <div class="form-group">

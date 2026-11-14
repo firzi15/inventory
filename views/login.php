@@ -19,6 +19,7 @@ User::getAllActive(); // pastikan akun default tersedia
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <script>try { var t = localStorage.getItem('theme'); if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk Sistem - Barcode Inventory Multi-Mitra</title>
     
@@ -29,7 +30,7 @@ User::getAllActive(); // pastikan akun default tersedia
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons & SweetAlert2 -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -45,8 +46,8 @@ User::getAllActive(); // pastikan akun default tersedia
             align-items: center;
             justify-content: center;
             padding: 24px;
-            background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
+            background: radial-gradient(circle at 10% 20%, rgba(2, 132, 199, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(2, 132, 199, 0.08) 0%, transparent 40%),
                         var(--bg-page);
         }
 
@@ -87,7 +88,7 @@ User::getAllActive(); // pastikan akun default tersedia
             background: var(--primary-gradient);
             color: #ffffff;
             margin-bottom: 16px;
-            box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.35);
         }
 
         .login-title {
@@ -130,7 +131,7 @@ User::getAllActive(); // pastikan akun default tersedia
             border-color: var(--primary);
             background: var(--bg-hover);
             transform: translateY(-1.5px);
-            box-shadow: 0 6px 14px -3px rgba(79, 70, 229, 0.12);
+            box-shadow: 0 6px 14px -3px rgba(2, 132, 199, 0.12);
         }
 
         .role-info {
@@ -153,17 +154,17 @@ User::getAllActive(); // pastikan akun default tersedia
         }
 
         .avatar-nia {
-            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            background: #0369a1;
             box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
         }
 
         .avatar-arif {
-            background: linear-gradient(135deg, #0284c7, #2563eb);
+            background: #0284c7;
             box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
         }
 
         .avatar-operator {
-            background: linear-gradient(135deg, #059669, #10b981);
+            background: #059669;
             box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);
         }
 
@@ -187,19 +188,19 @@ User::getAllActive(); // pastikan akun default tersedia
 
         .badge-admin {
             background: rgba(124, 58, 237, 0.12);
-            color: #7c3aed;
+            color: var(--aktif-fg);
             border: 1px solid rgba(124, 58, 237, 0.25);
         }
 
         .badge-arif {
             background: rgba(2, 132, 199, 0.12);
-            color: #0284c7;
+            color: var(--aktif-fg);
             border: 1px solid rgba(2, 132, 199, 0.25);
         }
 
         .badge-operator {
             background: rgba(5, 150, 105, 0.12);
-            color: #059669;
+            color: var(--ok-fg);
             border: 1px solid rgba(5, 150, 105, 0.25);
         }
 
@@ -218,7 +219,7 @@ User::getAllActive(); // pastikan akun default tersedia
             gap: 4px;
             padding: 6px 12px;
             border-radius: 8px;
-            background: rgba(79, 70, 229, 0.06);
+            background: rgba(2, 132, 199, 0.06);
             transition: all 0.15s ease;
         }
 
@@ -294,7 +295,7 @@ User::getAllActive(); // pastikan akun default tersedia
 
         .login-input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
         }
 
         .btn-toggle-pwd {
@@ -328,14 +329,14 @@ User::getAllActive(); // pastikan akun default tersedia
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
             margin-top: 20px;
         }
 
         .btn-submit-login:hover {
             opacity: 0.95;
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
         }
 
         /* Note Banner */
@@ -354,7 +355,7 @@ User::getAllActive(); // pastikan akun default tersedia
         }
 
         .info-access-banner i {
-            color: #0284c7;
+            color: var(--aktif-fg);
             flex-shrink: 0;
             margin-top: 1px;
         }
@@ -373,14 +374,14 @@ User::getAllActive(); // pastikan akun default tersedia
             </div>
 
             <?php if (!empty($errorMsg)): ?>
-                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #dc2626; padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--bad-fg); padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                     <i data-lucide="alert-circle" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
                     <span><?= htmlspecialchars($errorMsg) ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($successMsg)): ?>
-                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #059669; padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--ok-fg); padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
                     <i data-lucide="check-circle" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
                     <span><?= htmlspecialchars($successMsg) ?></span>
                 </div>

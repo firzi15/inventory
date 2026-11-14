@@ -1,36 +1,35 @@
 /* ==========================================================================
-   VIBRANT & EYE-CATCHING UI DESIGN SYSTEM (MULTI-COLOR + DUAL THEME)
+   UI DESIGN SYSTEM: LOGISTIK PADAT (terang + gelap)
    WES Barcode Inventory Multi-Mitra
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
     /* Base Color Accents */
-    --primary: #4f46e5;
+    --primary: #0284c7;
     /* Indigo */
-    --primary-hover: #4338ca;
-    --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+    --primary-hover: #0369a1;
+    --primary-gradient: #0284c7;
 
     --success: #10b981;
     /* Emerald */
-    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --success-gradient: #10b981;
 
     --warning: #f59e0b;
     /* Amber */
-    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    --warning-gradient: #f59e0b;
 
     --danger: #ef4444;
     /* Rose/Red */
-    --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    --danger-gradient: #ef4444;
 
     --info: #0ea5e9;
     /* Sky Blue */
-    --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+    --info-gradient: #0ea5e9;
 
-    --purple: #8b5cf6;
+    --purple: #0369a1;
     /* Violet */
-    --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    --purple-gradient: #0369a1;
 
     /* 7 Mitra Distinct Brand Colors */
     --mitra-1: #2563eb;
@@ -65,10 +64,10 @@
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 12px 24px -4px rgba(79, 70, 229, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 12px 24px -4px rgba(2, 132, 199, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
     --shadow-glow-blue: 0 8px 20px -4px rgba(37, 99, 235, 0.25);
     --shadow-glow-green: 0 8px 20px -4px rgba(16, 185, 129, 0.25);
-    --shadow-glow-purple: 0 8px 20px -4px rgba(139, 92, 246, 0.25);
+    --shadow-glow-purple: 0 8px 20px -4px rgba(3, 105, 161, 0.25);
     --shadow-glow-amber: 0 8px 20px -4px rgba(245, 158, 11, 0.25);
 
     --radius: 12px;
@@ -97,7 +96,7 @@
     --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.6);
     --shadow-glow-blue: 0 8px 25px -2px rgba(56, 189, 248, 0.3);
     --shadow-glow-green: 0 8px 25px -2px rgba(52, 211, 153, 0.3);
-    --shadow-glow-purple: 0 8px 25px -2px rgba(168, 85, 247, 0.3);
+    --shadow-glow-purple: 0 8px 25px -2px rgba(3, 105, 161, 0.3);
     --shadow-glow-amber: 0 8px 25px -2px rgba(251, 191, 36, 0.3);
 }
 
@@ -110,7 +109,7 @@
 }
 
 body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg-page);
     color: var(--text-main);
     line-height: 1.5;
@@ -208,7 +207,7 @@ body.has-sidebar {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
     flex-shrink: 0;
 }
 
@@ -266,7 +265,7 @@ body.has-sidebar {
     width: 38px;
     height: 38px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    background: #0284c7;
     color: #ffffff;
     font-weight: 800;
     font-size: 13px;
@@ -275,7 +274,7 @@ body.has-sidebar {
     justify-content: center;
     position: relative;
     flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 3px 8px rgba(2, 132, 199, 0.25);
 }
 
 .avatar-online-dot {
@@ -313,7 +312,7 @@ body.has-sidebar {
     display: inline-block;
     font-size: 10.5px;
     font-weight: 600;
-    color: #10b981;
+    color: var(--ok-fg);
     background: rgba(16, 185, 129, 0.12);
     padding: 1px 7px;
     border-radius: 6px;
@@ -357,11 +356,11 @@ body.has-sidebar {
 }
 
 .nav-item.active {
-    background: rgba(79, 70, 229, 0.1);
-    border-color: rgba(79, 70, 229, 0.28);
+    background: rgba(2, 132, 199, 0.1);
+    border-color: rgba(2, 132, 199, 0.28);
     color: var(--primary);
     font-weight: 700;
-    box-shadow: 0 2px 10px rgba(79, 70, 229, 0.08);
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.08);
 }
 
 .nav-item.active::before {
@@ -393,42 +392,42 @@ body.has-sidebar {
 /* Warna Khas Icon Menu per Modul */
 .icon-blue {
     background: rgba(59, 130, 246, 0.14);
-    color: #3b82f6;
+    color: var(--aktif-fg);
 }
 
 .icon-green {
     background: rgba(16, 185, 129, 0.14);
-    color: #10b981;
+    color: var(--ok-fg);
 }
 
 .icon-purple {
-    background: rgba(139, 92, 246, 0.14);
-    color: #8b5cf6;
+    background: rgba(3, 105, 161, 0.14);
+    color: var(--aktif-fg);
 }
 
 .icon-amber {
     background: rgba(245, 158, 11, 0.14);
-    color: #f59e0b;
+    color: var(--warn-fg);
 }
 
 .icon-cyan {
-    background: rgba(6, 182, 212, 0.14);
-    color: #06b6d4;
+    background: rgba(2, 132, 199, 0.14);
+    color: var(--aktif-fg);
 }
 
 .icon-indigo {
-    background: rgba(99, 102, 241, 0.14);
-    color: #6366f1;
+    background: rgba(2, 132, 199, 0.14);
+    color: var(--aktif-fg);
 }
 
 .icon-slate {
     background: rgba(100, 116, 139, 0.16);
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .icon-sky {
     background: rgba(2, 132, 199, 0.14);
-    color: #0284c7;
+    color: var(--aktif-fg);
 }
 
 .icon-rose {
@@ -606,10 +605,10 @@ body.has-sidebar {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 2px 6px;
-    background: rgba(79, 70, 229, 0.12);
+    background: rgba(2, 132, 199, 0.12);
     color: var(--primary);
     border-radius: 5px;
-    border: 1px solid rgba(79, 70, 229, 0.25);
+    border: 1px solid rgba(2, 132, 199, 0.25);
 }
 
 .topbar-desc {
@@ -659,7 +658,7 @@ body.has-sidebar {
 
 .topbar-quick-action:hover {
     border-color: #f59e0b;
-    color: #f59e0b;
+    color: var(--warn-fg);
 }
 
 .topbar-user-badge {
@@ -714,15 +713,15 @@ body.has-sidebar {
 }
 
 .avatar-nia {
-    background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
+    background: #0369a1 !important;
 }
 
 .avatar-arif {
-    background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+    background: #0284c7 !important;
 }
 
 .avatar-operator {
-    background: linear-gradient(135deg, #059669, #10b981) !important;
+    background: #059669 !important;
 }
 
 .topbar-user-info-text {
@@ -748,19 +747,19 @@ body.has-sidebar {
 
 .badge-admin {
     background: rgba(124, 58, 237, 0.12) !important;
-    color: #7c3aed !important;
+    color: var(--aktif-fg) !important;
     border: 1px solid rgba(124, 58, 237, 0.25) !important;
 }
 
 .badge-arif {
     background: rgba(2, 132, 199, 0.12) !important;
-    color: #0284c7 !important;
+    color: var(--aktif-fg) !important;
     border: 1px solid rgba(2, 132, 199, 0.25) !important;
 }
 
 .badge-operator {
     background: rgba(5, 150, 105, 0.12) !important;
-    color: #059669 !important;
+    color: var(--ok-fg) !important;
     border: 1px solid rgba(5, 150, 105, 0.25) !important;
 }
 
@@ -844,7 +843,7 @@ body.has-sidebar {
 }
 
 .user-dropdown-item.active {
-    background: rgba(79, 70, 229, 0.08);
+    background: rgba(2, 132, 199, 0.08);
 }
 
 .dropdown-avatar {
@@ -1036,7 +1035,7 @@ body.has-sidebar {
 
 .kpi-card.purple:hover {
     box-shadow: var(--shadow-glow-purple);
-    border-color: rgba(139, 92, 246, 0.4);
+    border-color: rgba(3, 105, 161, 0.4);
 }
 
 .kpi-card.amber:hover {
@@ -1067,7 +1066,7 @@ body.has-sidebar {
 
 .kpi-card.purple .kpi-icon-pod {
     background: var(--purple-gradient);
-    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 4px 14px rgba(3, 105, 161, 0.4);
 }
 
 .kpi-card.amber .kpi-icon-pod {
@@ -1118,12 +1117,12 @@ body.has-sidebar {
 .btn-primary {
     background: var(--primary-gradient);
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45);
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45);
 }
 
 .btn-success {
@@ -1208,32 +1207,32 @@ body.has-sidebar {
 
 .badge-success {
     background: rgba(16, 185, 129, 0.15);
-    color: #10b981;
+    color: var(--ok-fg);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .badge-warning {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--warn-fg);
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .badge-destructive {
     background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    color: var(--bad-fg);
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .badge-info {
     background: rgba(14, 165, 233, 0.15);
-    color: #0ea5e9;
+    color: var(--aktif-fg);
     border: 1px solid rgba(14, 165, 233, 0.3);
 }
 
 .badge-purple {
-    background: rgba(139, 92, 246, 0.15);
-    color: #8b5cf6;
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(3, 105, 161, 0.15);
+    color: var(--aktif-fg);
+    border: 1px solid rgba(3, 105, 161, 0.3);
 }
 
 /* 7 Mitra Color Identifiers */
@@ -1250,31 +1249,31 @@ body.has-sidebar {
 }
 
 .mitra-tag.m01 {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: #2563eb;
 }
 
 .mitra-tag.m02 {
-    background: linear-gradient(135deg, #059669, #047857);
+    background: #059669;
 }
 
 .mitra-tag.m03 {
-    background: linear-gradient(135deg, #d97706, #b45309);
+    background: #d97706;
 }
 
 .mitra-tag.m04 {
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    background: #7c3aed;
 }
 
 .mitra-tag.m05 {
-    background: linear-gradient(135deg, #0891b2, #0e7490);
+    background: #0891b2;
 }
 
 .mitra-tag.m06 {
-    background: linear-gradient(135deg, #e11d48, #be123c);
+    background: #e11d48;
 }
 
 .mitra-tag.m07 {
-    background: linear-gradient(135deg, #4f46e5, #4338ca);
+    background: #4f46e5;
 }
 
 /* Form Controls */
@@ -1306,7 +1305,7 @@ body.has-sidebar {
 .form-control:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
 }
 
 /* Modern Styled Select Dropdowns (Non-polosan) */
@@ -1325,7 +1324,7 @@ select.form-control,
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-main);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     cursor: pointer;
@@ -1334,7 +1333,7 @@ select.form-control,
 select.form-control:hover:not(:disabled),
 .form-select-styled:hover:not(:disabled) {
     border-color: #94a3b8;
-    background-color: #f8fafc;
+    background-color: var(--bg-muted);
 }
 
 select.form-control:focus,
@@ -1347,8 +1346,8 @@ select.form-control:focus,
 
 select.form-control:disabled,
 .form-select-styled:disabled {
-    background-color: #f8fafc !important;
-    color: #94a3b8 !important;
+    background-color: var(--bg-muted) !important;
+    color: var(--text-muted) !important;
     border-color: #e2e8f0 !important;
     cursor: not-allowed !important;
     opacity: 0.8;
@@ -1357,7 +1356,7 @@ select.form-control:disabled,
 
 select.form-control option {
     font-weight: 500;
-    color: #0f172a;
+    color: var(--text-main);
     padding: 8px;
     background: #ffffff;
 }
@@ -1382,7 +1381,7 @@ select.form-control option {
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-main);
     text-align: left;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     transition: all 0.15s ease-in-out;
@@ -1392,7 +1391,7 @@ select.form-control option {
 
 .shadcn-select-trigger:hover:not(:disabled):not(.disabled) {
     border-color: #94a3b8;
-    background: #f8fafc;
+    background: var(--bg-muted);
 }
 
 .shadcn-select-trigger:focus,
@@ -1404,9 +1403,9 @@ select.form-control option {
 
 .shadcn-select-trigger.disabled,
 .shadcn-select-trigger:disabled {
-    background: #f8fafc !important;
+    background: var(--bg-muted) !important;
     border-color: #e2e8f0 !important;
-    color: #94a3b8 !important;
+    color: var(--text-muted) !important;
     cursor: not-allowed !important;
     opacity: 0.75;
 }
@@ -1444,7 +1443,7 @@ select.form-control option {
     border-radius: 6px;
     font-size: 13px;
     font-weight: 500;
-    color: #1e293b;
+    color: var(--text-main);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1455,14 +1454,14 @@ select.form-control option {
 }
 
 .shadcn-select-item:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--bg-muted);
+    color: var(--text-main);
 }
 
 .shadcn-select-item.selected {
-    background: #eff6ff;
+    background: var(--info-bg);
     font-weight: 700;
-    color: #1d4ed8;
+    color: var(--aktif-fg);
 }
 
 .form-control-lg {
@@ -1670,25 +1669,25 @@ select.form-control option {
 .alert-info {
     background: rgba(14, 165, 233, 0.12);
     border: 1.5px solid rgba(14, 165, 233, 0.3);
-    color: #0284c7;
+    color: var(--aktif-fg);
 }
 
 .alert-success {
     background: rgba(16, 185, 129, 0.12);
     border: 1.5px solid rgba(16, 185, 129, 0.3);
-    color: #059669;
+    color: var(--ok-fg);
 }
 
 .alert-warning {
     background: rgba(245, 158, 11, 0.12);
     border: 1.5px solid rgba(245, 158, 11, 0.3);
-    color: #d97706;
+    color: var(--warn-fg);
 }
 
 .alert-danger {
     background: rgba(239, 68, 68, 0.12);
     border: 1.5px solid rgba(239, 68, 68, 0.3);
-    color: #dc2626;
+    color: var(--bad-fg);
 }
 
 [data-theme="dark"] .alert-info {
@@ -1700,7 +1699,7 @@ select.form-control option {
 }
 
 [data-theme="dark"] .alert-warning {
-    color: #fbbf24;
+    color: var(--warn-fg);
 }
 
 [data-theme="dark"] .alert-danger {
@@ -1798,9 +1797,9 @@ select.form-control option {
 }
 
 .label-weight-box.unweighed {
-    background: #fffbeb;
+    background: var(--warn-bg);
     border: 1.5px dashed #d97706;
-    color: #b45309;
+    color: var(--warn-fg);
     justify-content: center;
     font-weight: 800;
     font-size: 10px;
@@ -1976,11 +1975,11 @@ select.form-control option {
 .prd-content code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12.5px;
-    background: rgba(79, 70, 229, 0.08);
+    background: rgba(2, 132, 199, 0.08);
     color: var(--primary);
     padding: 2px 7px;
     border-radius: 6px;
-    border: 1px solid rgba(79, 70, 229, 0.2);
+    border: 1px solid rgba(2, 132, 199, 0.2);
     font-weight: 700;
 }
 
@@ -2021,7 +2020,7 @@ select.form-control option {
 
 .footer-badge {
     background: rgba(16, 185, 129, 0.12);
-    color: #10b981;
+    color: var(--ok-fg);
     padding: 2px 8px;
     border-radius: 6px;
     font-weight: 700;
@@ -2203,9 +2202,9 @@ select.form-control option {
 }
 
 .stepper-tab-card.active {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    background: rgba(2, 132, 199, 0.08);
     border-color: var(--primary);
-    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 4px 16px rgba(2, 132, 199, 0.15);
 }
 
 .stepper-tab-card.active::before {
@@ -2238,7 +2237,7 @@ select.form-control option {
     background: var(--primary-gradient);
     color: #ffffff;
     border-color: transparent;
-    box-shadow: 0 3px 10px rgba(79, 70, 229, 0.35);
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35);
 }
 
 .stepper-text {
@@ -2278,7 +2277,7 @@ select.form-control option {
 }
 
 .stepper-tab-card.active .stepper-icon-box {
-    background: rgba(79, 70, 229, 0.12);
+    background: rgba(2, 132, 199, 0.12);
     color: var(--primary);
 }
 
@@ -2323,7 +2322,7 @@ select.form-control option {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(79, 70, 229, 0.12);
+    background: rgba(2, 132, 199, 0.12);
     color: var(--primary);
     font-size: 13.5px;
     font-weight: 800;
@@ -2378,9 +2377,9 @@ select.form-control option {
 }
 
 .qty-pill-btn.active {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: #8b5cf6;
-    color: #8b5cf6;
+    background: rgba(3, 105, 161, 0.15);
+    border-color: #0369a1;
+    color: var(--aktif-fg);
     font-weight: 800;
 }
 
@@ -2479,7 +2478,7 @@ select.form-control option {
 
 .nav-sub-item.active {
     color: var(--primary);
-    background: rgba(79, 70, 229, 0.1);
+    background: rgba(2, 132, 199, 0.1);
     font-weight: 700;
 }
 
@@ -2493,7 +2492,7 @@ select.form-control option {
     height: 6px;
     border-radius: 50%;
     background: var(--primary);
-    box-shadow: 0 0 6px rgba(79, 70, 229, 0.6);
+    box-shadow: 0 0 6px rgba(2, 132, 199, 0.6);
 }
 
 .nav-sub-badge {
@@ -2574,7 +2573,7 @@ select.form-control option {
     border-radius: 18px !important;
     box-shadow: var(--shadow-lg), 0 20px 40px -15px rgba(0, 0, 0, 0.25) !important;
     padding: 26px !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Geist', sans-serif !important;
 }
 
 .swal2-title.swal2-modern-title {
@@ -2644,7 +2643,7 @@ select.form-control option {
     border: 1px solid #fde68a !important;
     border-left: 5px solid #d97706 !important;
     box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Geist', sans-serif !important;
     text-align: left !important;
     display: flex !important;
     flex-direction: column !important;
@@ -2678,8 +2677,8 @@ select.form-control option {
 .fifo-toast-icon {
     width: 26px;
     height: 26px;
-    background: #fef3c7;
-    color: #d97706;
+    background: var(--warn-bg);
+    color: var(--warn-fg);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -2691,23 +2690,23 @@ select.form-control option {
 
 [data-theme="dark"] .fifo-toast-icon {
     background: #451a03;
-    color: #f59e0b;
+    color: var(--warn-fg);
 }
 
 .fifo-toast-title {
     font-size: 13px;
     font-weight: 800;
-    color: #92400e;
+    color: var(--warn-fg);
     letter-spacing: -0.01em;
 }
 
 [data-theme="dark"] .fifo-toast-title {
-    color: #fbbf24;
+    color: var(--warn-fg);
 }
 
 .fifo-toast-body {
     font-size: 12px;
-    color: #475569;
+    color: var(--text-muted);
     line-height: 1.45;
     margin-bottom: 8px;
 }
@@ -2717,7 +2716,7 @@ select.form-control option {
 }
 
 .fifo-toast-body strong {
-    color: #0f172a;
+    color: var(--text-main);
     font-weight: 700;
 }
 
@@ -2728,8 +2727,8 @@ select.form-control option {
 .fifo-toast-badge {
     display: inline-block;
     padding: 1px 6px;
-    background: #fee2e2;
-    color: #dc2626;
+    background: var(--bad-bg);
+    color: var(--bad-fg);
     border-radius: 4px;
     font-weight: 800;
     font-size: 11px;
@@ -2740,7 +2739,7 @@ select.form-control option {
     align-items: center;
     justify-content: space-between;
     font-size: 11px;
-    color: #64748b;
+    color: var(--text-muted);
     border-top: 1px dashed #fcd34d;
     padding-top: 6px;
     width: 100%;
@@ -2748,14 +2747,14 @@ select.form-control option {
 
 [data-theme="dark"] .fifo-toast-footer {
     border-top-color: #78350f;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .fifo-toast-barcode {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
-    color: #4f46e5;
-    background: #eef2ff;
+    color: var(--aktif-fg);
+    background: var(--info-bg);
     padding: 1px 6px;
     border-radius: 4px;
     font-size: 10.5px;
@@ -2791,8 +2790,8 @@ details summary .collapsible-indicator .indicator-text {
 
 /* Saat details terbuka (open) */
 details[open]>summary .collapsible-indicator {
-    background: rgba(79, 70, 229, 0.08) !important;
-    border-color: rgba(79, 70, 229, 0.3) !important;
+    background: rgba(2, 132, 199, 0.08) !important;
+    border-color: rgba(2, 132, 199, 0.3) !important;
     color: var(--primary) !important;
 }
 
@@ -2811,7 +2810,7 @@ details[open]>summary .collapsible-indicator .indicator-chevron {
 .tt-search { position: relative; display: flex; align-items: center; flex: 0 1 320px; min-width: 200px; }
 .tt-search svg { position: absolute; left: 11px; color: var(--text-muted); pointer-events: none; }
 .tt-input { width: 100%; height: 36px; padding: 6px 12px 6px 33px; font-size: 13px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg-surface); color: var(--text-main); outline: none; transition: border-color .15s, box-shadow .15s; }
-.tt-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+.tt-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
 .tt-count { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .tt-nomatch { padding: 22px; text-align: center; font-size: 13px; color: var(--text-muted); }
 tr.tt-hidden { display: none !important; }
@@ -2894,7 +2893,7 @@ button.ss-trigger:focus-visible,
 button.ss-trigger.open {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
 }
 button.ss-trigger.open .ss-chev { transform: rotate(180deg); }
 button.ss-trigger.ss-placeholder .ss-text { color: var(--text-muted); font-weight: 500; }
@@ -2946,3 +2945,166 @@ button.ss-trigger:disabled { opacity: 0.6; cursor: not-allowed; background-color
 .ss-item.ss-empty { color: var(--text-muted); }
 .ss-item.disabled { opacity: 0.45; cursor: not-allowed; }
 .ss-item .ss-check { flex-shrink: 0; color: var(--primary); }
+
+/* ==========================================================================
+   TEMA AKTIF: Logistik Padat (diambil dari demo_ui_logistics.html)
+   Pilihan yang disengaja:
+   - Mengikuti demo yang sudah Anda lihat: Geist untuk teks, JetBrains Mono untuk angka dan kode,
+     latar abu-biru muda, panel putih berbingkai 1px, sudut kecil (4 sampai 6px), tanpa bayangan.
+   - Satu aksen biru #0284c7 hanya untuk tombol utama, menu aktif, dan fokus. Hijau hanya untuk
+     status berhasil. Tidak ada gradien dan tidak ada warna per menu.
+   - Judul panel huruf kapital kecil di atas dasar abu terang, tabel rapat 12px, angka mono.
+   ========================================================================== */
+
+:root:not([data-theme="dark"]) {
+    --aktif-bg: #e0f2fe;
+    --aktif-fg: #0369a1;
+    --primary: #0284c7;
+    --primary-hover: #0369a1;
+    --primary-gradient: #0284c7;
+    --success-gradient: #15803d;
+    --warning-gradient: #b45309;
+    --danger-gradient: #b91c1c;
+    --info-gradient: #0369a1;
+    --purple-gradient: #0369a1;
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-muted: var(--bg-muted);
+    --bg-hover: #f1f5f9;
+    --border: #cbd5e1;
+    --border-hover: #94a3b8;
+    --border-card: #cbd5e1;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: 0 8px 24px rgba(15, 23, 42, .16);
+    --radius: 6px;
+}
+body { font-family: 'Geist', -apple-system, sans-serif; font-size: 13px; line-height: 1.4; }
+.kpi-value, .table-custom td.mono, code, .mitra-tag, .page-subtitle code { font-family: 'JetBrains Mono', monospace; }
+
+/* Sidebar terang, teks saja */
+.app-sidebar { background: #ffffff; border-right: 1px solid var(--border); }
+.nav-item { border-radius: 4px; padding: 7px 10px; border: none; }
+.nav-item:hover { transform: none; background: var(--bg-hover); }
+.nav-item.active { background: var(--aktif-bg); color: var(--aktif-fg); box-shadow: none; border: none; font-weight: 700; }
+.nav-item.active::before { display: none; }
+.nav-item-icon, .kpi-icon-pod { background: transparent !important; color: var(--text-muted) !important; box-shadow: none !important; border-radius: 0; width: 24px; height: 24px; }
+.nav-item.active .nav-item-icon { color: var(--aktif-fg) !important; }
+.nav-item:hover .nav-item-icon { transform: none; }
+.nav-item-desc { display: none; }
+.nav-item-title { font-weight: 600; }
+.nav-section-label { letter-spacing: .05em; font-weight: 700; font-size: 10.5px; }
+.nav-sub-item { border-radius: 4px; }
+
+/* Judul, panel, KPI */
+.page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.page-subtitle { font-size: 12.5px; }
+.card, .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: none; padding: 0; overflow: hidden; }
+.card:hover, .kpi-card:hover { box-shadow: none; border-color: var(--border); transform: none; }
+.card > .card-header { background: var(--bg-muted); margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.card > :not(.card-header) { margin-left: 14px; margin-right: 14px; }
+.card > :last-child { margin-bottom: 14px; }
+.card > .card-header + * { margin-top: 12px; }
+.card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.kpi-card { padding: 12px 16px; }
+.kpi-card::before { display: none !important; }
+.kpi-label { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.kpi-value { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; }
+
+/* Tombol */
+.btn { border-radius: 4px; height: 36px; padding: 0 14px; font-size: 12.5px; font-weight: 700; box-shadow: none; }
+.btn-sm { height: 30px; padding: 0 10px; font-size: 12px; }
+.btn:hover { transform: none !important; }
+.btn-primary { background: var(--primary); box-shadow: none; }
+.btn-primary:hover { background: var(--primary-hover); box-shadow: none; }
+.btn-outline { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); }
+.btn-outline:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+
+/* Form dan tabel */
+.form-control { border-radius: 4px; height: 36px; padding: 6px 10px; font-size: 13px; }
+.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.table-custom thead th, .table-responsive table thead th { background: var(--bg-muted); color: var(--text-muted); padding: 8px 12px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; box-shadow: none; border-bottom: 1px solid var(--border); }
+.table-custom td, .table-responsive table td { padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+.table-custom tbody tr:hover td, .table-responsive table tbody tr:hover td { background: var(--bg-muted); }
+.badge { border-radius: 4px; font-weight: 700; padding: 1px 8px; }
+.mitra-tag { border-radius: 4px; }
+.app-topbar { box-shadow: none; border-bottom: 1px solid var(--border); }
+.sj-kartu, .sj-thumb { border-radius: 6px !important; }
+.sj-hal { border-radius: 4px; }
+
+/* Tanpa cahaya berwarna pada ikon dan kartu */
+:root { --shadow-glow-blue: none; --shadow-glow-green: none; --shadow-glow-purple: none; --shadow-glow-amber: none; }
+.sidebar-user-avatar { border-radius: 4px; background: var(--primary); }
+
+/* Mode gelap: token permukaan dari blok [data-theme="dark"] di atas tetap dipakai */
+[data-theme="dark"] {
+    --aktif-bg: rgba(2, 132, 199, 0.22);
+    --aktif-fg: #7dd3fc;
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, .6);
+    --border: #2b3a55;
+    --border-hover: #475a7d;
+    --border-card: #2b3a55;
+}
+[data-theme="dark"] .app-sidebar, [data-theme="dark"] .btn-outline, [data-theme="dark"] .form-control { background: var(--bg-card); }
+[data-theme="dark"] .table-custom thead th, [data-theme="dark"] .table-responsive table thead th { background: var(--bg-muted); }
+
+/* Ikon sidebar satu warna (abu), aktif memakai warna aksen; menimpa warna inline di header.php */
+.app-sidebar .nav-sub-item svg, .app-sidebar .nav-sub-item i,
+.app-sidebar .nav-item-icon svg, .app-sidebar .nav-item-icon i { color: var(--text-muted) !important; }
+.app-sidebar .nav-sub-item.active svg, .app-sidebar .nav-item.active .nav-item-icon svg { color: var(--aktif-fg) !important; }
+.app-sidebar .nav-item:hover .nav-item-icon svg, .app-sidebar .nav-sub-item:hover svg { color: var(--text-main) !important; }
+.sidebar-theme-btn svg { color: var(--text-muted) !important; }
+/* Matahari tampil di mode terang, bulan di mode gelap (tidak bergantung pada JS) */
+#moonIcon { display: none !important; }
+[data-theme="dark"] #sunIcon { display: none !important; }
+[data-theme="dark"] #moonIcon { display: inline-block !important; }
+
+/* Warna status: satu set, terbaca di mode terang dan gelap */
+:root { --ok-fg: #15803d; --bad-fg: #b91c1c; --warn-fg: #b45309; --ok-bg: #e8f5ec; --bad-bg: #fbeaea; --warn-bg: #fbf1dc; --info-bg: #e0f2fe; }
+[data-theme="dark"] { --ok-fg: #4ade80; --bad-fg: #f87171; --warn-fg: #fbbf24; --ok-bg: rgba(74, 222, 128, .12); --bad-bg: rgba(248, 113, 113, .14); --warn-bg: rgba(251, 191, 36, .13); --info-bg: rgba(2, 132, 199, .18); }
+
+/* Warna solid untuk tombol dan penanda; sedikit lebih terang di mode gelap supaya teks putih tetap terbaca */
+:root { --ok-solid: #15803d; --bad-solid: #b91c1c; --warn-solid: #b45309; }
+[data-theme="dark"] { --ok-solid: #16a34a; --bad-solid: #dc2626; --warn-solid: #d97706; }
+
+/* ==========================================================================
+   TABEL MUAT DI WADAHNYA
+   Sebelumnya semua sel dipaksa satu baris dan tabel selalu selebar isinya, sehingga hampir semua tabel
+   bergeser mendatar dan kolom terakhir terpotong di tepi kartu. Sekarang teks boleh turun baris; angka,
+   tanggal (kelas .nw dari tabel-rapi.js), penanda, dan tombol tetap satu baris.
+   ========================================================================== */
+.table-custom, .table-responsive table, .table { min-width: 0 !important; width: 100%; table-layout: auto; }
+.table-custom td, .table td, .table-items td, .table-responsive table td, .table-responsive > table > tbody > tr > td,
+.table-custom thead th, .table thead th, .table-responsive table thead th, .table-responsive > table > thead > tr > th {
+    white-space: normal !important; overflow-wrap: break-word; word-break: normal; vertical-align: middle;
+}
+.table-custom td.nw, .table-responsive table td.nw,
+.table-custom td[style*="text-align: right"], .table-responsive table td[style*="text-align: right"],
+.table-custom td[style*="text-align:right"], .table-responsive table td[style*="text-align:right"],
+.table-custom td:has(> .badge), .table-custom td:has(> .mitra-tag), .table-responsive table td:has(> .badge), .table-responsive table td:has(> .mitra-tag) {
+    white-space: nowrap !important;
+}
+.table-custom td .badge, .table-custom td .mitra-tag, .table-responsive table td .badge, .table-responsive table td .mitra-tag { white-space: nowrap; }
+.table-custom thead th, .table-responsive table thead th { line-height: 1.25; }
+.table-custom td, .table-responsive table td { line-height: 1.35; }
+.table-custom th, .table-custom td, .table-responsive table th, .table-responsive table td { font-variant-numeric: tabular-nums; }
+/* Lebar minimum inline pada kolom (mis. min-width: 130px) dilonggarkan; kolom menyesuaikan isinya */
+.table-custom th, .table-custom td, .table-responsive table th, .table-responsive table td { min-width: 0 !important; }
+/* Jarak sel lebih rapat agar kolom tidak melebar */
+.table-custom thead th, .table-responsive table thead th { padding-left: 10px; padding-right: 10px; }
+.table-custom td, .table-responsive table td { padding-left: 10px; padding-right: 10px; }
+.table-custom th:first-child, .table-custom td:first-child, .table-responsive table th:first-child, .table-responsive table td:first-child { padding-left: 14px; }
+.table-custom th:last-child, .table-custom td:last-child, .table-responsive table th:last-child, .table-responsive table td:last-child { padding-right: 14px; }
+/* Isi sel mengikuti aturan selnya sendiri (sebelumnya semua elemen di dalam sel dipaksa satu baris) */
+.table-custom td *, .table-responsive table td *, .table-custom th *, .table-responsive table th * { white-space: inherit; }
+.table-custom td .badge, .table-custom td .mitra-tag, .table-custom td .btn, .table-custom td a.btn,
+.table-responsive table td .badge, .table-responsive table td .mitra-tag, .table-responsive table td .btn { white-space: nowrap; }
+/* Tabel dengan banyak kolom (diberi kelas oleh tabel-rapi.js) memakai huruf dan jarak sedikit lebih kecil; tombol aksi boleh turun baris */
+.tabel-rapat th, .tabel-rapat td { padding-left: 7px !important; padding-right: 7px !important; font-size: 12px; }
+.tabel-rapat th:first-child, .tabel-rapat td:first-child { padding-left: 12px !important; }
+.tabel-rapat th:last-child, .tabel-rapat td:last-child { padding-right: 12px !important; }
+.tabel-rapat td .btn { margin: 1px 0; }

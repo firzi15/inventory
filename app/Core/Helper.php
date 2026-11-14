@@ -65,7 +65,7 @@ class Helper {
         return sprintf('<span class="badge %s">%s %s</span>', $badgeClass, $icon, htmlspecialchars($statusUpper));
     }
 
-    public static function renderMitraBadge(string $kodeMitra, string $namaMitra, string $hexColor = '#4f46e5'): string {
+    public static function renderMitraBadge(string $kodeMitra, string $namaMitra, string $hexColor = '#0284c7'): string {
         $cleanKode = strtolower(trim($kodeMitra));
         return sprintf(
             '<span class="mitra-tag %s" style="background: %s;"><strong>%s</strong> %s</span>',

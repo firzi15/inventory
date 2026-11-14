@@ -65,7 +65,7 @@ require_once __DIR__ . '/layout/header.php';
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <a href="Manual_Book_Sistem_Barcode_Inventory_Multi_Mitra.docx" class="btn btn-outline" download style="display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="file-text" style="width: 16px; height: 16px; color: #2563eb;"></i>
+                <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--aktif-fg);"></i>
                 <span>Manual Book</span>
             </a>
             <button type="button" class="btn btn-outline" onclick="openGuideModal()">
@@ -105,7 +105,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="history" style="width: 20px; height: 20px; color: #ef4444;"></i>
+                <i data-lucide="history" style="width: 20px; height: 20px; color: var(--bad-fg);"></i>
                 <span>Log Perubahan Harga</span>
             </h2>
             <div class="card-description">Setiap perubahan harga beli pemasok dan harga jual mitra: harga lama, harga baru, siapa, kapan, dan alasannya. Harga yang tidak berubah tidak dicatat.</div>
@@ -197,7 +197,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="landmark" style="width: 20px; height: 20px; color: #0ea5e9;"></i>
+                <i data-lucide="landmark" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Rekening Bank</span>
             </h2>
             <div class="card-description">Rekening bank perusahaan. Tampil di Transaksi Kas &amp; Bank dan Rekonsiliasi Bank.</div>
@@ -225,14 +225,14 @@ require_once __DIR__ . '/layout/header.php';
                 <tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">Belum ada rekening. Klik "Tambah Rekening".</td></tr>
                 <?php else: foreach ($rekeningList as $rk): ?>
                 <tr>
-                    <td><span class="badge" style="background: rgba(14, 165, 233, 0.12); color: #0369a1; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= htmlspecialchars($rk['kode_rekening']) ?></span></td>
+                    <td><span class="badge" style="background: rgba(14, 165, 233, 0.12); color: var(--aktif-fg); font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= htmlspecialchars($rk['kode_rekening']) ?></span></td>
                     <td><strong><?= htmlspecialchars($rk['nama_bank']) ?></strong></td>
                     <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;"><?= htmlspecialchars($rk['no_rekening']) ?></td>
                     <td><?= htmlspecialchars($rk['atas_nama'] ?: '-') ?></td>
                     <td style="font-size: 12.5px;"><?= htmlspecialchars($rk['keterangan'] ?: '-') ?></td>
                     <td>
                         <a href="index.php?action=toggle_rekening_bank&id=<?= (int)$rk['id'] ?>" class="btn btn-sm"
-                           style="<?= $rk['is_active'] ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; text-decoration: none;"
+                           style="<?= $rk['is_active'] ? 'background: var(--ok-bg); color: var(--ok-fg); border: 1.5px solid var(--border-hover);' : 'background: var(--bg-muted); color: var(--text-muted); border: 1.5px solid var(--border);' ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; text-decoration: none;"
                            title="Klik untuk mengubah status"><?= $rk['is_active'] ? 'Aktif' : 'Nonaktif' ?></a>
                     </td>
                     <td style="text-align: center;">
@@ -240,7 +240,7 @@ require_once __DIR__ . '/layout/header.php';
                             <button type="button" class="btn btn-outline btn-sm" onclick='editRekening(<?= json_encode($rk) ?>)'>
                                 <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i><span>Edit</span>
                             </button>
-                            <button type="button" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"
+                            <button type="button" class="btn btn-outline btn-sm" style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);"
                                     onclick='hapusMaster("delete_rekening_bank", <?= (int)$rk['id'] ?>, <?= json_encode('rekening ' . $rk['kode_rekening']) ?>)' title="Hapus">
                                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                             </button>
@@ -258,7 +258,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="book-open" style="width: 20px; height: 20px; color: #4f46e5;"></i>
+                <i data-lucide="book-open" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Master Akun COA</span>
             </h2>
             <div class="card-description">Daftar akun buku besar. Akun inti dipakai posting otomatis dokumen; sub-akun bisa ditambah dan dipilih di Purchase Invoice.</div>
@@ -287,7 +287,7 @@ require_once __DIR__ . '/layout/header.php';
             <tbody>
                 <?php foreach ($coaMaster as $kodeC => $c): ?>
                 <tr style="<?= $c[7] ? '' : 'opacity: 0.55;' ?>">
-                    <td><span class="badge" style="background: rgba(79, 70, 229, 0.12); color: #4f46e5; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= $kodeC ?></span></td>
+                    <td><span class="badge" style="background: rgba(2, 132, 199, 0.12); color: var(--aktif-fg); font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= $kodeC ?></span></td>
                     <td style="padding-left: <?= 12 + $c[9] * 22 ?>px; font-weight: <?= $c[9] === 0 ? '800' : '600' ?>;">
                         <?= $c[9] > 0 ? '<span style="color: var(--text-muted);">&#8627;</span> ' : '' ?><?= htmlspecialchars($c[0]) ?>
                         <?php if ($c[3]): ?><span class="badge badge-info" style="margin-left: 6px; font-size: 10.5px;">Akun inti</span><?php endif; ?>
@@ -312,7 +312,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
                             </button>
                             <?php if (!$c[3]): ?>
-                            <a href="javascript:void(0)" onclick="hapusMaster('delete_coa', '<?= $kodeC ?>', 'akun <?= $kodeC ?> <?= htmlspecialchars($c[0], ENT_QUOTES) ?>')" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus akun">
+                            <a href="javascript:void(0)" onclick="hapusMaster('delete_coa', '<?= $kodeC ?>', 'akun <?= $kodeC ?> <?= htmlspecialchars($c[0], ENT_QUOTES) ?>')" class="btn btn-outline btn-sm" style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" title="Hapus akun">
                                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                             </a>
                             <?php endif; ?>
@@ -357,7 +357,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="truck" style="width: 20px; height: 20px; color: #f59e0b;"></i>
+                <i data-lucide="truck" style="width: 20px; height: 20px; color: var(--warn-fg);"></i>
                 <span>Daftar Pemasok</span>
             </h2>
             <div class="card-description">Kelola data nelayan, tambak, atau supplier pengirim barang pada proses Penerimaan Barang Masuk</div>
@@ -393,7 +393,7 @@ require_once __DIR__ . '/layout/header.php';
                     <?php foreach ($pemasokList as $p): ?>
                     <tr>
                         <td>
-                            <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: var(--warn-fg); font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
                                 <?= htmlspecialchars($p['kode_pemasok']) ?>
                             </span>
                         </td>
@@ -403,7 +403,7 @@ require_once __DIR__ . '/layout/header.php';
                         <td><?= htmlspecialchars($p['pic_nama'] ?: '-') ?></td>
                         <td>
                             <?php if (!empty($p['telepon'])): ?>
-                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $p['telepon']) ?>" target="_blank" style="color: #10b981; font-weight: 600; text-decoration: none;">
+                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $p['telepon']) ?>" target="_blank" style="color: var(--ok-fg); font-weight: 600; text-decoration: none;">
                                     <?= htmlspecialchars($p['telepon']) ?>
                                 </a>
                             <?php else: ?>
@@ -419,16 +419,16 @@ require_once __DIR__ . '/layout/header.php';
                                onclick="confirmTogglePemasok(<?= $p['id'] ?>, '<?= htmlspecialchars($p['nama_pemasok'], ENT_QUOTES) ?>', <?= $p['is_active'] ? 'true' : 'false' ?>)"
                                class="btn btn-sm" 
                                style="<?= $p['is_active'] 
-                                   ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' 
-                                   : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' 
+                                   ? 'background: var(--ok-bg); color: var(--ok-fg); border: 1.5px solid var(--border-hover);' 
+                                   : 'background: var(--bg-muted); color: var(--text-muted); border: 1.5px solid var(--border);' 
                                ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s;"
                                title="<?= $p['is_active'] ? 'Klik untuk MENONAKTIFKAN pemasok ini' : 'Klik untuk MENGAKTIFKAN pemasok ini' ?>">
                                 <?php if ($p['is_active']): ?>
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok-solid); box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
                                     <span>● Aktif</span>
                                     <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
                                 <?php else: ?>
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);"></span>
                                     <span>Nonaktif</span>
                                     <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
                                 <?php endif; ?>
@@ -443,7 +443,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <a href="javascript:void(0)" 
                                    onclick="confirmDeletePemasok(<?= $p['id'] ?>, '<?= htmlspecialchars($p['nama_pemasok'], ENT_QUOTES) ?>')" 
                                    class="btn btn-outline btn-sm" 
-                                   style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" 
+                                   style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" 
                                    title="Hapus Pemasok Permanen">
                                     <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                 </a>
@@ -465,7 +465,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="store" style="width: 20px; height: 20px; color: #3b82f6;"></i>
+                <i data-lucide="store" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Vendor Non-Pemasok</span>
             </h2>
             <div class="card-description">Vendor penyedia barang operasional, packaging/kemasan, media pendingin, BBM genset, dan jasa perawatan</div>
@@ -502,7 +502,7 @@ require_once __DIR__ . '/layout/header.php';
                     <?php foreach ($vendorNonPemasokList as $v): ?>
                     <tr>
                         <td>
-                            <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: #2563eb; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
+                            <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: var(--aktif-fg); font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
                                 <?= htmlspecialchars($v['kode_vendor']) ?>
                             </span>
                         </td>
@@ -510,14 +510,14 @@ require_once __DIR__ . '/layout/header.php';
                             <strong style="color: var(--text-main); font-size: 14px;"><?= htmlspecialchars($v['nama_vendor']) ?></strong>
                         </td>
                         <td>
-                            <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 700; font-size: 11.5px;">
+                            <span class="badge" style="background: var(--bg-muted); color: var(--text-muted); font-weight: 700; font-size: 11.5px;">
                                 <?= htmlspecialchars($v['kategori_vendor'] ?: 'Operasional') ?>
                             </span>
                         </td>
                         <td>
                             <div><?= htmlspecialchars($v['pic_nama'] ?: '-') ?></div>
                             <?php if (!empty($v['telepon'])): ?>
-                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $v['telepon']) ?>" target="_blank" style="color: #10b981; font-weight: 600; font-size: 12px; text-decoration: none;">
+                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $v['telepon']) ?>" target="_blank" style="color: var(--ok-fg); font-weight: 600; font-size: 12px; text-decoration: none;">
                                     <?= htmlspecialchars($v['telepon']) ?>
                                 </a>
                             <?php endif; ?>
@@ -527,7 +527,7 @@ require_once __DIR__ . '/layout/header.php';
                         </td>
                         <td style="font-size: 12px;">
                             <?php if (!empty($v['bank']) || !empty($v['no_rekening'])): ?>
-                                <strong style="color: #1e293b;"><?= htmlspecialchars($v['bank'] ?: 'Bank') ?></strong>: <?= htmlspecialchars($v['no_rekening'] ?: '-') ?>
+                                <strong style="color: var(--text-main);"><?= htmlspecialchars($v['bank'] ?: 'Bank') ?></strong>: <?= htmlspecialchars($v['no_rekening'] ?: '-') ?>
                                 <?php if (!empty($v['nama_rekening'])): ?>
                                     <div style="color: var(--text-muted); font-size: 11px;">a.n <?= htmlspecialchars($v['nama_rekening']) ?></div>
                                 <?php endif; ?>
@@ -541,16 +541,16 @@ require_once __DIR__ . '/layout/header.php';
                                onclick="confirmToggleVendorNonPemasok(<?= $v['id'] ?>, '<?= htmlspecialchars($v['nama_vendor'], ENT_QUOTES) ?>', <?= $v['is_active'] ? 'true' : 'false' ?>)"
                                class="btn btn-sm" 
                                style="<?= $v['is_active'] 
-                                   ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' 
-                                   : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' 
+                                   ? 'background: var(--ok-bg); color: var(--ok-fg); border: 1.5px solid var(--border-hover);' 
+                                   : 'background: var(--bg-muted); color: var(--text-muted); border: 1.5px solid var(--border);' 
                                ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s;"
                                title="<?= $v['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>">
                                 <?php if ($v['is_active']): ?>
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok-solid); box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
                                     <span>Aktif</span>
                                     <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
                                 <?php else: ?>
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);"></span>
                                     <span>Nonaktif</span>
                                     <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
                                 <?php endif; ?>
@@ -565,7 +565,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <a href="javascript:void(0)" 
                                    onclick="confirmDeleteVendorNonPemasok(<?= $v['id'] ?>, '<?= htmlspecialchars($v['nama_vendor'], ENT_QUOTES) ?>')" 
                                    class="btn btn-outline btn-sm" 
-                                   style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" 
+                                   style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" 
                                    title="Hapus Vendor Permanen">
                                     <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                 </a>
@@ -587,7 +587,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="receipt" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
+                <i data-lucide="receipt" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Master Tipe Biaya Operasional</span>
             </h2>
             <div class="card-description">Klasifikasi pengeluaran operasional dan pemetaan akun buku besar</div>
@@ -624,7 +624,7 @@ require_once __DIR__ . '/layout/header.php';
                     <?php foreach ($tipeBiayaList as $b): ?>
                     <tr>
                         <td>
-                            <span class="badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
+                            <span class="badge" style="background: rgba(3, 105, 161, 0.12); color: var(--aktif-fg); font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
                                 <?= htmlspecialchars($b['kode_biaya']) ?>
                             </span>
                         </td>
@@ -642,7 +642,7 @@ require_once __DIR__ . '/layout/header.php';
                             </span>
                         </td>
                         <td>
-                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0284c7; font-size: 12px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg); font-size: 12px;">
                                 [<?= htmlspecialchars($b['kode_akun']) ?>]
                             </span>
                             <span style="font-size: 12.5px; font-weight: 600; color: var(--text-main);">
@@ -650,11 +650,11 @@ require_once __DIR__ . '/layout/header.php';
                             </span>
                         </td>
                         <td>
-                            <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600;">
+                            <span class="badge" style="background: var(--bg-muted); color: var(--text-muted); font-weight: 600;">
                                 <?= htmlspecialchars($b['satuan_default'] ?: 'Pcs') ?>
                             </span>
                         </td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #059669; font-size: 13px;">
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ok-fg); font-size: 13px;">
                             Rp <?= number_format((float)$b['estimasi_harga'], 0, ',', '.') ?>
                         </td>
                         <td style="font-size: 12.5px; color: var(--text-muted); max-width: 200px;">
@@ -665,16 +665,16 @@ require_once __DIR__ . '/layout/header.php';
                                onclick="confirmToggleTipeBiaya(<?= $b['id'] ?>, '<?= htmlspecialchars($b['nama_biaya'], ENT_QUOTES) ?>', <?= $b['is_active'] ? 'true' : 'false' ?>)"
                                class="btn btn-sm" 
                                style="<?= $b['is_active'] 
-                                   ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' 
-                                   : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' 
+                                   ? 'background: var(--ok-bg); color: var(--ok-fg); border: 1.5px solid var(--border-hover);' 
+                                   : 'background: var(--bg-muted); color: var(--text-muted); border: 1.5px solid var(--border);' 
                                ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s;"
                                title="<?= $b['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>">
                                 <?php if ($b['is_active']): ?>
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok-solid); box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
                                     <span>Aktif</span>
                                     <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
                                 <?php else: ?>
-                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);"></span>
                                     <span>Nonaktif</span>
                                     <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
                                 <?php endif; ?>
@@ -689,7 +689,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <a href="javascript:void(0)" 
                                    onclick="confirmDeleteTipeBiaya(<?= $b['id'] ?>, '<?= htmlspecialchars($b['nama_biaya'], ENT_QUOTES) ?>')" 
                                    class="btn btn-outline btn-sm" 
-                                   style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" 
+                                   style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" 
                                    title="Hapus Tipe Biaya Permanen">
                                     <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                 </a>
@@ -711,7 +711,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="tag" style="width: 20px; height: 20px; color: #f59e0b;"></i>
+                <i data-lucide="tag" style="width: 20px; height: 20px; color: var(--warn-fg);"></i>
                 <span>Master Harga Pemasok</span>
             </h2>
             <div class="card-description">
@@ -788,7 +788,7 @@ require_once __DIR__ . '/layout/header.php';
                                                name="harga_pemasok[<?= $p['id'] ?>][<?= $it['id'] ?>]" 
                                                value="<?= $val > 0 ? ($val == (int)$val ? (int)$val : (float)$val) : 0 ?>" 
                                                class="form-control" 
-                                               style="width: 115px; text-align: right; font-weight: 800; color: #d97706; padding: 5px 8px; font-size: 13px;"
+                                               style="width: 115px; text-align: right; font-weight: 800; color: var(--warn-fg); padding: 5px 8px; font-size: 13px;"
                                                title="Harga Beli Rp/kg untuk <?= htmlspecialchars($p['nama_pemasok']) ?> - <?= htmlspecialchars($it['nama_item']) ?>"
                                                placeholder="0">
                                     </div>
@@ -806,7 +806,7 @@ require_once __DIR__ . '/layout/header.php';
                 Perubahan tarif beli pemasok ini otomatis terhubung ke perhitungan modal beli dan menu Laba Rugi.
             </div>
             <input type="text" name="alasan_perubahan" class="form-control" placeholder="Alasan perubahan harga (opsional, masuk ke log)" style="max-width: 340px; margin-left: auto; margin-right: 12px;">
-            <button type="submit" class="btn btn-primary btn-lg" style="background: #f59e0b; border-color: #f59e0b; color: #fff;">
+            <button type="submit" class="btn btn-primary btn-lg" style="background: var(--warn-solid); border-color: var(--warn-solid); color: #fff;">
                 <i data-lucide="check" style="width: 18px; height: 18px;"></i>
                 <span>Simpan Perubahan Harga Pemasok</span>
             </button>
@@ -822,7 +822,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="badge-dollar-sign" style="width: 20px; height: 20px; color: #10b981;"></i>
+                <i data-lucide="badge-dollar-sign" style="width: 20px; height: 20px; color: var(--ok-fg);"></i>
                 <span>Master Harga Mitra</span>
             </h2>
             <div class="card-description">
@@ -892,7 +892,7 @@ require_once __DIR__ . '/layout/header.php';
                                            name="harga[<?= $m['id'] ?>][<?= $it['id'] ?>]" 
                                            value="<?= $hargaVal > 0 ? ($hargaVal == (int)$hargaVal ? (int)$hargaVal : (float)$hargaVal) : 0 ?>" 
                                            class="form-control" 
-                                           style="width: 105px; text-align: right; font-weight: 800; color: #10b981; padding: 5px 8px; font-size: 13px;"
+                                           style="width: 105px; text-align: right; font-weight: 800; color: var(--ok-fg); padding: 5px 8px; font-size: 13px;"
                                            title="Harga Rp/kg untuk <?= htmlspecialchars($m['kode_mitra']) ?> - <?= htmlspecialchars($it['nama_item']) ?>"
                                            placeholder="0">
                                 </div>
@@ -925,7 +925,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="building-2" style="width: 20px; height: 20px; color: #3b82f6;"></i>
+                <i data-lucide="building-2" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Daftar 7 Mitra Bisnis Terdaftar</span>
             </h2>
             <div class="card-description">Setiap mitra memiliki segregasi stok tersendiri dan dipetakan ke 1 ID Gudang Accurate Online</div>
@@ -961,7 +961,7 @@ require_once __DIR__ . '/layout/header.php';
                         <strong style="color: var(--text-main); font-size: 14px;"><?= htmlspecialchars($m['nama_mitra']) ?></strong>
                     </td>
                     <td>
-                        <code style="font-weight: 700; color: #0284c7;"><?= htmlspecialchars($m['kode_gudang_accurate']) ?></code>
+                        <code style="font-weight: 700; color: var(--aktif-fg);"><?= htmlspecialchars($m['kode_gudang_accurate']) ?></code>
                     </td>
                     <td>
                         <div><strong style="font-size: 13px;"><?= htmlspecialchars($m['pic_nama'] ?: '-') ?></strong></div>
@@ -986,7 +986,7 @@ require_once __DIR__ . '/layout/header.php';
                             <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
                             <span>Edit</span>
                         </button>
-                        <button type="button" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_mitra', <?= (int)$m['id'] ?>, '<?= htmlspecialchars($m['nama_mitra'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                        <button type="button" class="btn btn-outline btn-sm" style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_mitra', <?= (int)$m['id'] ?>, '<?= htmlspecialchars($m['nama_mitra'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -1004,13 +1004,13 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header">
         <div>
             <h2 class="card-title">
-                <i data-lucide="boxes" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
+                <i data-lucide="boxes" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Master Produk</span>
             </h2>
         </div>
         <div style="display: flex; gap: 8px;">
             <button type="button" class="btn btn-outline" onclick="openModalKategori()">
-                <i data-lucide="tag" style="width: 16px; height: 16px; color: #8b5cf6;"></i>
+                <i data-lucide="tag" style="width: 16px; height: 16px; color: var(--aktif-fg);"></i>
                 <span>Kelola Kategori Master</span>
             </button>
             <button type="button" class="btn btn-primary" onclick="openModalItem()">
@@ -1052,7 +1052,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
                                 <span>Edit</span>
                             </button>
-                            <button type="button" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_item', <?= (int)$it['id'] ?>, '<?= htmlspecialchars($it['nama_item'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                            <button type="button" class="btn btn-outline btn-sm" style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_item', <?= (int)$it['id'] ?>, '<?= htmlspecialchars($it['nama_item'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -1149,7 +1149,7 @@ require_once __DIR__ . '/layout/header.php';
                         <input type="text" id="inputDbAlias" name="db_alias" class="form-control" value="<?= htmlspecialchars($cfg['db_alias'] ?: ($cfg['db_id'] ? 'ID ' . $cfg['db_id'] : '')) ?>" placeholder="Belum ada database dipilih" readonly style="background: var(--bg-muted); font-size: 12.5px; font-weight: 700;">
                         <input type="hidden" id="inputDbId" name="db_id" value="<?= htmlspecialchars($cfg['db_id']) ?>">
                         <button type="button" class="btn btn-outline" id="btnTestConnect" onclick="testAndFetchDatabases()">
-                            <i data-lucide="radio" style="width: 15px; height: 15px; color: #0ea5e9;"></i>
+                            <i data-lucide="radio" style="width: 15px; height: 15px; color: var(--aktif-fg);"></i>
                             <span>Tes & Pilih DB</span>
                         </button>
                     </div>
@@ -1218,12 +1218,12 @@ require_once __DIR__ . '/layout/header.php';
                             <div style="font-size: 11px; color: var(--text-muted);"><?= Helper::formatDateTime($q['created_at']) ?></div>
                         </td>
                         <td>
-                            <span class="mitra-tag <?= strtolower($q['kode_mitra']) ?>" style="background: <?= htmlspecialchars($q['warna_identitas'] ?? '#4f46e5') ?>; padding: 2px 7px; font-size: 11px;">
+                            <span class="mitra-tag <?= strtolower($q['kode_mitra']) ?>" style="background: <?= htmlspecialchars($q['warna_identitas'] ?? '#0284c7') ?>; padding: 2px 7px; font-size: 11px;">
                                 <?= htmlspecialchars($q['kode_mitra']) ?>
                             </span>
                             <span style="font-size: 12px; margin-left: 5px; font-weight: 600;"><?= htmlspecialchars($q['nama_mitra']) ?></span>
                         </td>
-                        <td style="text-align: right; font-weight: 800; color: #10b981; font-size: 14px;"><?= Helper::formatKg($q['total_kg']) ?></td>
+                        <td style="text-align: right; font-weight: 800; color: var(--ok-fg); font-size: 14px;"><?= Helper::formatKg($q['total_kg']) ?></td>
                         <td><code style="font-size: 11px;"><?= htmlspecialchars($q['endpoint']) ?></code></td>
                         <td><strong><?= $q['attempt_count'] ?></strong> / <?= $q['max_attempts'] ?></td>
                         <td>
@@ -1352,7 +1352,7 @@ require_once __DIR__ . '/layout/header.php';
     <div style="background: var(--bg-card); width: 100%; max-width: 560px; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden;">
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
             <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="tag" style="width: 18px; height: 18px; color: #8b5cf6;"></i>
+                <i data-lucide="tag" style="width: 18px; height: 18px; color: var(--aktif-fg);"></i>
                 <span>Kelola Kategori</span>
             </h3>
             <button type="button" class="btn btn-outline btn-sm" onclick="closeModalKategori()">✕</button>
@@ -1381,7 +1381,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 11px;" onclick="editKategori(<?= json_encode($cat) ?>)">
                                     Edit
                                 </button>
-                                <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 11px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_jenis', <?= (int)$cat['id'] ?>, '<?= htmlspecialchars($cat['nama_jenis'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i></button>
+                                <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 11px; color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_jenis', <?= (int)$cat['id'] ?>, '<?= htmlspecialchars($cat['nama_jenis'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i></button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -1781,7 +1781,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <div style="display: flex; gap: 12px; background: var(--bg-muted); padding: 12px 16px; border-radius: 8px;">
-                <div style="background: #10b981; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">5</div>
+                <div style="background: var(--ok-solid); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">5</div>
                 <div>
                     <strong>Tempel Token ke Sistem Gudang</strong>
                     <div style="color: var(--text-muted); font-size: 12.5px;">Tempel token tersebut ke kolom <strong>API Token</strong> di atas, lalu klik <strong>Tes & Pilih DB</strong> untuk menyimpan database. Selesai!</div>
@@ -2118,7 +2118,7 @@ require_once __DIR__ . '/layout/header.php';
             html: `
                 <div style="text-align: left; font-size: 13.5px;">
                     <p>Apakah Anda yakin ingin menghapus pemasok <strong>"${nama}"</strong> secara permanen?</p>
-                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
+                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--bad-solid); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
                         ⚠️ <em>Pemasok tidak dapat dihapus jika sudah memiliki riwayat penerimaan produk di gudang.</em>
                     </div>
                 </div>
@@ -2153,7 +2153,7 @@ require_once __DIR__ . '/layout/header.php';
             html: `
                 <div style="text-align: left; font-size: 13.5px;">
                     <p>Apakah Anda yakin ingin menghapus vendor <strong>"${nama}"</strong> secara permanen?</p>
-                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
+                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--bad-solid); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
                         ⚠️ <em>Vendor tidak dapat dihapus jika sudah memiliki riwayat faktur pembelian operasional.</em>
                     </div>
                 </div>
@@ -2188,7 +2188,7 @@ require_once __DIR__ . '/layout/header.php';
             html: `
                 <div style="text-align: left; font-size: 13.5px;">
                     <p>Apakah Anda yakin ingin menghapus tipe biaya <strong>"${nama}"</strong> secara permanen?</p>
-                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
+                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--bad-solid); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
                         ⚠️ <em>Tipe biaya tidak dapat dihapus jika sudah digunakan pada rincian faktur pembelian.</em>
                     </div>
                 </div>
@@ -2261,7 +2261,7 @@ require_once __DIR__ . '/layout/header.php';
                 if (container) {
                     container.style.display = 'block';
                     container.innerHTML = `
-                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #dc2626; padding: 16px; border-radius: 8px;">
+                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--bad-solid); color: var(--bad-fg); padding: 16px; border-radius: 8px;">
                             <div style="font-weight: 800; margin-bottom: 4px;">Koneksi Gagal</div>
                             <div style="font-size: 12px;">${escapeHtml(data.message || 'Tidak ada database ditemukan atau token tidak valid.')}</div>
                         </div>
@@ -2272,7 +2272,7 @@ require_once __DIR__ . '/layout/header.php';
             if (loading) loading.style.display = 'none';
             if (container) {
                 container.style.display = 'block';
-                container.innerHTML = `<div style="color: #ef4444; padding: 16px;">Terjadi kesalahan: ${escapeHtml(e.message)}</div>`;
+                container.innerHTML = `<div style="color: var(--bad-fg); padding: 16px;">Terjadi kesalahan: ${escapeHtml(e.message)}</div>`;
             }
         }
     }

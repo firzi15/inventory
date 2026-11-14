@@ -122,12 +122,12 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="width: 100px; text-align: center;">Nota Terbuka</th>
                             <th style="text-align: right; min-width: 130px;">Total Belanja</th>
                             <th style="text-align: right; min-width: 130px;">Total Setoran</th>
-                            <th style="text-align: right; min-width: 135px; background: #fffbeb;">Sisa Piutang</th>
-                            <th style="text-align: right; min-width: 120px; color: #0369a1;">Belum Jatuh Tempo</th>
-                            <th style="text-align: right; min-width: 110px; color: #15803d;">Telat 1 - 7 Hari</th>
-                            <th style="text-align: right; min-width: 110px; color: #b45309;">Telat 8 - 14 Hari</th>
-                            <th style="text-align: right; min-width: 110px; color: #c2410c;">Telat 15 - 30 Hari</th>
-                            <th style="text-align: right; min-width: 110px; color: #b91c1c;">Telat &gt; 30 Hari</th>
+                            <th style="text-align: right; min-width: 135px; background: var(--bg-muted);">Sisa Piutang</th>
+                            <th style="text-align: right; min-width: 120px; color: var(--aktif-fg);">Belum Jatuh Tempo</th>
+                            <th style="text-align: right; min-width: 110px; color: var(--ok-fg);">Telat 1 - 7 Hari</th>
+                            <th style="text-align: right; min-width: 110px; color: var(--warn-fg);">Telat 8 - 14 Hari</th>
+                            <th style="text-align: right; min-width: 110px; color: var(--warn-fg);">Telat 15 - 30 Hari</th>
+                            <th style="text-align: right; min-width: 110px; color: var(--bad-fg);">Telat &gt; 30 Hari</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -162,18 +162,18 @@ require_once __DIR__ . '/layout/header.php';
                             </td>
                             <td style="text-align: center;">
                                 <?php if ($m['nota_terbuka'] > 0): ?>
-                                    <span style="font-weight: 800; color: #b45309;"><?= $m['nota_terbuka'] ?> Nota</span>
+                                    <span style="font-weight: 800; color: var(--warn-fg);"><?= $m['nota_terbuka'] ?> Nota</span>
                                 <?php else: ?>
-                                    <span style="color: #10b981; font-weight: 700;">Lunas</span>
+                                    <span style="color: var(--ok-fg); font-weight: 700;">Lunas</span>
                                 <?php endif; ?>
                             </td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
                                 <?= Helper::formatRupiah($m['total_belanja']) ?>
                             </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #047857;">
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ok-fg);">
                                 <?= Helper::formatRupiah($m['total_setoran']) ?>
                             </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: #fffbeb; color: <?= $m['sisa_piutang'] > 0 ? '#b45309' : '#047857' ?>;">
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: var(--bg-muted); color: <?= $m['sisa_piutang'] > 0 ? '#b45309' : '#047857' ?>;">
                                 <?= Helper::formatRupiah($m['sisa_piutang']) ?>
                             </td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: <?= $m['aging_belum'] > 0 ? '#0369a1' : '#94a3b8' ?>;">
@@ -195,16 +195,16 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endforeach; ?>
                     </tbody>
                     <tfoot>
-                        <tr style="background: #f8fafc; font-weight: 800;">
+                        <tr style="background: var(--bg-muted); font-weight: 800;">
                             <td colspan="3" style="text-align: right; text-transform: uppercase;">Total Keseluruhan Mitra:</td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($totBelanja) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #047857;"><?= Helper::formatRupiah($totSetor) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: #fef3c7; color: #b45309;"><?= Helper::formatRupiah($totSisa) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #0369a1;"><?= Helper::formatRupiah($totBelum) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #15803d;"><?= Helper::formatRupiah($tot0to7) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b45309;"><?= Helper::formatRupiah($tot8to14) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #c2410c;"><?= Helper::formatRupiah($tot15to30) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b91c1c;"><?= Helper::formatRupiah($totGt30) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($totSetor) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted); color: var(--warn-fg);"><?= Helper::formatRupiah($totSisa) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--aktif-fg);"><?= Helper::formatRupiah($totBelum) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($tot0to7) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);"><?= Helper::formatRupiah($tot8to14) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);"><?= Helper::formatRupiah($tot15to30) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--bad-fg);"><?= Helper::formatRupiah($totGt30) ?></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -270,7 +270,7 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="min-width: 160px;">Mitra Penerima</th>
                             <th style="text-align: right; width: 120px;">Total Belanja</th>
                             <th style="text-align: right; width: 120px;">Total Setoran</th>
-                            <th style="text-align: right; width: 125px; background: #fffbeb;">Sisa Tagihan</th>
+                            <th style="text-align: right; width: 125px; background: var(--bg-muted);">Sisa Tagihan</th>
                             <th style="width: 130px; text-align: center;">Jatuh Tempo</th>
                             <th style="width: 110px; text-align: center;">Status</th>
                             <th class="no-print" style="width: 140px; text-align: center;">Aksi</th>
@@ -311,13 +311,13 @@ require_once __DIR__ . '/layout/header.php';
                                 <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
                                     <?= Helper::formatRupiah($n['total_nilai_jual']) ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #047857;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ok-fg);">
                                     <?= Helper::formatRupiah($n['total_bayar']) ?>
                                     <?php if ($n['jml_kali_setor'] > 0): ?>
                                         <div style="font-size: 10.5px; color: var(--text-muted);"><?= $n['jml_kali_setor'] ?>x cicilan</div>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: #fffbeb; color: <?= $n['sisa_piutang'] > 0 ? '#b45309' : '#047857' ?>;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: var(--bg-muted); color: <?= $n['sisa_piutang'] > 0 ? '#b45309' : '#047857' ?>;">
                                     <?= Helper::formatRupiah($n['sisa_piutang']) ?>
                                 </td>
                                 <td style="text-align: center;">
@@ -328,16 +328,16 @@ require_once __DIR__ . '/layout/header.php';
                                             <div class="no-print"><a href="javascript:void(0)" style="font-size: 11px;" onclick='ubahJatuhTempo("NOTA", <?= (int)$n['id'] ?>, <?= json_encode(substr($n['jatuh_tempo'], 0, 10)) ?>, <?= json_encode($n['no_surat_jalan']) ?>)'>ubah</a></div>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span style="color: #10b981; font-weight: 700; font-size: 12px;">Selesai</span>
+                                        <span style="color: var(--ok-fg); font-weight: 700; font-size: 12px;">Selesai</span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($n['status_bayar'] === 'LUNAS'): ?>
-                                        <span style="font-weight: 800; font-size: 11px; color: #047857; background: #d1fae5; padding: 2px 8px; border-radius: 4px;">LUNAS</span>
+                                        <span style="font-weight: 800; font-size: 11px; color: var(--ok-fg); background: var(--ok-bg); padding: 2px 8px; border-radius: 4px;">LUNAS</span>
                                     <?php elseif ($n['status_bayar'] === 'PARSIAL'): ?>
-                                        <span style="font-weight: 800; font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 4px;">PARSIAL</span>
+                                        <span style="font-weight: 800; font-size: 11px; color: var(--warn-fg); background: var(--warn-bg); padding: 2px 8px; border-radius: 4px;">PARSIAL</span>
                                     <?php else: ?>
-                                        <span style="font-weight: 800; font-size: 11px; color: #b91c1c; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">BELUM BAYAR</span>
+                                        <span style="font-weight: 800; font-size: 11px; color: var(--bad-fg); background: var(--bad-bg); padding: 2px 8px; border-radius: 4px;">BELUM BAYAR</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="no-print" style="text-align: center;">
@@ -410,7 +410,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <?= htmlspecialchars($p['no_bukti_bayar']) ?>
                                     </strong>
                                     <?php if (($p['status'] ?? 'AKTIF') === 'BATAL'): ?>
-                                        <div><span style="display: inline-block; padding: 1px 6px; background: #e2e8f0; color: #475569; font-size: 10.5px; border-radius: 4px;">Dibatalkan</span></div>
+                                        <div><span style="display: inline-block; padding: 1px 6px; background: var(--border); color: var(--text-muted); font-size: 10.5px; border-radius: 4px;">Dibatalkan</span></div>
                                         <div style="font-size: 10.5px; color: var(--text-muted);"><?= htmlspecialchars($p['alasan_batal'] ?? '') ?></div>
                                     <?php endif; ?>
                                     <div style="font-size: 10.5px; color: var(--text-muted);"><?= date('H:i', strtotime($p['created_at'])) ?> WIB</div>
@@ -423,14 +423,14 @@ require_once __DIR__ . '/layout/header.php';
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($p['metode_bayar'] === 'TUNAI'): ?>
-                                        <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: #e0f2fe; color: #0284c7; border-radius: 4px;">TUNAI</span>
+                                        <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: var(--info-bg); color: var(--aktif-fg); border-radius: 4px;">TUNAI</span>
                                     <?php else: ?>
-                                        <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: #f3e8ff; color: #7c3aed; border-radius: 4px;">TRANSFER (<?= htmlspecialchars($p['bank_tujuan'] ?: 'BANK') ?>)</span>
+                                        <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: var(--info-bg); color: var(--aktif-fg); border-radius: 4px;">TRANSFER (<?= htmlspecialchars($p['bank_tujuan'] ?: 'BANK') ?>)</span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #047857;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: var(--ok-fg);">
                                     <?php if (($p['status'] ?? 'AKTIF') === 'BATAL'): ?>
-                                        <span style="color: #94a3b8; text-decoration: line-through;"><?= Helper::formatRupiah($p['jumlah_asal']) ?></span>
+                                        <span style="color: var(--text-muted); text-decoration: line-through;"><?= Helper::formatRupiah($p['jumlah_asal']) ?></span>
                                     <?php else: ?>
                                         <?= Helper::formatRupiah($jml) ?>
                                     <?php endif; ?>
@@ -459,9 +459,9 @@ require_once __DIR__ . '/layout/header.php';
                     </tbody>
                     <?php if (!empty($riwayatPayments)): ?>
                     <tfoot>
-                        <tr style="background: #f8fafc; font-weight: 800;">
+                        <tr style="background: var(--bg-muted); font-weight: 800;">
                             <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Penerimaan Kas Terpilih:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: #047857;">
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--ok-fg);">
                                 <?= Helper::formatRupiah($totKasMasuk) ?>
                             </td>
                             <td colspan="3"></td>
@@ -479,8 +479,8 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL 1: FORM PENCATATAN SETORAN UANG MASUK (TUNAI / TRANSFER BANK)       -->
 <!-- ========================================================================= -->
 <div id="modalPayment" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: white; border-radius: 8px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background: var(--bg-card); border-radius: 8px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main);">Catat Setoran Pembayaran Mitra</h3>
                 <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Membukukan uang setoran kas/bank dan memotong nota piutang secara otomatis atau manual</p>
@@ -527,12 +527,12 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- 5. Jumlah Uang yang Disetor -->
             <div style="margin-bottom: 16px;">
-                <label class="form-label" for="pay_jumlah_bayar" style="font-weight: 800; font-size: 13px; color: #047857;">
+                <label class="form-label" for="pay_jumlah_bayar" style="font-weight: 800; font-size: 13px; color: var(--ok-fg);">
                     Jumlah Uang yang Disetorkan (Rp) *
                 </label>
                 <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 10px; font-weight: 800; color: #047857; font-size: 16px;">Rp</span>
-                    <input type="number" step="100" name="jumlah_bayar" id="pay_jumlah_bayar" class="form-control" required min="100" placeholder="0" oninput="calculateAllocationPreview()" style="height: 44px; padding-left: 45px; font-size: 18px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: #047857;">
+                    <span style="position: absolute; left: 14px; top: 10px; font-weight: 800; color: var(--ok-fg); font-size: 16px;">Rp</span>
+                    <input type="number" step="100" name="jumlah_bayar" id="pay_jumlah_bayar" class="form-control" required min="100" placeholder="0" oninput="calculateAllocationPreview()" style="height: 44px; padding-left: 45px; font-size: 18px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">
                 </div>
                 <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
                     Contoh: Ketik <code>700000</code> untuk setoran Rp 700.000.
@@ -540,7 +540,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <!-- 6. Mode Alokasi ke Nota -->
-            <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+            <div style="background: var(--bg-muted); border: 1.5px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 16px;">
                 <label class="form-label" style="font-weight: 800; font-size: 12px; margin-bottom: 6px; display: block;">Aturan Alokasi ke Nota Terutang:</label>
                 <div style="display: flex; gap: 16px;">
                     <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px; font-weight: 700;">
@@ -558,10 +558,10 @@ require_once __DIR__ . '/layout/header.php';
             <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <span style="font-size: 12px; font-weight: 800; color: var(--text-main);">Daftar Nota Terutang Mitra Ini:</span>
-                    <span id="labelTotalSisaPiutangMitra" style="font-size: 11.5px; font-weight: 700; color: #b45309;">Pilih mitra terlebih dahulu</span>
+                    <span id="labelTotalSisaPiutangMitra" style="font-size: 11.5px; font-weight: 700; color: var(--warn-fg);">Pilih mitra terlebih dahulu</span>
                 </div>
 
-                <div id="wrapperNotaList" style="max-height: 200px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px;">
+                <div id="wrapperNotaList" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
                     <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">
                         Pilih mitra di atas untuk menampilkan daftar nota pengeluaran yang belum lunas.
                     </div>
@@ -575,7 +575,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <!-- Tombol Aksi Form -->
-            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 16px;">
                 <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Batal</button>
                 <button type="submit" id="btnSubmitPayment" class="btn btn-primary" style="font-weight: 800;">
                     Simpan & Bukukan Setoran
@@ -589,8 +589,8 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL 2: DETAIL RIWAYAT SETORAN PER NOTA                                  -->
 <!-- ========================================================================= -->
 <div id="modalHistory" class="no-print" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: white; border-radius: 8px; width: 100%; max-width: 650px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background: var(--bg-card); border-radius: 8px; width: 100%; max-width: 650px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main);" id="histModalTitle">Riwayat Setoran Nota</h3>
                 <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);" id="histModalSubtitle">Rincian cicilan uang masuk yang memotong nota surat jalan ini</p>
@@ -600,14 +600,14 @@ require_once __DIR__ . '/layout/header.php';
 
         <div style="padding: 20px;">
             <!-- Ringkasan Nota -->
-            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: var(--bg-muted); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div>
                     <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Total Nilai Belanja Nota:</span>
                     <div id="histBelanjaText" style="font-size: 16px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">Rp 0</div>
                 </div>
                 <div>
                     <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Sisa Tagihan Saat Ini:</span>
-                    <div id="histSisaText" style="font-size: 16px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #b45309;">Rp 0</div>
+                    <div id="histSisaText" style="font-size: 16px; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);">Rp 0</div>
                 </div>
             </div>
 
@@ -617,7 +617,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
         </div>
 
-        <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; text-align: right;">
+        <div style="padding: 12px 20px; border-top: 1px solid var(--border); text-align: right;">
             <button type="button" class="btn btn-outline" onclick="closeHistoryModal()">Tutup</button>
         </div>
     </div>
@@ -692,7 +692,7 @@ async function onMitraChangeForPayment(focusTrxId = 0, focusAmount = 0) {
 function renderUnpaidNotasTable(focusTrxId = 0) {
     const wrapper = document.getElementById('wrapperNotaList');
     if (currentUnpaidNotas.length === 0) {
-        wrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: #10b981; font-weight: 700; font-size: 12px;">Mitra ini tidak memiliki nota piutang yang tertunggak (Lunas). Uang setoran akan dibukukan sebagai saldo deposit.</div>';
+        wrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--ok-fg); font-weight: 700; font-size: 12px;">Mitra ini tidak memiliki nota piutang yang tertunggak (Lunas). Uang setoran akan dibukukan sebagai saldo deposit.</div>';
         return;
     }
 
@@ -701,7 +701,7 @@ function renderUnpaidNotasTable(focusTrxId = 0) {
     let html = `
         <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
             <thead>
-                <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; text-align: left;">
+                <tr style="background: var(--bg-muted); border-bottom: 1px solid var(--border); text-align: left;">
                     <th style="padding: 6px 8px; width: 25px; text-align: center;">#</th>
                     <th style="padding: 6px 8px;">No. Surat Jalan</th>
                     <th style="padding: 6px 8px; width: 80px;">Umur</th>
@@ -715,7 +715,7 @@ function renderUnpaidNotasTable(focusTrxId = 0) {
     currentUnpaidNotas.forEach((n, idx) => {
         const isFocused = (focusTrxId > 0 && parseInt(n.id) === focusTrxId);
         html += `
-            <tr style="border-bottom: 1px solid #e2e8f0; ${isFocused ? 'background: #fef3c7;' : ''}">
+            <tr style="border-bottom: 1px solid var(--border); ${isFocused ? 'background: var(--warn-bg);' : ''}">
                 <td style="padding: 6px 8px; text-align: center; color: var(--text-muted);">${idx + 1}</td>
                 <td style="padding: 6px 8px;">
                     <strong style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px;">${escapeHtml(n.no_surat_jalan)}</strong>
@@ -724,13 +724,13 @@ function renderUnpaidNotasTable(focusTrxId = 0) {
                 <td style="padding: 6px 8px; font-weight: 700; color: ${n.umur_hari > 14 ? '#b91c1c' : '#b45309'};">
                     ${n.umur_hari} Hari
                 </td>
-                <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #b45309;">
+                <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--warn-fg);">
                     Rp ${formatNumberRp(n.sisa_piutang)}
                 </td>
                 <td style="padding: 6px 8px; text-align: right;">
                     ${isManual 
                         ? `<input type="number" step="100" class="form-control input-alok-manual" name="alokasi_manual[${n.id}]" data-trx-id="${n.id}" data-max="${n.sisa_piutang}" placeholder="0" style="height: 28px; font-size: 11px; text-align: right; font-family: 'JetBrains Mono', monospace;" oninput="validateManualAllocation()">`
-                        : `<span id="preview_alok_${n.id}" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #047857;">Rp 0</span>`
+                        : `<span id="preview_alok_${n.id}" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--ok-fg);">Rp 0</span>`
                     }
                 </td>
             </tr>
@@ -839,7 +839,7 @@ async function viewNotaHistory(trxId, noSj, totalBelanja, sisaPiutang) {
             let html = `
                 <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
                     <thead>
-                        <tr style="background: #f1f5f9; border-bottom: 1px solid #cbd5e1; text-align: left;">
+                        <tr style="background: var(--bg-muted); border-bottom: 1px solid var(--border); text-align: left;">
                             <th style="padding: 6px 8px; width: 30px; text-align: center;">#</th>
                             <th style="padding: 6px 8px;">No. Bukti Bayar</th>
                             <th style="padding: 6px 8px; width: 95px;">Tgl Setor</th>
@@ -853,21 +853,21 @@ async function viewNotaHistory(trxId, noSj, totalBelanja, sisaPiutang) {
 
             data.history.forEach((h, idx) => {
                 html += `
-                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <tr style="border-bottom: 1px solid var(--border);">
                         <td style="padding: 6px 8px; text-align: center; color: var(--text-muted);">${idx + 1}</td>
                         <td style="padding: 6px 8px;">
                             <strong style="font-family: 'JetBrains Mono', monospace;">${escapeHtml(h.no_bukti_bayar)}</strong>
                             <div style="font-size: 10.5px; color: var(--text-muted);">${escapeHtml(h.nama_kasir || 'Kasir')}</div>
                             ${h.status_pembayaran === 'BATAL'
-                                ? `<div><span style="display:inline-block;padding:1px 6px;background:#e2e8f0;color:#475569;font-size:10.5px;border-radius:4px;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(h.alasan_batal || '')}</div>`
-                                : `<div><a href="javascript:void(0)" onclick="closeHistoryModal(); batalDokumen('batal_setoran_ar', { id: ${h.pembayaran_id} }, 'setoran ${escapeHtml(h.no_bukti_bayar)} (Rp ${formatNumberRp(h.total_setoran_induk)})')" style="font-size:11px;color:#dc2626;font-weight:700;">Batalkan setoran</a></div>`}
+                                ? `<div><span style="display:inline-block;padding:1px 6px;background:var(--border);color:var(--text-muted);font-size:10.5px;border-radius:4px;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(h.alasan_batal || '')}</div>`
+                                : `<div><a href="javascript:void(0)" onclick="closeHistoryModal(); batalDokumen('batal_setoran_ar', { id: ${h.pembayaran_id} }, 'setoran ${escapeHtml(h.no_bukti_bayar)} (Rp ${formatNumberRp(h.total_setoran_induk)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;">Batalkan setoran</a></div>`}
                         </td>
                         <td style="padding: 6px 8px;">${h.tanggal_bayar}</td>
                         <td style="padding: 6px 8px;">${escapeHtml(h.metode_bayar)}</td>
                         <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: ${h.status_pembayaran === 'BATAL' ? '#94a3b8; text-decoration: line-through' : '#047857'};">
                             Rp ${formatNumberRp(h.status_pembayaran === 'BATAL' ? h.nominal_asal : h.nominal_alokasi)}
                         </td>
-                        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #b45309;">
+                        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--warn-fg);">
                             Rp ${formatNumberRp(h.sisa_piutang_setelah)}
                         </td>
                     </tr>

@@ -138,7 +138,7 @@ require_once __DIR__ . '/layout/header.php';
     <?php if ($activeTab === 'invoices'): ?>
         <div class="card" style="padding: 20px;">
             <!-- FILTER BAR -->
-            <form method="GET" action="index.php" class="no-print" style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid #e2e8f0; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+            <form method="GET" action="index.php" class="no-print" style="background: var(--bg-muted); padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
                 <input type="hidden" name="page" value="ap_aging">
                 <input type="hidden" name="tab" value="invoices">
 
@@ -205,7 +205,7 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="width: 135px;">Ref. Surat Jalan</th>
                             <th style="text-align: right; width: 125px;">Total Tagihan</th>
                             <th style="text-align: right; width: 120px;">Total Dibayar</th>
-                            <th style="text-align: right; width: 125px; background: #fffbeb;">Sisa Utang</th>
+                            <th style="text-align: right; width: 125px; background: var(--bg-muted);">Sisa Utang</th>
                             <th style="text-align: center; width: 105px;">Status</th>
                             <th class="no-print" style="width: 145px; text-align: center;">Aksi</th>
                         </tr>
@@ -235,25 +235,25 @@ require_once __DIR__ . '/layout/header.php';
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
                                 <td>
-                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 800; color: #1e3a8a;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 800; color: var(--aktif-fg);">
                                         <?= htmlspecialchars($inv['no_invoice']) ?>
                                     </div>
                                 </td>
                                 <td>
                                     <?php if ($inv['tipe_invoice'] === 'STOK'): ?>
-                                        <span style="display: inline-block; padding: 2px 7px; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11px; border-radius: 4px;">
+                                        <span style="display: inline-block; padding: 2px 7px; background: var(--info-bg); color: var(--aktif-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">
                                             1200 Persediaan
                                         </span>
                                     <?php elseif ($inv['tipe_invoice'] === 'OPERASIONAL'): ?>
-                                        <span style="display: inline-block; padding: 2px 7px; background: #fef3c7; color: #b45309; font-weight: 700; font-size: 11px; border-radius: 4px;">
+                                        <span style="display: inline-block; padding: 2px 7px; background: var(--warn-bg); color: var(--warn-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">
                                             6000 Operasional
                                         </span>
                                     <?php elseif ($inv['tipe_invoice'] === 'ASET'): ?>
-                                        <span style="display: inline-block; padding: 2px 7px; background: #ecfdf5; color: #047857; font-weight: 700; font-size: 11px; border-radius: 4px;">
+                                        <span style="display: inline-block; padding: 2px 7px; background: var(--ok-bg); color: var(--ok-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">
                                             1100 Aset
                                         </span>
                                     <?php else: ?>
-                                        <span style="display: inline-block; padding: 2px 7px; background: #f1f5f9; color: #475569; font-weight: 700; font-size: 11px; border-radius: 4px;">
+                                        <span style="display: inline-block; padding: 2px 7px; background: var(--bg-muted); color: var(--text-muted); font-weight: 700; font-size: 11px; border-radius: 4px;">
                                             <?= htmlspecialchars($inv['kode_akun_debit']) ?>
                                         </span>
                                     <?php endif; ?>
@@ -263,7 +263,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <?= !empty($inv['kode_pemasok']) ? '[' . htmlspecialchars($inv['kode_pemasok']) . '] ' : '' ?><?= htmlspecialchars($inv['nama_vendor']) ?>
                                     </strong>
                                     <?php if (!empty($inv['keterangan'])): ?>
-                                        <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
+                                        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.3; max-width: 200px;">
                                             <?= htmlspecialchars($inv['keterangan']) ?>
                                         </div>
                                     <?php endif; ?>
@@ -282,7 +282,7 @@ require_once __DIR__ . '/layout/header.php';
                                 </td>
                                 <td>
                                     <?php if (!empty($inv['no_surat_jalan'])): ?>
-                                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: #0284c7;">
+                                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: var(--aktif-fg);">
                                             <?= htmlspecialchars($inv['no_surat_jalan']) ?>
                                         </span>
                                     <?php else: ?>
@@ -292,21 +292,21 @@ require_once __DIR__ . '/layout/header.php';
                                 <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
                                     <?= Helper::formatRupiah($inv['total_nominal']) ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #047857;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ok-fg);">
                                     <?= Helper::formatRupiah($inv['total_bayar']) ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: #fffbeb; color: <?= (float)$inv['sisa_utang'] > 0.01 ? '#b45309' : '#047857' ?>;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: var(--bg-muted); color: <?= (float)$inv['sisa_utang'] > 0.01 ? '#b45309' : '#047857' ?>;">
                                     <?= Helper::formatRupiah($inv['sisa_utang']) ?>
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($inv['status_bayar'] === 'LUNAS'): ?>
-                                        <span style="display: inline-block; padding: 2px 8px; background: #d1fae5; color: #065f46; font-weight: 700; font-size: 11px; border-radius: 4px;">Lunas</span>
+                                        <span style="display: inline-block; padding: 2px 8px; background: var(--ok-bg); color: var(--ok-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">Lunas</span>
                                     <?php elseif ($inv['status_bayar'] === 'BATAL'): ?>
-                                        <span style="display: inline-block; padding: 2px 8px; background: #e2e8f0; color: #475569; font-weight: 700; font-size: 11px; border-radius: 4px;" title="<?= htmlspecialchars($inv['alasan_batal'] ?? '') ?>">Dibatalkan</span>
+                                        <span style="display: inline-block; padding: 2px 8px; background: var(--border); color: var(--text-muted); font-weight: 700; font-size: 11px; border-radius: 4px;" title="<?= htmlspecialchars($inv['alasan_batal'] ?? '') ?>">Dibatalkan</span>
                                     <?php elseif ($inv['status_bayar'] === 'SEBAGIAN'): ?>
-                                        <span style="display: inline-block; padding: 2px 8px; background: #fef3c7; color: #92400e; font-weight: 700; font-size: 11px; border-radius: 4px;">Cicil / Parsial</span>
+                                        <span style="display: inline-block; padding: 2px 8px; background: var(--warn-bg); color: var(--warn-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">Cicil / Parsial</span>
                                     <?php else: ?>
-                                        <span style="display: inline-block; padding: 2px 8px; background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 11px; border-radius: 4px;">Belum Bayar</span>
+                                        <span style="display: inline-block; padding: 2px 8px; background: var(--bad-bg); color: var(--bad-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">Belum Bayar</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="no-print" style="text-align: center; white-space: nowrap;">
@@ -319,7 +319,7 @@ require_once __DIR__ . '/layout/header.php';
                                         </button>
                                     <?php endif; ?>
                                     <?php if ($inv['tipe_invoice'] !== 'STOK' && $inv['status_bayar'] === 'BELUM_BAYAR'): ?>
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_purchase_invoice', { id: <?= (int)$inv['id'] ?> }, 'faktur <?= htmlspecialchars($inv['no_invoice'], ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: #dc2626; border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
+                                        <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_purchase_invoice', { id: <?= (int)$inv['id'] ?> }, 'faktur <?= htmlspecialchars($inv['no_invoice'], ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: var(--bad-fg); border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -328,11 +328,11 @@ require_once __DIR__ . '/layout/header.php';
                     </tbody>
                     <?php if (!empty($invoicesList)): ?>
                     <tfoot>
-                        <tr style="background: #f8fafc; font-weight: 800;">
+                        <tr style="background: var(--bg-muted); font-weight: 800;">
                             <td colspan="6" style="text-align: right; text-transform: uppercase;">Total Faktur Ditampilkan:</td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($sumTotalTagihan) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #047857;"><?= Helper::formatRupiah($sumTotalBayar) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: #fef3c7; color: #b45309;"><?= Helper::formatRupiah($sumSisaUtang) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($sumTotalBayar) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted); color: var(--warn-fg);"><?= Helper::formatRupiah($sumSisaUtang) ?></td>
                             <td colspan="2" class="no-print"></td>
                         </tr>
                     </tfoot>
@@ -356,7 +356,7 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="width: 100px; text-align: center;">SJ Terbuka</th>
                             <th style="text-align: right; min-width: 130px;">Total Tagihan</th>
                             <th style="text-align: right; min-width: 130px;">Total Dibayar</th>
-                            <th style="text-align: right; min-width: 135px; background: #fffbeb;">Sisa Utang</th>
+                            <th style="text-align: right; min-width: 135px; background: var(--bg-muted);">Sisa Utang</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -381,29 +381,29 @@ require_once __DIR__ . '/layout/header.php';
                             </td>
                             <td style="text-align: center;">
                                 <?php if ($p['sj_terbuka'] > 0): ?>
-                                    <span style="font-weight: 800; color: #b45309;"><?= $p['sj_terbuka'] ?> SJ</span>
+                                    <span style="font-weight: 800; color: var(--warn-fg);"><?= $p['sj_terbuka'] ?> SJ</span>
                                 <?php else: ?>
-                                    <span style="color: #10b981; font-weight: 700;">Lunas</span>
+                                    <span style="color: var(--ok-fg); font-weight: 700;">Lunas</span>
                                 <?php endif; ?>
                             </td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
                                 <?= Helper::formatRupiah($p['total_tagihan']) ?>
                             </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #047857;">
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ok-fg);">
                                 <?= Helper::formatRupiah($p['total_dibayar']) ?>
                             </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: #fffbeb; color: <?= $p['sisa_utang'] > 0 ? '#b45309' : '#047857' ?>;">
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: var(--bg-muted); color: <?= $p['sisa_utang'] > 0 ? '#b45309' : '#047857' ?>;">
                                 <?= Helper::formatRupiah($p['sisa_utang']) ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                     <tfoot>
-                        <tr style="background: #f8fafc; font-weight: 800;">
+                        <tr style="background: var(--bg-muted); font-weight: 800;">
                             <td colspan="3" style="text-align: right; text-transform: uppercase;">Total Keseluruhan Pemasok:</td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($totTagihan) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #047857;"><?= Helper::formatRupiah($totBayar) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: #fef3c7; color: #b45309;"><?= Helper::formatRupiah($totSisa) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($totBayar) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted); color: var(--warn-fg);"><?= Helper::formatRupiah($totSisa) ?></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -417,7 +417,7 @@ require_once __DIR__ . '/layout/header.php';
     <?php if ($activeTab === 'sj_masuk'): ?>
         <div class="card" style="padding: 20px;">
             <!-- FILTER BAR -->
-            <form method="GET" action="index.php" class="no-print" style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid #e2e8f0; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+            <form method="GET" action="index.php" class="no-print" style="background: var(--bg-muted); padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
                 <input type="hidden" name="page" value="ap_aging">
                 <input type="hidden" name="tab" value="sj_masuk">
 
@@ -470,7 +470,7 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="min-width: 170px;">Pemasok</th>
                             <th style="text-align: right; min-width: 125px;">Total Tagihan</th>
                             <th style="text-align: right; min-width: 125px;">Total Dibayar</th>
-                            <th style="text-align: right; min-width: 130px; background: #fffbeb;">Sisa Utang</th>
+                            <th style="text-align: right; min-width: 130px; background: var(--bg-muted);">Sisa Utang</th>
                             <th style="width: 130px; text-align: center;">Jatuh Tempo</th>
                             <th style="width: 110px; text-align: center;">Status Bayar</th>
                             <th class="no-print" style="width: 130px; text-align: center;">Aksi</th>
@@ -510,13 +510,13 @@ require_once __DIR__ . '/layout/header.php';
                                 <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
                                     <?= Helper::formatRupiah($sj['total_nilai_beli']) ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #047857;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ok-fg);">
                                     <?= Helper::formatRupiah($sj['total_bayar']) ?>
                                     <?php if ($sj['jml_kali_bayar'] > 0): ?>
                                         <div style="font-size: 10.5px; color: var(--text-muted);"><?= $sj['jml_kali_bayar'] ?>x cicilan</div>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: #fffbeb; color: <?= $sj['sisa_utang'] > 0 ? '#b45309' : '#047857' ?>;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: var(--bg-muted); color: <?= $sj['sisa_utang'] > 0 ? '#b45309' : '#047857' ?>;">
                                     <?= Helper::formatRupiah($sj['sisa_utang']) ?>
                                 </td>
                                 <td style="text-align: center;">
@@ -526,16 +526,16 @@ require_once __DIR__ . '/layout/header.php';
                                             <div class="no-print"><a href="javascript:void(0)" style="font-size: 11px;" onclick='ubahJatuhTempo("FAKTUR", <?= (int)$sj['invoice_id'] ?>, <?= json_encode(substr($sj['jatuh_tempo'], 0, 10)) ?>, <?= json_encode($sj['no_surat_jalan']) ?>)'>ubah</a></div>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span style="color: #10b981; font-weight: 700; font-size: 12px;">Selesai</span>
+                                        <span style="color: var(--ok-fg); font-weight: 700; font-size: 12px;">Selesai</span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($sj['status_bayar'] === 'LUNAS'): ?>
-                                        <span style="font-weight: 800; font-size: 11px; color: #047857; background: #d1fae5; padding: 2px 8px; border-radius: 4px;">LUNAS</span>
+                                        <span style="font-weight: 800; font-size: 11px; color: var(--ok-fg); background: var(--ok-bg); padding: 2px 8px; border-radius: 4px;">LUNAS</span>
                                     <?php elseif ($sj['status_bayar'] === 'PARSIAL'): ?>
-                                        <span style="font-weight: 800; font-size: 11px; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 4px;">PARSIAL</span>
+                                        <span style="font-weight: 800; font-size: 11px; color: var(--warn-fg); background: var(--warn-bg); padding: 2px 8px; border-radius: 4px;">PARSIAL</span>
                                     <?php else: ?>
-                                        <span style="font-weight: 800; font-size: 11px; color: #b91c1c; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">BELUM BAYAR</span>
+                                        <span style="font-weight: 800; font-size: 11px; color: var(--bad-fg); background: var(--bad-bg); padding: 2px 8px; border-radius: 4px;">BELUM BAYAR</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="no-print" style="text-align: center;">
@@ -565,7 +565,7 @@ require_once __DIR__ . '/layout/header.php';
     <?php if ($activeTab === 'riwayat_bayar'): ?>
         <div class="card" style="padding: 20px;">
             <!-- FILTER BAR -->
-            <form method="GET" action="index.php" class="no-print" style="background: #f8fafc; padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid #e2e8f0; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+            <form method="GET" action="index.php" class="no-print" style="background: var(--bg-muted); padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
                 <input type="hidden" name="page" value="ap_aging">
                 <input type="hidden" name="tab" value="riwayat_bayar">
 
@@ -629,11 +629,11 @@ require_once __DIR__ . '/layout/header.php';
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
                                 <td>
-                                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #1e3a8a;">
+                                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--aktif-fg);">
                                         <?= htmlspecialchars($p['no_bukti_keluar']) ?>
                                     </strong>
                                     <?php if (($p['status'] ?? 'AKTIF') === 'BATAL'): ?>
-                                        <div><span style="display: inline-block; padding: 1px 6px; background: #e2e8f0; color: #475569; font-size: 10.5px; border-radius: 4px;">Dibatalkan</span></div>
+                                        <div><span style="display: inline-block; padding: 1px 6px; background: var(--border); color: var(--text-muted); font-size: 10.5px; border-radius: 4px;">Dibatalkan</span></div>
                                         <div style="font-size: 10.5px; color: var(--text-muted);"><?= htmlspecialchars($p['alasan_batal'] ?? '') ?></div>
                                     <?php endif; ?>
                                 </td>
@@ -645,21 +645,21 @@ require_once __DIR__ . '/layout/header.php';
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($p['metode_bayar'] === 'TRANSFER_BANK'): ?>
-                                        <span style="display: inline-block; padding: 2px 8px; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11px; border-radius: 4px;">
+                                        <span style="display: inline-block; padding: 2px 8px; background: var(--info-bg); color: var(--aktif-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">
                                             TRANSFER
                                         </span>
                                         <?php if (!empty($p['bank_sumber'])): ?>
                                             <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;"><?= htmlspecialchars($p['bank_sumber']) ?></div>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span style="display: inline-block; padding: 2px 8px; background: #ecfdf5; color: #047857; font-weight: 700; font-size: 11px; border-radius: 4px;">
+                                        <span style="display: inline-block; padding: 2px 8px; background: var(--ok-bg); color: var(--ok-fg); font-weight: 700; font-size: 11px; border-radius: 4px;">
                                             TUNAI
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #047857;">
+                                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: var(--ok-fg);">
                                     <?php if (($p['status'] ?? 'AKTIF') === 'BATAL'): ?>
-                                        <span style="color: #94a3b8; text-decoration: line-through;"><?= Helper::formatRupiah($p['jumlah_asal']) ?></span>
+                                        <span style="color: var(--text-muted); text-decoration: line-through;"><?= Helper::formatRupiah($p['jumlah_asal']) ?></span>
                                     <?php else: ?>
                                         <?= Helper::formatRupiah($p['jumlah_bayar']) ?>
                                     <?php endif; ?>
@@ -688,9 +688,9 @@ require_once __DIR__ . '/layout/header.php';
                     </tbody>
                     <?php if (!empty($riwayatPayments)): ?>
                     <tfoot>
-                        <tr style="background: #f8fafc; font-weight: 800;">
+                        <tr style="background: var(--bg-muted); font-weight: 800;">
                             <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Kas Keluar Terbuku:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #047857;"><?= Helper::formatRupiah($totKasKeluar) ?></td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($totKasKeluar) ?></td>
                             <td colspan="3"></td>
                         </tr>
                     </tfoot>
@@ -706,19 +706,19 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL 1: CATAT PEMBAYARAN KAS KELUAR KE PEMASOK / INVOICE                -->
 <!-- ========================================================================= -->
 <div id="modalCatatBayarPemasok" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
-    <div class="card" style="width: 100%; max-width: 680px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px;">
+    <div class="card" style="width: 100%; max-width: 680px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: var(--bg-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 18px;">
             <div>
-                <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #1e293b;">Catat Pembayaran Kas Keluar</h3>
+                <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: var(--text-main);">Catat Pembayaran Kas Keluar</h3>
                 <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Pembayaran tagihan via transfer bank atau kas tunai</p>
             </div>
-            <button type="button" onclick="closePaymentModal()" style="border: none; background: transparent; font-size: 20px; color: #64748b; cursor: pointer; padding: 4px;">&times;</button>
+            <button type="button" onclick="closePaymentModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button>
         </div>
 
         <!-- Banner jika pembayaran diarahkan ke Faktur tertentu -->
-        <div id="bannerTargetInvoice" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
-            <div style="font-size: 11px; font-weight: 800; color: #1e40af; text-transform: uppercase;">Pembayaran Ditujukan Khusus Ke Faktur:</div>
-            <div id="bannerTargetInvoiceText" style="font-size: 13px; font-weight: 800; color: #1e3a8a; margin-top: 2px;">-</div>
+        <div id="bannerTargetInvoice" style="display: none; background: var(--info-bg); border: 1px solid var(--border-hover); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--aktif-fg); text-transform: uppercase;">Pembayaran Ditujukan Khusus Ke Faktur:</div>
+            <div id="bannerTargetInvoiceText" style="font-size: 13px; font-weight: 800; color: var(--aktif-fg); margin-top: 2px;">-</div>
         </div>
 
         <form id="formCatatBayarPemasok" onsubmit="submitPaymentAp(event)">
@@ -727,7 +727,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                 <!-- Pemasok -->
                 <div style="grid-column: span 2;">
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Pemasok / Vendor Penerima <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Pemasok / Vendor Penerima <span style="color: var(--bad-fg);">*</span></label>
                     <select id="payPemasokId" name="pemasok_id" class="form-control" required onchange="loadUnpaidSjForPemasok(this.value)">
                         <option value="">-- Pilih Pemasok / Supplier --</option>
                         <?php foreach ($pemasokList as $pm): ?>
@@ -738,13 +738,13 @@ require_once __DIR__ . '/layout/header.php';
 
                 <!-- Tanggal Bayar -->
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Tanggal Pembayaran <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Tanggal Pembayaran <span style="color: var(--bad-fg);">*</span></label>
                     <input type="date" id="payTanggal" name="tanggal_bayar" class="form-control" value="<?= date('Y-m-d') ?>" required>
                 </div>
 
                 <!-- Metode Bayar -->
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Metode Pembayaran <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Metode Pembayaran <span style="color: var(--bad-fg);">*</span></label>
                     <select id="payMetode" name="metode_bayar" class="form-control" required onchange="toggleMetodeBayar(this.value)">
                         <option value="TRANSFER_BANK">Transfer Bank</option>
                         <option value="TUNAI">Uang Tunai</option>
@@ -753,21 +753,21 @@ require_once __DIR__ . '/layout/header.php';
 
                 <!-- Bank Sumber -->
                 <div id="wrapperBankSumber">
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Rekening Bank Sumber</label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Rekening Bank Sumber</label>
                     <input type="text" id="payBankSumber" name="bank_sumber" class="form-control" placeholder="Contoh: BCA 8820192837 a/n PT WMS">
                 </div>
 
                 <!-- No Rekening Tujuan -->
                 <div id="wrapperNoRekTujuan">
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">No. Rekening Tujuan Vendor</label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">No. Rekening Tujuan Vendor</label>
                     <input type="text" id="payNoRekTujuan" name="no_rekening_tujuan" class="form-control" placeholder="Contoh: Mandiri 1320019283 a/n Udin">
                 </div>
 
                 <!-- Jumlah Bayar -->
                 <div style="grid-column: span 2;">
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Total Dibayarkan (Rp)</label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Total Dibayarkan (Rp)</label>
                     <div style="position: relative;">
-                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #64748b;">Rp</span>
+                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted);">Rp</span>
                         <input type="number" id="payJumlah" name="jumlah_bayar" class="form-control" placeholder="0" min="1" step="any" required readonly style="padding-left: 38px; font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted);">
                     </div>
                     <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Pembayaran ke pemasok selalu lunas penuh per surat jalan atau faktur.</div>
@@ -779,10 +779,10 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <!-- PREVIEW DAFTAR SURAT JALAN BELUM LUNAS -->
-            <div id="wrapperUnpaidSj" style="margin-top: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+            <div id="wrapperUnpaidSj" style="margin-top: 14px; background: var(--bg-muted); border: 1px solid var(--border); border-radius: 8px; padding: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 12px; font-weight: 800; color: #334155;">Pilih Surat Jalan yang Dibayar</span>
-                    <span id="badgeTotalUnpaid" style="font-size: 11px; font-weight: 700; color: #b45309;">Sisa Utang: Rp 0</span>
+                    <span style="font-size: 12px; font-weight: 800; color: var(--text-main);">Pilih Surat Jalan yang Dibayar</span>
+                    <span id="badgeTotalUnpaid" style="font-size: 11px; font-weight: 700; color: var(--warn-fg);">Sisa Utang: Rp 0</span>
                 </div>
 
                 <div id="containerUnpaidTable" style="max-height: 200px; overflow-y: auto;">
@@ -794,11 +794,11 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- Keterangan -->
             <div style="margin-top: 14px;">
-                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Keterangan / Catatan Pengeluaran</label>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Keterangan / Catatan Pengeluaran</label>
                 <textarea name="keterangan" id="payKeterangan" class="form-control" rows="2" placeholder="Catatan opsional (misal: Pelunasan faktur es balok / ikan tongkol)..." style="font-size: 12px;"></textarea>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">
                 <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Batal</button>
                 <button type="submit" id="btnSubmitPay" class="btn btn-primary" style="font-weight: 700;">
                     <i data-lucide="check" style="width: 15px; height: 15px;"></i>
@@ -813,23 +813,23 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL 2: RIWAYAT PEMBAYARAN PER SURAT JALAN                              -->
 <!-- ========================================================================= -->
 <div id="modalRiwayatBayarSj" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
-    <div class="card" style="width: 100%; max-width: 640px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
+    <div class="card" style="width: 100%; max-width: 640px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: var(--bg-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
             <div>
-                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #1e293b;">Riwayat Cicilan Pembayaran Surat Jalan</h3>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main);">Riwayat Cicilan Pembayaran Surat Jalan</h3>
                 <p id="histSjSubtitle" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">-</p>
             </div>
-            <button type="button" onclick="closeHistSjModal()" style="border: none; background: transparent; font-size: 20px; color: #64748b; cursor: pointer; padding: 4px;">&times;</button>
+            <button type="button" onclick="closeHistSjModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button>
         </div>
 
-        <div id="histSjSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div id="histSjSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; background: var(--bg-muted); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
             <div>
                 <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">TOTAL NILAI PEMBELIAN</div>
-                <div id="histSjTotalTagihan" style="font-size: 15px; font-weight: 800; color: #1e293b; font-family: 'JetBrains Mono', monospace;">Rp 0</div>
+                <div id="histSjTotalTagihan" style="font-size: 15px; font-weight: 800; color: var(--text-main); font-family: 'JetBrains Mono', monospace;">Rp 0</div>
             </div>
             <div>
                 <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">SISA UTANG BERJALAN</div>
-                <div id="histSjSisaUtang" style="font-size: 15px; font-weight: 800; color: #b45309; font-family: 'JetBrains Mono', monospace;">Rp 0</div>
+                <div id="histSjSisaUtang" style="font-size: 15px; font-weight: 800; color: var(--warn-fg); font-family: 'JetBrains Mono', monospace;">Rp 0</div>
             </div>
         </div>
 
@@ -853,7 +853,7 @@ require_once __DIR__ . '/layout/header.php';
             </table>
         </div>
 
-        <div style="display: flex; justify-content: flex-end; margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
             <button type="button" class="btn btn-outline" onclick="closeHistSjModal()">Tutup</button>
         </div>
     </div>
@@ -863,20 +863,20 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL 3: BUAT FAKTUR PEMBELIAN (OPERASIONAL / ASET / NON-STOK)           -->
 <!-- ========================================================================= -->
 <div id="modalCreatePurchaseInvoice" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
-    <div class="card" style="width: 100%; max-width: 820px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px;">
+    <div class="card" style="width: 100%; max-width: 820px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: var(--bg-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 18px;">
             <div>
-                <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #1e293b;">Buat Faktur Operasional</h3>
+                <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: var(--text-main);">Buat Faktur Operasional</h3>
                 <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Catat tagihan biaya operasional atau aset non-stok</p>
             </div>
-            <button type="button" onclick="closeCreateInvoiceModal()" style="border: none; background: transparent; font-size: 20px; color: #64748b; cursor: pointer; padding: 4px;">&times;</button>
+            <button type="button" onclick="closeCreateInvoiceModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button>
         </div>
 
         <form id="formCreatePurchaseInvoice" onsubmit="submitCreateInvoice(event)">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                 <!-- Tipe Invoice & Debit COA -->
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Akun <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Akun <span style="color: var(--bad-fg);">*</span></label>
                     <select id="invTipe" name="kode_akun_debit" class="form-control" required onchange="onInvoiceTypeChange(this.value)">
                         <?php if (!empty($akunFaktur['biaya'])): ?>
                         <optgroup label="Biaya">
@@ -897,7 +897,7 @@ require_once __DIR__ . '/layout/header.php';
 
                 <!-- Vendor / Penerima -->
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Vendor <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Vendor <span style="color: var(--bad-fg);">*</span></label>
                     <select id="invPemasokSelect" class="form-control" onchange="onVendorSelectChange(this.value)">
                         <option value="">-- Pilih Vendor --</option>
                         <?php if (!empty($vendorNonPemasokList)): ?>
@@ -916,13 +916,13 @@ require_once __DIR__ . '/layout/header.php';
 
                 <!-- Tanggal Invoice -->
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Tanggal Faktur / Transaksi <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Tanggal Faktur / Transaksi <span style="color: var(--bad-fg);">*</span></label>
                     <input type="date" id="invTanggal" name="tanggal_invoice" class="form-control" value="<?= date('Y-m-d') ?>" required oninput="hitungTempoFaktur()">
                 </div>
 
                 <!-- Jatuh Tempo -->
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Tanggal Jatuh Tempo <span style="color: #ef4444;">*</span></label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Tanggal Jatuh Tempo <span style="color: var(--bad-fg);">*</span></label>
                     <select id="invTermin" class="form-control" style="margin-bottom: 6px;" onchange="hitungTempoFaktur()">
                         <?php foreach (\App\Services\AgingService::TERMIN as $hr => $lb): ?>
                             <option value="<?= $hr ?>" <?= $hr === 14 ? 'selected' : '' ?>><?= $lb ?></option>
@@ -934,16 +934,16 @@ require_once __DIR__ . '/layout/header.php';
 
                 <!-- Nomor Referensi / Nota Vendor -->
                 <div style="grid-column: span 2;">
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Nomor Nota Fisik / Bon Vendor / Surat Jalan</label>
+                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Nomor Nota Fisik / Bon Vendor / Surat Jalan</label>
                     <input type="text" id="invNoSj" name="no_surat_jalan" class="form-control" placeholder="Contoh: NOTA-ES-992 / BON-0482">
                 </div>
             </div>
 
             <!-- TABEL LINE ITEMS DINAMIS -->
-            <div style="margin-top: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+            <div style="margin-top: 14px; background: var(--bg-muted); border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
-                        <span style="font-size: 12.5px; font-weight: 800; color: #1e293b;">Rincian Item Biaya / Pembelian</span>
+                        <span style="font-size: 12.5px; font-weight: 800; color: var(--text-main);">Rincian Item Biaya / Pembelian</span>
                         <div style="font-size: 11px; color: var(--text-muted);">Masukkan komponen pengeluaran, jumlah qty, dan harga satuan</div>
                     </div>
                     <button type="button" class="btn btn-outline btn-sm" onclick="addInvoiceItemRow()" style="font-size: 11.5px; padding: 4px 10px; font-weight: 700;">
@@ -954,7 +954,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
                     <table class="table-custom" style="font-size: 11.5px; width: 100%;">
                         <thead>
-                            <tr style="background: #e2e8f0;">
+                            <tr style="background: var(--border);">
                                 <th style="min-width: 220px;">Deskripsi Biaya / Barang</th>
                                 <th style="width: 85px; text-align: center;">Qty</th>
                                 <th style="width: 100px;">Satuan</th>
@@ -967,9 +967,9 @@ require_once __DIR__ . '/layout/header.php';
                             <!-- Injected by JS -->
                         </tbody>
                         <tfoot>
-                            <tr style="background: #eef2ff; font-weight: 800;">
-                                <td colspan="4" style="text-align: right; text-transform: uppercase; font-size: 12px; color: #3730a3;">Total Tagihan Faktur:</td>
-                                <td id="labelGrandTotalInvoice" style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #3730a3;">Rp 0</td>
+                            <tr style="background: var(--info-bg); font-weight: 800;">
+                                <td colspan="4" style="text-align: right; text-transform: uppercase; font-size: 12px; color: var(--aktif-fg);">Total Tagihan Faktur:</td>
+                                <td id="labelGrandTotalInvoice" style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--aktif-fg);">Rp 0</td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -979,7 +979,7 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- Keterangan -->
             <div style="margin-top: 14px;">
-                <label style="display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">Keterangan / Keperluan Operasional</label>
+                <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Keterangan / Keperluan Operasional</label>
                 <textarea name="keterangan" id="invKeterangan" class="form-control" rows="2" placeholder="Catatan opsional (misal: Pembelian es balok untuk pengawetan ikan tongkol masuk dari nelayan Karawang)..." style="font-size: 12px;"></textarea>
             </div>
 
@@ -992,7 +992,7 @@ require_once __DIR__ . '/layout/header.php';
                 <?php endforeach; ?>
             </datalist>
 
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 14px;">
                 <button type="button" class="btn btn-outline" onclick="closeCreateInvoiceModal()">Batal</button>
                 <button type="submit" id="btnSubmitCreateInvoice" class="btn btn-primary" style="font-weight: 700;">
                     <i data-lucide="check" style="width: 15px; height: 15px;"></i>
@@ -1007,21 +1007,21 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL 4: DETAIL LENGKAP FAKTUR PEMBELIAN (ITEMS, JURNAL, & HISTORI BAYAR)  -->
 <!-- ========================================================================= -->
 <div id="modalDetailPurchaseInvoice" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
-    <div class="card" style="width: 100%; max-width: 760px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px;">
+    <div class="card" style="width: 100%; max-width: 760px; margin: auto; padding: 24px; box-shadow: var(--shadow-lg); border-radius: 12px; background: var(--bg-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
             <div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <h3 id="detInvNo" style="margin: 0; font-size: 17px; font-weight: 800; color: #1e3a8a; font-family: 'JetBrains Mono', monospace;">-</h3>
+                    <h3 id="detInvNo" style="margin: 0; font-size: 17px; font-weight: 800; color: var(--aktif-fg); font-family: 'JetBrains Mono', monospace;">-</h3>
                     <span id="detInvStatusBadge" style="display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 4px;">-</span>
                 </div>
                 <p id="detInvVendor" style="margin: 2px 0 0 0; font-size: 12.5px; color: var(--text-muted); font-weight: 700;">-</p>
             </div>
-            <button type="button" onclick="closeDetailInvoiceModal()" style="border: none; background: transparent; font-size: 20px; color: #64748b; cursor: pointer; padding: 4px;">&times;</button>
+            <button type="button" onclick="closeDetailInvoiceModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button>
         </div>
 
         <!-- RINGKASAN METADATA & JURNAL COA -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 12px;">
+            <div style="background: var(--bg-muted); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span style="color: var(--text-muted);">Tanggal Faktur:</span>
                     <strong id="detInvTgl">-</strong>
@@ -1036,29 +1036,29 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
             </div>
 
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 12px;">
+            <div style="background: var(--bg-muted); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span style="color: var(--text-muted);">Debit Akun:</span>
-                    <strong id="detInvDebit" style="color: #0284c7;">-</strong>
+                    <strong id="detInvDebit" style="color: var(--aktif-fg);">-</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span style="color: var(--text-muted);">Kredit Akun:</span>
-                    <strong id="detInvKredit" style="color: #b45309;">[2000] Utang Usaha</strong>
+                    <strong id="detInvKredit" style="color: var(--warn-fg);">[2000] Utang Usaha</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span style="color: var(--text-muted);">Sisa Utang:</span>
-                    <strong id="detInvSisa" style="color: #b91c1c; font-family: 'JetBrains Mono', monospace; font-size: 13px;">Rp 0</strong>
+                    <strong id="detInvSisa" style="color: var(--bad-fg); font-family: 'JetBrains Mono', monospace; font-size: 13px;">Rp 0</strong>
                 </div>
             </div>
         </div>
 
         <!-- TABEL RINCIAN ITEM -->
         <div style="margin-bottom: 16px;">
-            <div style="font-size: 12.5px; font-weight: 800; color: #1e293b; margin-bottom: 6px;">Rincian Barang / Biaya Faktur</div>
+            <div style="font-size: 12.5px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Rincian Barang / Biaya Faktur</div>
             <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
                 <table class="table-custom" style="font-size: 11.5px; width: 100%;">
                     <thead>
-                        <tr style="background: #f1f5f9;">
+                        <tr style="background: var(--bg-muted);">
                             <th style="width: 35px; text-align: center;">No</th>
                             <th>Deskripsi Item</th>
                             <th style="width: 80px; text-align: center;">Qty</th>
@@ -1076,11 +1076,11 @@ require_once __DIR__ . '/layout/header.php';
 
         <!-- TABEL RIWAYAT PEMBAYARAN KAS KELUAR -->
         <div>
-            <div style="font-size: 12.5px; font-weight: 800; color: #1e293b; margin-bottom: 6px;">Riwayat Alokasi Pembayaran Kas Keluar</div>
+            <div style="font-size: 12.5px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Riwayat Alokasi Pembayaran Kas Keluar</div>
             <div class="table-responsive" style="max-height: 160px; overflow-y: auto;">
                 <table class="table-custom" style="font-size: 11.5px; width: 100%;">
                     <thead>
-                        <tr style="background: #f1f5f9;">
+                        <tr style="background: var(--bg-muted);">
                             <th style="width: 35px; text-align: center;">No</th>
                             <th style="width: 140px;">No. Bukti Kas</th>
                             <th style="width: 95px;">Tgl Bayar</th>
@@ -1096,7 +1096,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px;">
             <div id="detInvActionBayar">
                 <!-- Tombol bayar jika belum lunas -->
             </div>
@@ -1206,10 +1206,10 @@ async function loadUnpaidSjForPemasok(pemasokId, prefillNominal = null) {
 
             renderUnpaidTable(currentUnpaidSjList);
         } else {
-            container.innerHTML = `<div style="text-align: center; color: #ef4444; font-size: 12px; padding: 12px;">Gagal: ${data.message}</div>`;
+            container.innerHTML = `<div style="text-align: center; color: var(--bad-fg); font-size: 12px; padding: 12px;">Gagal: ${data.message}</div>`;
         }
     } catch (err) {
-        container.innerHTML = `<div style="text-align: center; color: #ef4444; font-size: 12px; padding: 12px;">Terjadi kesalahan koneksi</div>`;
+        container.innerHTML = `<div style="text-align: center; color: var(--bad-fg); font-size: 12px; padding: 12px;">Terjadi kesalahan koneksi</div>`;
     }
 }
 
@@ -1218,7 +1218,7 @@ function renderUnpaidTable(list) {
     const container = document.getElementById('containerUnpaidTable');
 
     if (!list || list.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: #10b981; font-weight: 700; font-size: 12px; padding: 16px;">Tidak ada surat jalan yang terutang.</div>';
+        container.innerHTML = '<div style="text-align: center; color: var(--ok-fg); font-weight: 700; font-size: 12px; padding: 16px;">Tidak ada surat jalan yang terutang.</div>';
         recalcPayTotal();
         return;
     }
@@ -1226,7 +1226,7 @@ function renderUnpaidTable(list) {
     let html = `
         <table class="table-custom" data-no-tools style="font-size: 11.5px; width: 100%;">
             <thead>
-                <tr style="background: #e2e8f0;">
+                <tr style="background: var(--border);">
                     <th style="padding: 6px 8px; width: 34px;"><input type="checkbox" id="chkPayAll" onchange="togglePayAll(this.checked)"></th>
                     <th style="padding: 6px 8px;">No. SJ</th>
                     <th style="padding: 6px 8px;">Tgl Terima</th>
@@ -1245,7 +1245,7 @@ function renderUnpaidTable(list) {
                 </td>
                 <td style="padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">${sj.no_surat_jalan}</td>
                 <td style="padding: 6px 8px; color: var(--text-muted);">${sj.tanggal_masuk.substring(0, 10)}</td>
-                <td style="text-align: right; padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #b45309;">Rp ${new Intl.NumberFormat('id-ID').format(sj.sisa_utang)}</td>
+                <td style="text-align: right; padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--warn-fg);">Rp ${new Intl.NumberFormat('id-ID').format(sj.sisa_utang)}</td>
             </tr>`;
     });
 
@@ -1350,12 +1350,12 @@ async function viewSjHistory(noSj, totalBeli, sisaUtang) {
                 html += `
                     <tr>
                         <td style="text-align: center; color: var(--text-muted);">${no++}</td>
-                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #1e3a8a;">${h.no_bukti_keluar}</td>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">${h.no_bukti_keluar}</td>
                         <td>${h.tanggal_bayar.substring(0, 10)}</td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #047857;">
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--ok-fg);">
                             Rp ${new Intl.NumberFormat('id-ID').format(h.nominal_alokasi)}
                         </td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b45309;">
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);">
                             Rp ${new Intl.NumberFormat('id-ID').format(h.sisa_utang_setelah)}
                         </td>
                         <td>
@@ -1370,7 +1370,7 @@ async function viewSjHistory(noSj, totalBeli, sisaUtang) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">Belum ada riwayat cicilan pembayaran untuk Surat Jalan ini.</td></tr>';
         }
     } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">Gagal memuat riwayat cicilan.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--bad-fg);">Gagal memuat riwayat cicilan.</td></tr>';
     }
 }
 
@@ -1495,11 +1495,11 @@ function addInvoiceItemRow(deskripsi = '', qty = '', satuan = '', harga = '') {
         <td style="padding: 6px 8px;">
             <input type="number" class="form-control item-harga" value="${harga}" min="0" step="any" required style="font-size: 11.5px; text-align: right; font-family: 'JetBrains Mono', monospace; padding: 4px 8px;" oninput="calcInvoiceTotals()">
         </td>
-        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #1e3a8a;" class="item-subtotal-text">
+        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);" class="item-subtotal-text">
             Rp ${new Intl.NumberFormat('id-ID').format(subtotal)}
         </td>
         <td style="text-align: center; padding: 6px 8px;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="removeInvoiceItemRow('${rowId}')" style="padding: 2px 6px; color: #ef4444; border-color: #fca5a5;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="removeInvoiceItemRow('${rowId}')" style="padding: 2px 6px; color: var(--bad-fg); border-color: var(--border-hover);">
                 <i data-lucide="x" style="width: 12px; height: 12px;"></i>
             </button>
         </td>
@@ -1674,7 +1674,7 @@ async function viewInvoiceDetail(id) {
                             <td style="text-align: center;">${it.qty}</td>
                             <td>${it.satuan}</td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">Rp ${new Intl.NumberFormat('id-ID').format(it.harga_satuan)}</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #1e3a8a;">Rp ${new Intl.NumberFormat('id-ID').format(it.subtotal)}</td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">Rp ${new Intl.NumberFormat('id-ID').format(it.subtotal)}</td>
                         </tr>
                     `;
                 });
@@ -1692,15 +1692,15 @@ async function viewInvoiceDetail(id) {
                     htmlPay += `
                         <tr>
                             <td style="text-align: center; color: var(--text-muted);">${noP++}</td>
-                            <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #1e3a8a;">${p.no_bukti_keluar}
+                            <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">${p.no_bukti_keluar}
                                 ${p.status_pembayaran === 'BATAL'
-                                    ? `<div><span style="display:inline-block;padding:1px 6px;background:#e2e8f0;color:#475569;font-size:10.5px;border-radius:4px;font-family:inherit;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);font-weight:500;font-family:inherit;">${p.alasan_batal || ''}</div>`
-                                    : `<div><a href="javascript:void(0)" onclick="closeDetailInvoiceModal(); batalDokumen('batal_bayar_ap', { id: ${p.pembayaran_id} }, 'pembayaran ${p.no_bukti_keluar} (Rp ${new Intl.NumberFormat('id-ID').format(p.total_pembayaran)})')" style="font-size:11px;color:#dc2626;font-weight:700;font-family:inherit;">Batalkan pembayaran</a></div>`}
+                                    ? `<div><span style="display:inline-block;padding:1px 6px;background:var(--border);color:var(--text-muted);font-size:10.5px;border-radius:4px;font-family:inherit;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);font-weight:500;font-family:inherit;">${p.alasan_batal || ''}</div>`
+                                    : `<div><a href="javascript:void(0)" onclick="closeDetailInvoiceModal(); batalDokumen('batal_bayar_ap', { id: ${p.pembayaran_id} }, 'pembayaran ${p.no_bukti_keluar} (Rp ${new Intl.NumberFormat('id-ID').format(p.total_pembayaran)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;font-family:inherit;">Batalkan pembayaran</a></div>`}
                             </td>
                             <td>${p.tanggal_bayar.substring(0, 10)}</td>
                             <td>${p.metode_bayar} ${p.bank_sumber ? '• ' + p.bank_sumber : ''}</td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: ${p.status_pembayaran === 'BATAL' ? '#94a3b8; text-decoration: line-through' : '#047857'};">Rp ${new Intl.NumberFormat('id-ID').format(p.status_pembayaran === 'BATAL' ? p.nominal_asal : p.nominal_alokasi)}</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b45309;">Rp ${new Intl.NumberFormat('id-ID').format(p.sisa_utang_setelah)}</td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);">Rp ${new Intl.NumberFormat('id-ID').format(p.sisa_utang_setelah)}</td>
                         </tr>
                     `;
                 });

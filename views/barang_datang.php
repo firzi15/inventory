@@ -169,7 +169,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <td class="no-print"><button type="button" class="btn btn-outline btn-sm" onclick='rincianBox(<?= json_encode($r['sj']) ?>, <?= (int)$r['item_id'] ?>, <?= json_encode($r['nama_item']) ?>)'>Box</button></td>
                             </tr>
                             <?php endforeach; ?>
-                            <tr style="font-weight: 700; background: rgba(79, 70, 229, 0.06);">
+                            <tr style="font-weight: 700; background: rgba(2, 132, 199, 0.06);">
                                 <td colspan="7" style="text-align: right;">TOTAL <?= htmlspecialchars(mb_strtoupper($namaKat)) ?></td>
                                 <td style="text-align: right;"><?= $kk ?></td>
                                 <td style="text-align: right;"><?= $kg($kq) ?></td>
@@ -191,7 +191,7 @@ require_once __DIR__ . '/layout/header.php';
                     <?php endforeach; ?>
                     <?php if ($rows): ?>
                         <?php foreach ($totKat as $namaKat => $t): ?>
-                        <tr style="font-weight: 700; background: rgba(79, 70, 229, 0.06);">
+                        <tr style="font-weight: 700; background: rgba(2, 132, 199, 0.06);">
                             <td colspan="7" style="text-align: right;">TOTAL <?= htmlspecialchars(mb_strtoupper($namaKat)) ?> (semua)</td>
                             <td style="text-align: right;"><?= $t['kemasan'] ?></td>
                             <td style="text-align: right;"><?= $kg($t['qty']) ?></td>

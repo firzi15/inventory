@@ -242,7 +242,7 @@ require_once __DIR__ . '/layout/header.php';
                         $n = array_sum(array_column($list, 'nilai'));
                         $k = array_sum(array_column($list, 'kemasan'));
                         $h = array_sum(array_column($list, 'hpp'));
-                        $gaya = $besar ? 'font-weight: 800; background: var(--primary); color: #fff;' : 'font-weight: 700; background: rgba(79, 70, 229, 0.06);';
+                        $gaya = $besar ? 'font-weight: 800; background: var(--primary); color: #fff;' : 'font-weight: 700; background: rgba(2, 132, 199, 0.06);';
                         echo '<tr style="' . $gaya . '"><td colspan="' . ($jual ? 4 : 5) . '" style="text-align: right;">' . htmlspecialchars($label) . '</td>';
                         echo '<td style="text-align: right;">' . $k . '</td><td style="text-align: right;">' . $kg($q) . '</td>';
                         echo '<td style="text-align: right;">' . $rp($q > 0 ? $n / $q : 0) . '</td><td style="text-align: right;">' . $rp($n) . '</td><td></td>';
@@ -339,7 +339,7 @@ require_once __DIR__ . '/layout/header.php';
 document.addEventListener('DOMContentLoaded', function () {
     var cv = document.getElementById('chartHarga');
     if (!cv || typeof Chart === 'undefined') return;
-    var warna = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#8b5cf6', '#14b8a6'];
+    var warna = ['#0284c7', '#10b981', '#f59e0b', '#ef4444', '#0ea5e9', '#0369a1', '#14b8a6'];
     var d = <?= json_encode($chart) ?>;
     new Chart(cv, {
         type: 'line',

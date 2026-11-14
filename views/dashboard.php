@@ -16,7 +16,7 @@ $recentTrx = Transaksi::getRecent(6);
 
 // Utang mitra: total belanja (utang), total setoran (terbayar), dan sisa utang tiap mitra
 $warnaMitra = [];
-foreach (Mitra::getAll() as $mm) $warnaMitra[(int)$mm['id']] = $mm['warna_identitas'] ?? '#4f46e5';
+foreach (Mitra::getAll() as $mm) $warnaMitra[(int)$mm['id']] = $mm['warna_identitas'] ?? '#0284c7';
 $utangMitra = Piutang::getAgingSummaryPerMitra();
 $totUtang = array_sum(array_column($utangMitra, 'total_belanja'));
 $totBayar = array_sum(array_column($utangMitra, 'total_setoran'));
@@ -142,14 +142,14 @@ require_once __DIR__ . '/layout/header.php';
                     <?php if (empty($mitraTop)): ?>
                         <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Belum ada mitra.</td></tr>
                     <?php endif; ?>
-                    <?php foreach ($mitraTop as $m): $warna = $warnaMitra[(int)$m['mitra_id']] ?? '#4f46e5'; ?>
+                    <?php foreach ($mitraTop as $m): $warna = $warnaMitra[(int)$m['mitra_id']] ?? '#0284c7'; ?>
                     <tr>
                         <td>
                             <span class="mitra-tag <?= strtolower($m['kode_mitra']) ?>" style="background: <?= htmlspecialchars($warna) ?>;"><?= htmlspecialchars($m['kode_mitra']) ?></span>
                             <span style="font-weight: 600; font-size: 13px; margin-left: 6px;"><?= htmlspecialchars($m['nama_mitra']) ?></span>
                         </td>
                         <td style="text-align: right; white-space: nowrap;"><?= Helper::formatRupiah($m['total_belanja']) ?></td>
-                        <td style="text-align: right; white-space: nowrap; color: #047857;"><?= Helper::formatRupiah($m['total_setoran']) ?></td>
+                        <td style="text-align: right; white-space: nowrap; color: var(--ok-fg);"><?= Helper::formatRupiah($m['total_setoran']) ?></td>
                         <td style="text-align: right; white-space: nowrap; font-weight: 700; color: <?= $m['sisa_piutang'] > 0.01 ? '#b45309' : 'inherit' ?>;"><?= Helper::formatRupiah($m['sisa_piutang']) ?></td>
                     </tr>
                     <?php endforeach; ?>
@@ -159,7 +159,7 @@ require_once __DIR__ . '/layout/header.php';
                     <tr style="font-weight: 800; background: var(--bg-muted);">
                         <td>Semua mitra (<?= count($utangMitra) ?>)</td>
                         <td style="text-align: right;"><?= Helper::formatRupiah($totUtang) ?></td>
-                        <td style="text-align: right; color: #047857;"><?= Helper::formatRupiah($totBayar) ?></td>
+                        <td style="text-align: right; color: var(--ok-fg);"><?= Helper::formatRupiah($totBayar) ?></td>
                         <td style="text-align: right; color: <?= $totSisa > 0.01 ? '#b45309' : 'inherit' ?>;"><?= Helper::formatRupiah($totSisa) ?></td>
                     </tr>
                 </tfoot>
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
             labels: t.labels,
             datasets: [
-                { label: 'Masuk (kg)', data: t.masuk, backgroundColor: '#4f46e5', borderRadius: 3, maxBarThickness: 18 },
+                { label: 'Masuk (kg)', data: t.masuk, backgroundColor: '#0284c7', borderRadius: 3, maxBarThickness: 18 },
                 { label: 'Keluar (kg)', data: t.keluar, backgroundColor: '#94a3b8', borderRadius: 3, maxBarThickness: 18 }
             ]
         },

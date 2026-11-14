@@ -169,7 +169,7 @@ require_once __DIR__ . '/layout/header.php';
 
                 <div class="form-group" style="margin-bottom: 10px;">
                     <label class="form-label" for="nama_penerima" style="font-size: 12px;">Diterima Oleh (Pihak Penerima) <span style="color:red;">*</span></label>
-                    <input type="text" name="nama_penerima" id="nama_penerima" class="form-control" value="<?= htmlspecialchars($currentUser['nama_lengkap']) ?>" required style="font-size: 13px; font-weight: 700; color: #10b981;">
+                    <input type="text" name="nama_penerima" id="nama_penerima" class="form-control" value="<?= htmlspecialchars($currentUser['nama_lengkap']) ?>" required style="font-size: 13px; font-weight: 700; color: var(--ok-fg);">
                     <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
                         Terikat ke akun operator: <strong><?= htmlspecialchars($currentUser['nama_lengkap']) ?></strong>
                     </div>
@@ -228,7 +228,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
             <div style="display: flex; gap: 10px; align-items: baseline;">
                 <span style="font-size: 13.5px; color: var(--text-muted); font-weight: 600;">Total Bobot Mutasi:</span>
-                <span id="mutasiTotalKg" style="font-size: 24px; font-weight: 900; color: #10b981; font-family: 'JetBrains Mono', monospace;">0.00 kg</span>
+                <span id="mutasiTotalKg" style="font-size: 24px; font-weight: 900; color: var(--ok-fg); font-family: 'JetBrains Mono', monospace;">0.00 kg</span>
             </div>
         </div>
 
@@ -336,7 +336,7 @@ require_once __DIR__ . '/layout/header.php';
                     <i data-lucide="sliders-horizontal" style="width: 15px; height: 15px;"></i>
                     <span>Filter Lanjutan</span>
                     <?php if ($activeMutasiFilterCount > 0): ?>
-                        <span class="badge" style="background: #ffffff; color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeMutasiFilterCount ?></span>
+                        <span class="badge" style="background: var(--bg-card); color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeMutasiFilterCount ?></span>
                     <?php endif; ?>
                 </button>
 
@@ -350,10 +350,10 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <!-- JUMBOTRON PANEL FILTER MUTASI LENGKAP & DETAIL (COLLAPSIBLE) -->
-        <div id="panelJumbotronFilterMutasi" class="no-print" style="display: none; padding: 20px 24px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border-bottom: 1.5px solid #cbd5e1;">
+        <div id="panelJumbotronFilterMutasi" class="no-print" style="display: none; padding: 20px 24px; background: var(--bg-card); border-bottom: 1.5px solid var(--border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid var(--border);">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3);">
+                    <div style="background: var(--primary); color: white; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3);">
                         <i data-lucide="sliders" style="width: 18px; height: 18px;"></i>
                     </div>
                     <div>
@@ -418,7 +418,7 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
 
                     <div style="display: flex; gap: 8px; align-items: flex-end;">
-                        <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);">
+                        <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);">
                             <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
                             <span>Terapkan Filter</span>
                         </button>
@@ -500,7 +500,7 @@ require_once __DIR__ . '/layout/header.php';
                             <td><code style="font-size: 11px;"><?= htmlspecialchars($log['sj_pemasok'] ?: '-') ?></code></td>
                             <td>
                                 <?php if (!empty($log['kode_mitra'])): ?>
-                                    <span class="mitra-tag <?= strtolower($log['kode_mitra']) ?>" style="background: <?= htmlspecialchars($log['warna_identitas'] ?? '#7c3aed') ?>; padding: 2px 7px; font-size: 11px;">
+                                    <span class="mitra-tag <?= strtolower($log['kode_mitra']) ?>" style="background: <?= htmlspecialchars($log['warna_identitas'] ?? '#0369a1') ?>; padding: 2px 7px; font-size: 11px;">
                                         <?= htmlspecialchars($log['kode_mitra']) ?>
                                     </span>
                                 <?php else: ?>
@@ -632,10 +632,10 @@ require_once __DIR__ . '/layout/header.php';
                                 <div style="font-size: 11px; color: var(--text-muted);">Penyerah: <?= htmlspecialchars($rm['nama_penyerah'] ?? '-') ?></div>
                             </td>
                             <td>
-                                <strong style="color: #10b981;"><?= htmlspecialchars($tujuanName) ?></strong>
+                                <strong style="color: var(--ok-fg);"><?= htmlspecialchars($tujuanName) ?></strong>
                                 <div style="font-size: 11px; color: var(--text-muted);">Penerima: <?= htmlspecialchars($rm['nama_penerima'] ?? '-') ?> (User: <?= htmlspecialchars($rm['operator_input'] ?? 'System') ?>)</div>
                             </td>
-                            <td style="text-align: right; font-weight: 800; font-size: 14px; color: #10b981;"><?= Helper::formatKg($rm['total_kg']) ?></td>
+                            <td style="text-align: right; font-weight: 800; font-size: 14px; color: var(--ok-fg);"><?= Helper::formatKg($rm['total_kg']) ?></td>
                             <td><?= Helper::renderStatusBadge($rm['status_accurate']) ?></td>
                             <td style="text-align: center;">
                                 <a href="index.php?page=bast_print&id=<?= $rm['id'] ?>" target="_blank" class="btn btn-outline btn-sm">
@@ -684,9 +684,9 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL POPUP: BARCODE BELUM DITIMBANG (WAJIB DITIMBANG TERLEBIH DAHULU)     -->
 <!-- ========================================================================= -->
 <div id="modalBarcodeNotWeighed" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: var(--bg-card); border-radius: 16px; max-width: 530px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 2px solid #f59e0b; overflow: hidden; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="background: var(--bg-card); border-radius: 16px; max-width: 530px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 2px solid var(--warn-solid); overflow: hidden; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
         <!-- Header Banner Amber / Peringatan -->
-        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 18px 22px; color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
+        <div style="background: var(--warn-solid); padding: 18px 22px; color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 14px;">
                 <div style="background: rgba(255, 255, 255, 0.25); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <i data-lucide="scale" style="width: 25px; height: 25px; color: #ffffff;"></i>
@@ -712,7 +712,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="background: var(--bg-muted); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; font-size: 13px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px;">
                     <span style="color: var(--text-muted);">ID Barcode:</span>
-                    <strong id="notWeighedBarcodeId" style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: #d97706;">-</strong>
+                    <strong id="notWeighedBarcodeId" style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--warn-fg);">-</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px;">
                     <span style="color: var(--text-muted);">Nama Komoditas:</span>
@@ -728,7 +728,7 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
                     <span style="color: var(--text-muted); font-weight: 700;">Status Timbangan:</span>
-                    <span class="badge badge-warning" id="notWeighedBarcodeBadge" style="font-size: 13px; font-weight: 900; padding: 4px 10px; background: #fef3c7; color: #b45309; border: 1px solid #f59e0b;">
+                    <span class="badge badge-warning" id="notWeighedBarcodeBadge" style="font-size: 13px; font-weight: 900; padding: 4px 10px; background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-solid);">
                         BELUM DITIMBANG (0.00 KG)
                     </span>
                 </div>
@@ -737,7 +737,7 @@ require_once __DIR__ . '/layout/header.php';
             <!-- Tombol Aksi Bawah -->
             <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
                 <!-- Tombol Utama: Langsung Menuju Stasiun Timbang dengan Barcode Ini -->
-                <button type="button" id="btnGoToWeighStation" class="btn btn-success" style="width: 100%; height: 46px; font-size: 14px; font-weight: 800; justify-content: center; border-radius: 10px; background: #10b981; border: none; cursor: pointer; color: white;">
+                <button type="button" id="btnGoToWeighStation" class="btn btn-success" style="width: 100%; height: 46px; font-size: 14px; font-weight: 800; justify-content: center; border-radius: 10px; background: var(--ok-solid); border: none; cursor: pointer; color: white;">
                     <i data-lucide="scale" style="width: 17px; height: 17px; margin-right: 6px;"></i>
                     <span>Buka Stasiun Timbang Sekarang</span>
                 </button>
@@ -753,9 +753,9 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL POPUP: BARCODE SUDAH DIPINDAHKAN (PROPORSIONAL & RAMAH OPERATOR)     -->
 <!-- ========================================================================= -->
 <div id="modalBarcodeAlreadyMoved" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: var(--bg-card); border-radius: 16px; max-width: 530px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 2px solid #8b5cf6; overflow: hidden; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="background: var(--bg-card); border-radius: 16px; max-width: 530px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 2px solid var(--primary); overflow: hidden; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
         <!-- Header Banner Violet Modern -->
-        <div style="background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); padding: 18px 22px; color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
+        <div style="background: var(--primary); padding: 18px 22px; color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 14px;">
                 <div style="background: rgba(255, 255, 255, 0.2); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <i data-lucide="package-check" style="width: 25px; height: 25px; color: #ffffff;"></i>
@@ -771,7 +771,7 @@ require_once __DIR__ . '/layout/header.php';
         <!-- Body Modal Informasi -->
         <div style="padding: 22px;">
             <!-- Kotak Pesan Proporsional -->
-            <div style="background: rgba(139, 92, 246, 0.08); border: 1.5px solid rgba(139, 92, 246, 0.25); border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;">
+            <div style="background: rgba(3, 105, 161, 0.08); border: 1.5px solid rgba(3, 105, 161, 0.25); border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;">
                 <div style="font-size: 13px; color: var(--text-main); line-height: 1.55; font-weight: 600;" id="movedModalWarningText">
                     ℹ️ Barcode kemasan ini <strong>sudah pernah dipindahkan</strong> dan telah tercatat dalam dokumen <strong>Berita Acara Serah Terima (BAST)</strong>. Untuk mencegah duplikasi stok fisik di gudang, barcode tidak dapat discan lagi.
                 </div>
@@ -781,7 +781,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="background: var(--bg-muted); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; font-size: 13px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px;">
                     <span style="color: var(--text-muted);">ID Barcode:</span>
-                    <strong id="movedBarcodeId" style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: #8b5cf6;">-</strong>
+                    <strong id="movedBarcodeId" style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--aktif-fg);">-</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px;">
                     <span style="color: var(--text-muted);">Nama Komoditas:</span>
@@ -811,7 +811,7 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- Tombol Aksi Bawah -->
             <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
-                <button type="button" id="btnCloseMovedModal" onclick="closeBarcodeAlreadyMovedModal()" class="btn btn-primary" style="width: 100%; height: 44px; font-size: 14px; font-weight: 800; justify-content: center; border-radius: 10px; background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); border: none; cursor: pointer;">
+                <button type="button" id="btnCloseMovedModal" onclick="closeBarcodeAlreadyMovedModal()" class="btn btn-primary" style="width: 100%; height: 44px; font-size: 14px; font-weight: 800; justify-content: center; border-radius: 10px; background: var(--primary); border: none; cursor: pointer;">
                     <span>Tutup & Lanjutkan Scan (Tekan Enter / Esc)</span>
                 </button>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -1006,11 +1006,11 @@ require_once __DIR__ . '/layout/header.php';
                     </td>
                     <td><span class="badge badge-info" style="font-size: 11px;">${lbl.nama_pemasok || 'Pemasok Umum'}</span></td>
                     <td>
-                        <span class="mitra-tag ${(lbl.kode_mitra || 'MTR').toLowerCase()}" style="background: ${lbl.warna_identitas || '#7c3aed'}; padding: 2px 7px; font-size: 11px;">
+                        <span class="mitra-tag ${(lbl.kode_mitra || 'MTR').toLowerCase()}" style="background: ${lbl.warna_identitas || '#0369a1'}; padding: 2px 7px; font-size: 11px;">
                             ${lbl.kode_mitra || 'Belum Ada'}
                         </span>
                     </td>
-                    <td style="text-align: right; font-weight: 800; font-size: 14px; color: #10b981;">${berat.toFixed(2)} kg</td>
+                    <td style="text-align: right; font-weight: 800; font-size: 14px; color: var(--ok-fg);">${berat.toFixed(2)} kg</td>
                     <td style="text-align: center;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="removeMutasiLabel('${code}')" style="color: var(--danger); padding: 2px 7px; font-size: 11px;">✕</button>
                     </td>
@@ -1125,7 +1125,7 @@ require_once __DIR__ . '/layout/header.php';
                             <p style="margin-bottom: 6px;"><strong>No. Transaksi:</strong> <code>${data.no_transaksi}</code></p>
                             <p style="margin-bottom: 6px;"><strong>Total Muatan:</strong> ${data.total_label} pcs (${parseFloat(data.total_kg).toFixed(2)} kg)</p>
                             <p style="margin-bottom: 12px;"><strong>Diterima Oleh:</strong> ${penerima}</p>
-                            <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 10px; border-radius: 6px;">
+                            <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ok-solid); padding: 10px; border-radius: 6px;">
                                 Dokumen Berita Acara Serah Terima (BAST) siap dicetak. Apakah Anda ingin membukanya sekarang?
                             </div>
                         </div>
@@ -1181,23 +1181,23 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                     <div>
                         <div style="color: var(--text-muted);">Berat Netto Aktual:</div>
-                        <strong style="font-size: 16px; color: #10b981;">${parseFloat(label.berat_netto || 0).toFixed(2)} kg</strong>
+                        <strong style="font-size: 16px; color: var(--ok-fg);">${parseFloat(label.berat_netto || 0).toFixed(2)} kg</strong>
                         <div>Status: <span class="badge ${label.status === 'KELUAR' ? 'badge-secondary' : 'badge-success'}">${label.status}</span></div>
                     </div>
                 </div>
 
                 <!-- Timeline Alur Vertikal -->
                 <div style="position: relative; padding-left: 32px;">
-                    <div style="position: absolute; left: 13px; top: 12px; bottom: 12px; width: 3px; background: #e2e8f0;"></div>
+                    <div style="position: absolute; left: 13px; top: 12px; bottom: 12px; width: 3px; background: var(--border);"></div>
 
                     <!-- Step 1: Penerimaan dari Pemasok -->
                     <div style="position: relative; margin-bottom: 22px;">
-                        <div style="position: absolute; left: -32px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; box-shadow: 0 0 0 4px #eff6ff;">
+                        <div style="position: absolute; left: -32px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; box-shadow: 0 0 0 4px #eff6ff;">
                             1
                         </div>
-                        <div style="background: var(--bg-card); border: 1.5px solid #bfdbfe; border-radius: 8px; padding: 12px 14px;">
+                        <div style="background: var(--bg-card); border: 1.5px solid var(--border-hover); border-radius: 8px; padding: 12px 14px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <strong style="color: #1e40af; font-size: 13.5px;">🚚 Langkah 1: Diterima dari Pemasok</strong>
+                                <strong style="color: var(--aktif-fg); font-size: 13.5px;">🚚 Langkah 1: Diterima dari Pemasok</strong>
                                 <span style="font-size: 11px; color: var(--text-muted);">${label.created_at || '-'}</span>
                             </div>
                             <div style="margin-top: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
@@ -1214,7 +1214,7 @@ require_once __DIR__ . '/layout/header.php';
                 history.forEach((trx, hIdx) => {
                     const isOutbound = (trx.tipe_transaksi === 'KELUAR' || trx.alur_pergerakan === 'KE_PEMBELI_POS');
                     const stepNum = hIdx + 2;
-                    const stepColor = isOutbound ? '#10b981' : '#8b5cf6';
+                    const stepColor = isOutbound ? '#10b981' : '#0369a1';
                     const stepBg = isOutbound ? '#ecfdf5' : '#f5f3ff';
                     const stepBorder = isOutbound ? '#a7f3d0' : '#ddd6fe';
                     const stepTitle = isOutbound ? '📦 Langkah 3: Pengeluaran Barang (Outbound)' : `🔄 Langkah ${stepNum}: Pemindahan Stok (BAST)`;
@@ -1245,10 +1245,10 @@ require_once __DIR__ . '/layout/header.php';
                 // Belum ada mutasi
                 html += `
                     <div style="position: relative; margin-bottom: 22px;">
-                        <div style="position: absolute; left: -32px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: #94a3b8; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">
+                        <div style="position: absolute; left: -32px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--text-muted); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">
                             2
                         </div>
-                        <div style="background: var(--bg-card); border: 1.5px dashed #cbd5e1; border-radius: 8px; padding: 12px 14px; color: var(--text-muted); font-size: 12px;">
+                        <div style="background: var(--bg-card); border: 1.5px dashed var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text-muted); font-size: 12px;">
                             <strong>Belum Ada Mutasi Pemindahan Stok</strong>
                             <div style="margin-top: 4px;">Kemasan ini saat ini masih berada pada status stok aktif milik mitra <strong>${label.nama_mitra || 'Utama'}</strong>.</div>
                         </div>
@@ -1260,11 +1260,11 @@ require_once __DIR__ . '/layout/header.php';
             if (label.status === 'KELUAR' && (!history.length || !history.some(h => h.tipe_transaksi === 'KELUAR'))) {
                 html += `
                     <div style="position: relative; margin-bottom: 10px;">
-                        <div style="position: absolute; left: -32px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">
+                        <div style="position: absolute; left: -32px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--ok-solid); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">
                             ✓
                         </div>
-                        <div style="background: var(--bg-card); border: 1.5px solid #a7f3d0; border-radius: 8px; padding: 12px 14px;">
-                            <strong style="color: #065f46; font-size: 13.5px;">📦 Langkah 3: Barang Telah Keluar dari Gudang</strong>
+                        <div style="background: var(--bg-card); border: 1.5px solid var(--border-hover); border-radius: 8px; padding: 12px 14px;">
+                            <strong style="color: var(--ok-fg); font-size: 13.5px;">📦 Langkah 3: Barang Telah Keluar dari Gudang</strong>
                             <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
                                 Status barang: <span class="badge badge-secondary">KELUAR</span> (Telah dikirim ke pembeli / outlet POS).
                             </div>

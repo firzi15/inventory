@@ -308,7 +308,7 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <span style="font-size: 13.5px; color: var(--text-muted); font-weight: 600;">Total Netto:</span>
-                    <span id="cartTotalKg" style="font-size: 22px; font-weight: 900; color: #10b981; font-family: 'JetBrains Mono', monospace;">0.00 kg</span>
+                    <span id="cartTotalKg" style="font-size: 22px; font-weight: 900; color: var(--ok-fg); font-family: 'JetBrains Mono', monospace;">0.00 kg</span>
                 </div>
             </div>
 
@@ -361,7 +361,7 @@ require_once __DIR__ . '/layout/header.php';
 <div class="card no-print" style="margin-top: 10px; border: 1.5px solid var(--border);">
     <div style="padding: 18px 22px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; user-select: none; background: var(--bg-card); border-bottom: 1px solid var(--border);">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: rgba(79, 70, 229, 0.1); width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
+            <div style="background: rgba(2, 132, 199, 0.1); width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
                 <i data-lucide="package-open" style="width: 22px; height: 22px; color: var(--primary);"></i>
             </div>
             <div>
@@ -485,7 +485,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <?= number_format($ht['total_label']) ?> Pcs
                             </span>
                         </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: #10b981;">
+                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--ok-fg);">
                             <?= Helper::formatKg($ht['total_kg']) ?>
                         </td>
                         <td style="font-size: 11.5px; color: var(--text-muted);">
@@ -493,7 +493,7 @@ require_once __DIR__ . '/layout/header.php';
                         </td>
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
-                                <a href="index.php?page=surat_jalan_print&id=<?= $ht['id'] ?>" target="_blank" class="btn btn-outline btn-sm" style="padding: 5px 9px; font-size: 12px; color: #4f46e5; border-color: #c7d2fe; display: inline-flex; align-items: center; gap: 4px;" title="Cetak Dokumen Surat Jalan Resmi A4">
+                                <a href="index.php?page=surat_jalan_print&id=<?= $ht['id'] ?>" target="_blank" class="btn btn-outline btn-sm" style="padding: 5px 9px; font-size: 12px; color: var(--aktif-fg); border-color: var(--border-hover); display: inline-flex; align-items: center; gap: 4px;" title="Cetak Dokumen Surat Jalan Resmi A4">
                                     <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
                                     <span>Cetak</span>
                                 </a>
@@ -502,7 +502,7 @@ require_once __DIR__ . '/layout/header.php';
                                     <span>Rincian</span>
                                 </button>
                                 <?php if ($ht['jenis_transaksi'] === 'PENGELUARAN'): ?>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_pengeluaran', { id: <?= (int)$ht['id'] ?> }, 'surat jalan keluar <?= htmlspecialchars($ht['no_transaksi'], ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: #dc2626; border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_pengeluaran', { id: <?= (int)$ht['id'] ?> }, 'surat jalan keluar <?= htmlspecialchars($ht['no_transaksi'], ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: var(--bad-fg); border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
                                 <?php endif; ?>
                             </div>
                         </td>
@@ -606,7 +606,7 @@ require_once __DIR__ . '/layout/header.php';
                             <strong><?= htmlspecialchars($item['nama_item']) ?></strong>
                             <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($item['nama_jenis']) ?></div>
                         </td>
-                        <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: #10b981;">
+                        <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: var(--ok-fg);">
                             <?= Helper::formatKg($berat) ?>
                         </td>
                         <td>
@@ -619,13 +619,13 @@ require_once __DIR__ . '/layout/header.php';
                             <?php endif; ?>
                         </td>
                         <td>
-                            <code style="font-size: 11.5px; font-weight: 700; color: #2563eb;"><?= htmlspecialchars($sjKeluar) ?></code>
+                            <code style="font-size: 11.5px; font-weight: 700; color: var(--aktif-fg);"><?= htmlspecialchars($sjKeluar) ?></code>
                         </td>
                         <td style="font-size: 11.5px; color: var(--text-muted);">
                             <?= $waktuKeluar ?>
                         </td>
                         <td style="text-align: center;">
-                            <span class="badge badge-secondary" style="background: #475569; color: #fff; font-size: 11px;">Sudah Keluar</span>
+                            <span class="badge badge-secondary" style="background: var(--text-muted); color: #fff; font-size: 11px;">Sudah Keluar</span>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -682,7 +682,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="sheet-preview-dialog" style="max-width: 860px; width: 95%; background: var(--bg-surface, #ffffff); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
         <div class="sheet-preview-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 6px; border-radius: 8px;">
+                <div style="background: rgba(16, 185, 129, 0.15); color: var(--ok-fg); padding: 6px; border-radius: 8px;">
                     <i data-lucide="package" style="width: 20px; height: 20px;"></i>
                 </div>
                 <div>
@@ -784,7 +784,7 @@ require_once __DIR__ . '/layout/header.php';
             if (!data.success || !data.stock) {
                 badgeEl.innerText = 'Gagal memuat stok';
                 badgeEl.style.background = '#dc2626';
-                itemsEl.innerHTML = '<div style="color: #dc2626; padding: 4px;">Gagal memuat persediaan gudang.</div>';
+                itemsEl.innerHTML = '<div style="color: var(--bad-fg); padding: 4px;">Gagal memuat persediaan gudang.</div>';
                 return;
             }
 
@@ -813,11 +813,11 @@ require_once __DIR__ . '/layout/header.php';
                 items.forEach(it => {
                     const kg = parseFloat(it.total_kg || 0).toFixed(2);
                     html += `
-                        <tr style="border-bottom: 1px dashed #d1fae5;">
-                            <td style="padding: 4px 6px; font-weight: 700; color: #065f46;">${it.nama_item}</td>
-                            <td style="padding: 4px 6px; color: #64748b; font-size: 11px;">(${it.nama_jenis})</td>
-                            <td style="padding: 4px 6px; text-align: right; font-weight: 700; color: #1e40af;">${it.total_kemasan} Pcs</td>
-                            <td style="padding: 4px 6px; text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #059669;">${kg} Kg</td>
+                        <tr style="border-bottom: 1px dashed var(--border-hover);">
+                            <td style="padding: 4px 6px; font-weight: 700; color: var(--ok-fg);">${it.nama_item}</td>
+                            <td style="padding: 4px 6px; color: var(--text-muted); font-size: 11px;">(${it.nama_jenis})</td>
+                            <td style="padding: 4px 6px; text-align: right; font-weight: 700; color: var(--aktif-fg);">${it.total_kemasan} Pcs</td>
+                            <td style="padding: 4px 6px; text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">${kg} Kg</td>
                         </tr>
                     `;
                 });
@@ -833,7 +833,7 @@ require_once __DIR__ . '/layout/header.php';
                 let chipsHtml = '';
                 labels.slice(0, 10).forEach(lbl => {
                     chipsHtml += `
-                        <button type="button" class="btn btn-outline btn-sm" onclick="triggerSimulatedScan('${lbl.id_label}')" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 7px; background: #fff; border-color: #86efac; color: #065f46;" title="Klik untuk scan ${lbl.id_label} (${lbl.nama_item})">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="triggerSimulatedScan('${lbl.id_label}')" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 7px; background: var(--bg-card); border-color: var(--border-hover); color: var(--ok-fg);" title="Klik untuk scan ${lbl.id_label} (${lbl.nama_item})">
                             + ${lbl.id_label} (${parseFloat(lbl.berat_netto).toFixed(1)}kg)
                         </button>
                     `;
@@ -937,14 +937,14 @@ require_once __DIR__ . '/layout/header.php';
                         html: `
                             <div style="display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 2px 0 2px 14px;">
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                                    <span style="font-size: 13.5px; font-weight: 700; color: #1e293b;">
+                                    <span style="font-size: 13.5px; font-weight: 700; color: var(--text-main);">
                                         Ada ${data.fifo_info.older_count} box ${label.nama_item}
                                     </span>
-                                    <a href="${stockUrl}" target="_blank" title="Buka Sisa Stok Gudang" style="display: inline-flex; align-items: center; justify-content: center; color: #94a3b8; text-decoration: none; padding: 2px; border-radius: 4px; transition: color 0.15s ease;" onmouseover="this.style.color='#1e293b'" onmouseout="this.style.color='#94a3b8'">
+                                    <a href="${stockUrl}" target="_blank" title="Buka Sisa Stok Gudang" style="display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; padding: 2px; border-radius: 4px; transition: color 0.15s ease;" onmouseover="this.style.color='#1e293b'" onmouseout="this.style.color='#94a3b8'">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                     </a>
                                 </div>
-                                <div style="font-size: 12px; color: #64748b;">
+                                <div style="font-size: 12px; color: var(--text-muted);">
                                     Lebih lama mengendap (${data.fifo_info.aging_text})
                                 </div>
                             </div>
@@ -1003,14 +1003,14 @@ require_once __DIR__ . '/layout/header.php';
                         </a>
                     </div>
                     ${hrgMitra <= 0 
-                        ? `<div style="font-size: 10.5px; color: #dc2626; font-weight: 700; margin-top: 3px;">⚠️ Tarif Jual: Rp 0 (Belum diatur di Master)</div>`
-                        : `<div style="font-size: 10.5px; color: #059669; font-weight: 600; margin-top: 2px;">Tarif: Rp ${new Intl.NumberFormat('id-ID').format(hrgMitra)}/kg • Subtotal: Rp ${new Intl.NumberFormat('id-ID').format(netto * hrgMitra)}</div>`
+                        ? `<div style="font-size: 10.5px; color: var(--bad-fg); font-weight: 700; margin-top: 3px;">⚠️ Tarif Jual: Rp 0 (Belum diatur di Master)</div>`
+                        : `<div style="font-size: 10.5px; color: var(--ok-fg); font-weight: 600; margin-top: 2px;">Tarif: Rp ${new Intl.NumberFormat('id-ID').format(hrgMitra)}/kg • Subtotal: Rp ${new Intl.NumberFormat('id-ID').format(netto * hrgMitra)}</div>`
                     }
                 </td>
                 <td>
                     <span class="badge badge-outline" style="font-size: 11px;">${label.nama_jenis || '-'}</span>
                 </td>
-                <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #10b981;">
+                <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ok-fg);">
                     ${netto.toFixed(2)} kg
                 </td>
                 <td>
@@ -1124,7 +1124,7 @@ require_once __DIR__ . '/layout/header.php';
                 html: `
                     <div style="text-align: left; font-size: 13.5px; line-height: 1.5;">
                         <p style="margin-bottom: 8px;">Produk <strong>${uniqueZero}</strong> belum memiliki tarif harga jual di <strong>Master Harga Mitra</strong> (harga saat ini: Rp 0).</p>
-                        <p style="color: #b45309; font-weight: 700; margin-bottom: 8px;">⚠️ Dampak: Transaksi akan diterbitkan dengan nilai tagihan Rp 0 dan tidak akan muncul sebagai piutang aktif di AR Aging.</p>
+                        <p style="color: var(--warn-fg); font-weight: 700; margin-bottom: 8px;">⚠️ Dampak: Transaksi akan diterbitkan dengan nilai tagihan Rp 0 dan tidak akan muncul sebagai piutang aktif di AR Aging.</p>
                         <p>Apakah Anda ingin tetap memproses pengeluaran Rp 0, atau membatalkan untuk mengisi tarif di Master Data?</p>
                     </div>
                 `,
@@ -1162,7 +1162,7 @@ require_once __DIR__ . '/layout/header.php';
                             <p style="margin-bottom: 6px;"><strong>Mitra Tujuan:</strong> ${data.mitra}</p>
                             <p style="margin-bottom: 6px;"><strong>Penerima:</strong> ${data.tujuan}</p>
                             <p style="margin-bottom: 12px;"><strong>Total Muatan:</strong> ${data.total_label} Kemasan (${parseFloat(data.total_kg).toFixed(2)} kg)</p>
-                            <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 10px; border-radius: 6px;">
+                            <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ok-solid); padding: 10px; border-radius: 6px;">
                                 Dokumen Surat Jalan siap dicetak. Apakah Anda ingin membuka dokumen sekarang?
                             </div>
                         </div>
@@ -1255,7 +1255,7 @@ require_once __DIR__ . '/layout/header.php';
             let html = '<table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">';
             html += `
                 <thead>
-                    <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: var(--text-muted); font-size: 10.5px; text-transform: uppercase;">
+                    <tr style="background: var(--bg-muted); border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10.5px; text-transform: uppercase;">
                         <th style="padding: 6px 8px; text-align: left;">ID Barcode</th>
                         <th style="padding: 6px 8px; text-align: left;">Produk</th>
                         <th style="padding: 6px 8px; text-align: right;">Netto</th>
@@ -1266,17 +1266,17 @@ require_once __DIR__ . '/layout/header.php';
             `;
 
             data.fifo_list.forEach(item => {
-                const badgeColor = item.aging_badge === 'danger' ? 'background: #fee2e2; color: #b91c1c;' : (item.aging_badge === 'warning' ? 'background: #fef3c7; color: #b45309;' : 'background: #dcfce7; color: #15803d;');
+                const badgeColor = item.aging_badge === 'danger' ? 'background: var(--bad-bg); color: var(--bad-fg);' : (item.aging_badge === 'warning' ? 'background: var(--warn-bg); color: var(--warn-fg);' : 'background: var(--ok-bg); color: var(--ok-fg);');
                 html += `
-                    <tr style="border-bottom: 1px dashed #e2e8f0;">
+                    <tr style="border-bottom: 1px dashed var(--border);">
                         <td style="padding: 6px 8px;">
-                            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #1e40af;">${item.id_label}</strong>
+                            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--aktif-fg);">${item.id_label}</strong>
                         </td>
                         <td style="padding: 6px 8px;">
                             <strong>${item.nama_item}</strong>
                             <div style="font-size: 10px; color: var(--text-muted);">${item.nama_jenis}</div>
                         </td>
-                        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #047857;">
+                        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ok-fg);">
                             ${parseFloat(item.berat_netto).toFixed(2)} kg
                         </td>
                         <td style="padding: 6px 8px; text-align: center;">
@@ -1338,13 +1338,13 @@ require_once __DIR__ . '/layout/header.php';
 
             partyInfoEl.innerHTML = `
                 <div>
-                    <div style="font-size: 11px; font-weight: 800; color: #1d4ed8; text-transform: uppercase; margin-bottom: 4px;">🚚 Pemasok Asal Stok (Gudang)</div>
-                    <div style="font-weight: 800; font-size: 13px; color: #1e3a8a;">${namaPms}</div>
+                    <div style="font-size: 11px; font-weight: 800; color: var(--aktif-fg); text-transform: uppercase; margin-bottom: 4px;">🚚 Pemasok Asal Stok (Gudang)</div>
+                    <div style="font-weight: 800; font-size: 13px; color: var(--aktif-fg);">${namaPms}</div>
                     <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Petugas Penyerah: <strong>${t.nama_penyerah || t.operator_pemroses || 'Petugas Gudang'}</strong></div>
                 </div>
                 <div>
-                    <div style="font-size: 11px; font-weight: 800; color: #15803d; text-transform: uppercase; margin-bottom: 4px;">🏢 Mitra Bisnis Penerima (Tujuan)</div>
-                    <div style="font-weight: 800; font-size: 13px; color: #065f46;">${namaMtr}</div>
+                    <div style="font-size: 11px; font-weight: 800; color: var(--ok-fg); text-transform: uppercase; margin-bottom: 4px;">🏢 Mitra Bisnis Penerima (Tujuan)</div>
+                    <div style="font-weight: 800; font-size: 13px; color: var(--ok-fg);">${namaMtr}</div>
                     <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">PIC / Penerima: <strong>${t.nama_penerima || '-'}</strong> • Catatan: <strong>${t.keterangan || '-'}</strong></div>
                 </div>
             `;
@@ -1362,7 +1362,7 @@ require_once __DIR__ . '/layout/header.php';
                     <td><strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary);">${it.id_label}</strong></td>
                     <td><strong>${it.nama_item}</strong></td>
                     <td><span class="badge badge-outline" style="font-size: 10.5px;">${it.nama_jenis || '-'}</span></td>
-                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #10b981;">${parseFloat(it.berat_netto).toFixed(2)} kg</td>
+                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">${parseFloat(it.berat_netto).toFixed(2)} kg</td>
                     <td><code style="font-size: 10.5px;">${it.no_surat_jalan || it.batch_no || '-'}</code></td>
                 `;
                 tbody.appendChild(tr);

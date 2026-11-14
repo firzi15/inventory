@@ -158,10 +158,10 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 
 <!-- Kecocokan nilai persediaan dengan jurnal (akun 1200 Inventory) -->
-<div class="card" style="padding: 16px 20px; margin-bottom: 22px; border-left: 4px solid <?= $rekonPersediaan['cocok'] ? '#16a34a' : '#dc2626' ?>;">
+<div class="card" style="padding: 16px 20px; margin-bottom: 22px; border-left: 4px solid <?= $rekonPersediaan['cocok'] ? 'var(--ok-solid)' : '#dc2626' ?>;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
         <div style="font-weight: 800; font-size: 14px;">Kecocokan dengan Jurnal (akun 1200 Inventory)</div>
-        <span class="badge" style="<?= $rekonPersediaan['cocok'] ? 'background: #dcfce7; color: #15803d;' : 'background: #fee2e2; color: #b91c1c;' ?> font-weight: 800;">
+        <span class="badge" style="<?= $rekonPersediaan['cocok'] ? 'background: var(--ok-bg); color: var(--ok-fg);' : 'background: var(--bad-bg); color: var(--bad-fg);' ?> font-weight: 800;">
             <?= $rekonPersediaan['cocok'] ? 'Cocok' : 'Selisih ' . Helper::formatRupiah(abs($rekonPersediaan['selisih'])) ?>
         </span>
     </div>
@@ -173,7 +173,7 @@ require_once __DIR__ . '/layout/header.php';
         <div><div style="color: var(--text-muted); font-size: 11.5px;">Keluar (HPP pengeluaran)</div><strong><?= Helper::formatRupiah(abs($rekonPersediaan['keluar'])) ?></strong></div>
     </div>
     <?php if (!$rekonPersediaan['cocok']): ?>
-        <div style="margin-top: 12px; font-size: 12.5px; color: #b91c1c;">
+        <div style="margin-top: 12px; font-size: 12.5px; color: var(--bad-fg);">
             Nilai barang di gudang berbeda dari saldo jurnal.
             <?php if (abs($rekonPersediaan['lain']) > 0.5): ?>Ada mutasi akun 1200 dari dokumen lain sebesar <?= Helper::formatRupiah($rekonPersediaan['lain']) ?>.<?php endif; ?>
             <?php if ($rekonPersediaan['sj_beda']): ?>Surat Jalan berikut nilai barangnya tidak sama dengan fakturnya:<?php endif; ?>
@@ -188,7 +188,7 @@ require_once __DIR__ . '/layout/header.php';
                         <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;"><?= htmlspecialchars($b['no_surat_jalan']) ?></td>
                         <td style="text-align: right;"><?= Helper::formatRupiah($b['nilai_label']) ?></td>
                         <td style="text-align: right;"><?= Helper::formatRupiah($b['nilai_faktur']) ?></td>
-                        <td style="text-align: right; color: #b91c1c;"><?= Helper::formatRupiah($b['nilai_label'] - $b['nilai_faktur']) ?></td>
+                        <td style="text-align: right; color: var(--bad-fg);"><?= Helper::formatRupiah($b['nilai_label'] - $b['nilai_faktur']) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -226,11 +226,11 @@ require_once __DIR__ . '/layout/header.php';
         <?php foreach ($mitraSummaryList as $ms): 
             $mId = (int)$ms['id'];
             $isSelected = ($selectedMitraFilter === $mId);
-            $warna = !empty($ms['warna_identitas']) ? $ms['warna_identitas'] : '#4f46e5';
+            $warna = !empty($ms['warna_identitas']) ? $ms['warna_identitas'] : '#0284c7';
             $hasStock = ((float)$ms['total_kg'] > 0);
             $pctMitra = $grandTotalKg > 0 ? round(((float)$ms['total_kg'] / $grandTotalKg) * 100, 1) : 0;
         ?>
-        <div class="card" style="padding: 16px; border-radius: 12px; position: relative; display: flex; flex-direction: column; justify-content: space-between; border: <?= $isSelected ? '2px solid ' . htmlspecialchars($warna) : '1px solid var(--border)' ?>; <?= $isSelected ? 'box-shadow: 0 4px 18px rgba(79, 70, 229, 0.2);' : '' ?> background: var(--card-bg);">
+        <div class="card" style="padding: 16px; border-radius: 12px; position: relative; display: flex; flex-direction: column; justify-content: space-between; border: <?= $isSelected ? '2px solid ' . htmlspecialchars($warna) : '1px solid var(--border)' ?>; <?= $isSelected ? 'box-shadow: 0 4px 18px rgba(2, 132, 199, 0.2);' : '' ?> background: var(--card-bg);">
             <!-- Header Kartu Mitra -->
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
@@ -296,7 +296,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="card-header no-print">
         <div>
             <h2 class="card-title">
-                <i data-lucide="calculator" style="width: 18px; height: 18px; color: #059669;"></i>
+                <i data-lucide="calculator" style="width: 18px; height: 18px; color: var(--ok-fg);"></i>
                 <span>Data Stok per Mitra & Master Harga</span>
                 <?php if ($activeMitraObj): ?>
                     <span class="badge badge-primary" style="margin-left: 6px;">
@@ -325,7 +325,7 @@ require_once __DIR__ . '/layout/header.php';
                 <i data-lucide="sliders-horizontal" style="width: 15px; height: 15px;"></i>
                 <span>Filter Lanjutan</span>
                 <?php if ($activeFilterCount > 0): ?>
-                    <span class="badge" style="background: #ffffff; color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeFilterCount ?></span>
+                    <span class="badge" style="background: var(--bg-card); color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeFilterCount ?></span>
                 <?php endif; ?>
             </button>
             <?php if ($hasAnyFilter): ?>
@@ -338,10 +338,10 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 
     <!-- JUMBOTRON PANEL FILTER LENGKAP & DETAIL (COLLAPSIBLE) -->
-    <div id="panelJumbotronFilterMitra" class="no-print" style="display: none; padding: 20px 24px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border-bottom: 1.5px solid #cbd5e1;">
+    <div id="panelJumbotronFilterMitra" class="no-print" style="display: none; padding: 20px 24px; background: var(--bg-card); border-bottom: 1.5px solid var(--border);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid var(--border);">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: linear-gradient(135deg, #059669, #10b981); color: white; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);">
+                <div style="background: var(--ok-solid); color: white; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);">
                     <i data-lucide="sliders" style="width: 18px; height: 18px;"></i>
                 </div>
                 <div>
@@ -421,7 +421,7 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
 
                 <div style="display: flex; gap: 8px; align-items: flex-end;">
-                    <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); background: #059669; border-color: #059669;">
+                    <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); background: var(--ok-solid); border-color: var(--ok-solid);">
                         <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
                         <span>Terapkan Filter</span>
                     </button>
@@ -477,7 +477,7 @@ require_once __DIR__ . '/layout/header.php';
                     <th style="text-align: right; min-width: 130px;">Rata-rata/Pcs</th>
                     <th style="text-align: right; min-width: 140px; background: rgba(2, 132, 199, 0.05);">Total Netto (Kg)</th>
                     <th style="text-align: right; min-width: 160px; background: rgba(16, 185, 129, 0.08);">HPP Rata-rata</th>
-                    <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.16); color: #047857; font-weight: 800;">Nilai Persediaan (Rp)</th>
+                    <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.16); color: var(--ok-fg); font-weight: 800;">Nilai Persediaan (Rp)</th>
                 </tr>
             </thead>
             <tbody id="detailTableBody">
@@ -492,7 +492,7 @@ require_once __DIR__ . '/layout/header.php';
                     <?php 
                     $no = 1;
                     foreach ($detailItems as $row): 
-                        $warna = $row['warna_identitas'] ?? '#4f46e5';
+                        $warna = $row['warna_identitas'] ?? '#0284c7';
                         $hargaPerKg = (float)$row['harga_per_kg'];
                         $totalNilai = (float)$row['total_nilai'];
                     ?>
@@ -507,7 +507,7 @@ require_once __DIR__ . '/layout/header.php';
                             </div>
                         </td>
                         <td>
-                            <span class="badge" style="background: rgba(14, 165, 233, 0.08); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.2); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 5px;">
+                            <span class="badge" style="background: rgba(14, 165, 233, 0.08); color: var(--aktif-fg); border: 1px solid rgba(14, 165, 233, 0.2); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 3px 6px; border-radius: 5px;">
                                 <?= htmlspecialchars($row['kode_gudang_accurate'] ?? '-') ?>
                             </span>
                         </td>
@@ -528,13 +528,13 @@ require_once __DIR__ . '/layout/header.php';
                         <td style="text-align: right; color: var(--text-muted); font-size: 12px;">
                             <?= Helper::formatKg($row['rata_rata_kg']) ?>
                         </td>
-                        <td style="text-align: right; font-weight: 900; font-size: 14.5px; color: #0284c7; background: rgba(2, 132, 199, 0.03);">
+                        <td style="text-align: right; font-weight: 900; font-size: 14.5px; color: var(--aktif-fg); background: rgba(2, 132, 199, 0.03);">
                             <?= Helper::formatKg($row['total_kg']) ?>
                         </td>
                         <!-- KOLOM HARGA MASTER MITRA -->
                         <td style="text-align: right; background: rgba(16, 185, 129, 0.05);">
                             <?php if ($hargaPerKg > 0): ?>
-                                <div style="font-weight: 800; font-size: 13.5px; color: #059669;">
+                                <div style="font-weight: 800; font-size: 13.5px; color: var(--ok-fg);">
                                     <?= Helper::formatRupiah($hargaPerKg) ?> <span style="font-size: 11px; font-weight: 600; color: var(--text-muted);">/kg</span>
                                 </div>
                                 <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">
@@ -547,7 +547,7 @@ require_once __DIR__ . '/layout/header.php';
                             <?php endif; ?>
                         </td>
                         <!-- KOLOM TOTAL NILAI STOK -->
-                        <td style="text-align: right; font-weight: 900; font-size: 15px; color: #047857; background: rgba(16, 185, 129, 0.1);">
+                        <td style="text-align: right; font-weight: 900; font-size: 15px; color: var(--ok-fg); background: rgba(16, 185, 129, 0.1);">
                             <?= Helper::formatRupiah($totalNilai) ?>
                             <?php if ((float)($row['total_nilai_jual'] ?? 0) > 0): ?>
                                 <div style="font-size: 10.5px; font-weight: 600; color: var(--text-muted);">estimasi jual <?= Helper::formatRupiah($row['total_nilai_jual']) ?></div>
@@ -566,13 +566,13 @@ require_once __DIR__ . '/layout/header.php';
                         <?= Helper::formatNumber($subtotalDetailKemasan) ?> pcs
                     </td>
                     <td></td>
-                    <td style="text-align: right; font-size: 15px; font-weight: 900; color: #0284c7; background: rgba(2, 132, 199, 0.08);">
+                    <td style="text-align: right; font-size: 15px; font-weight: 900; color: var(--aktif-fg); background: rgba(2, 132, 199, 0.08);">
                         <?= Helper::formatKg($subtotalDetailKg) ?>
                     </td>
                     <td style="text-align: right; font-size: 11.5px; color: var(--text-muted);">
                         Nilai Persediaan:
                     </td>
-                    <td style="text-align: right; font-size: 16px; font-weight: 900; color: #047857; background: rgba(16, 185, 129, 0.2);">
+                    <td style="text-align: right; font-size: 16px; font-weight: 900; color: var(--ok-fg); background: rgba(16, 185, 129, 0.2);">
                         <?= Helper::formatRupiah($subtotalDetailNilai) ?>
                     </td>
                 </tr>
@@ -604,7 +604,7 @@ require_once __DIR__ . '/layout/header.php';
             $endP = min($totalPages, $page + 2);
             for ($pi = $startP; $pi <= $endP; $pi++):
             ?>
-                <a href="<?= $baseMitraUrl ?>&p=<?= $pi ?>" class="btn <?= $pi === $page ? 'btn-primary' : 'btn-outline' ?> btn-sm" style="padding: 4px 10px; font-weight: <?= $pi === $page ? '800' : '600' ?>; <?= $pi === $page ? 'background: #059669; border-color: #059669;' : '' ?>">
+                <a href="<?= $baseMitraUrl ?>&p=<?= $pi ?>" class="btn <?= $pi === $page ? 'btn-primary' : 'btn-outline' ?> btn-sm" style="padding: 4px 10px; font-weight: <?= $pi === $page ? '800' : '600' ?>; <?= $pi === $page ? 'background: var(--ok-solid); border-color: var(--ok-solid);' : '' ?>">
                     <?= $pi ?>
                 </a>
             <?php endfor; ?>
@@ -653,10 +653,10 @@ require_once __DIR__ . '/layout/header.php';
                             <div style="font-size: 11px; color: var(--primary); font-weight: 600;">(<?= htmlspecialchars($j['kode_jenis']) ?>)</div>
                         </th>
                     <?php endforeach; ?>
-                    <th style="text-align: right; min-width: 160px; background: rgba(79, 70, 229, 0.08); color: var(--primary); font-weight: 800;">
+                    <th style="text-align: right; min-width: 160px; background: rgba(2, 132, 199, 0.08); color: var(--primary); font-weight: 800;">
                         TOTAL STOK FISIK
                     </th>
-                    <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.12); color: #047857; font-weight: 900;">
+                    <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.12); color: var(--ok-fg); font-weight: 900;">
                         TOTAL VALUASI (RP)
                     </th>
                 </tr>
@@ -667,7 +667,7 @@ require_once __DIR__ . '/layout/header.php';
                     $totalMitraKg = $totalsPerMitra[$mId]['kg'] ?? 0;
                     $totalMitraLabel = $totalsPerMitra[$mId]['label'] ?? 0;
                     $totalMitraValuasi = $mitraSummaryMap[$mId]['total_nilai_stok'] ?? 0;
-                    $warna = $m['warna_identitas'] ?? '#4f46e5';
+                    $warna = $m['warna_identitas'] ?? '#0284c7';
                     $pctMitra = $grandTotalKg > 0 ? round(($totalMitraKg / $grandTotalKg) * 100, 1) : 0;
                 ?>
                 <tr>
@@ -680,7 +680,7 @@ require_once __DIR__ . '/layout/header.php';
                         </div>
                     </td>
                     <td>
-                        <span class="badge" style="background: rgba(14, 165, 233, 0.08); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.25); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; padding: 4px 8px; border-radius: 6px;">
+                        <span class="badge" style="background: rgba(14, 165, 233, 0.08); color: var(--aktif-fg); border: 1px solid rgba(14, 165, 233, 0.25); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; padding: 4px 8px; border-radius: 6px;">
                             <?= htmlspecialchars($m['kode_gudang_accurate'] ?? '-') ?>
                         </span>
                     </td>
@@ -691,7 +691,7 @@ require_once __DIR__ . '/layout/header.php';
                     ?>
                         <td style="text-align: right;">
                             <?php if ($cell && $cell['label'] > 0): ?>
-                                <div style="font-weight: 800; font-size: 13.5px; color: #10b981;"><?= Helper::formatKg($cell['kg']) ?></div>
+                                <div style="font-weight: 800; font-size: 13.5px; color: var(--ok-fg);"><?= Helper::formatKg($cell['kg']) ?></div>
                                 <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;"><?= Helper::formatNumber($cell['label']) ?> pcs</div>
                             <?php else: ?>
                                 <span style="color: var(--text-muted); opacity: 0.35;">-</span>
@@ -699,13 +699,13 @@ require_once __DIR__ . '/layout/header.php';
                         </td>
                     <?php endforeach; ?>
 
-                    <td style="text-align: right; background: rgba(79, 70, 229, 0.04); border-left: 1px solid rgba(79, 70, 229, 0.15);">
+                    <td style="text-align: right; background: rgba(2, 132, 199, 0.04); border-left: 1px solid rgba(2, 132, 199, 0.15);">
                         <div style="font-weight: 900; font-size: 14.5px; color: <?= htmlspecialchars($warna) ?>;"><?= Helper::formatKg($totalMitraKg) ?></div>
                         <div style="font-size: 11px; font-weight: 700; color: var(--text-muted);"><?= Helper::formatNumber($totalMitraLabel) ?> kemasan</div>
                     </td>
 
                     <td style="text-align: right; background: rgba(16, 185, 129, 0.08); border-left: 1px solid rgba(16, 185, 129, 0.2);">
-                        <div style="font-weight: 900; font-size: 14.5px; color: #047857;"><?= Helper::formatRupiah($totalMitraValuasi) ?></div>
+                        <div style="font-weight: 900; font-size: 14.5px; color: var(--ok-fg);"><?= Helper::formatRupiah($totalMitraValuasi) ?></div>
                         <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;"><?= $pctMitra ?>% pangsa</div>
                     </td>
                 </tr>
@@ -733,7 +733,7 @@ require_once __DIR__ . '/layout/header.php';
                         <div style="font-size: 15px; font-weight: 900;"><?= Helper::formatKg($checkGrandKg) ?></div>
                         <div style="font-size: 11px; opacity: 0.95; font-weight: 600;"><?= Helper::formatNumber($checkGrandLabel) ?> Kemasan</div>
                     </td>
-                    <td style="text-align: right; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff;">
+                    <td style="text-align: right; background: var(--ok-solid); color: #ffffff;">
                         <div style="font-size: 16px; font-weight: 900;"><?= Helper::formatRupiah($grandTotalValuasi) ?></div>
                         <div style="font-size: 11px; opacity: 0.95; font-weight: 600;">Valuasi Finansial 100%</div>
                     </td>

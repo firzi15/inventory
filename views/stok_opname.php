@@ -126,7 +126,7 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 </div>
 
-<div class="grid grid-cols-3 no-print" style="align-items: start; margin-bottom: 30px; gap: 24px;">
+<div class="grid grid-cols-3 no-print" style="grid-template-columns: 1fr; align-items: start; margin-bottom: 30px; gap: 20px;">
     <!-- Kolom 1: Sesi Scanner & Filter Cepat -->
     <div class="card">
         <div class="card-header">
@@ -140,8 +140,8 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <!-- Input Scanner Laser Genggam -->
-        <div style="padding: 20px;">
-            <div class="form-group">
+        <div style="padding: 16px 20px; display: grid; grid-template-columns: minmax(300px, 1fr) 1.4fr; gap: 20px; align-items: center;">
+            <div class="form-group" style="margin: 0;">
                 <label class="form-label" for="opname_scan_input" style="font-size: 13px; font-weight: 800; color: var(--primary);">
                     Input Scan Barcode Kemasan Fisik
                 </label>
@@ -158,11 +158,11 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 
     <!-- Kolom 2 & 3: Daftar Seluruh Barang Belum Dimutasi ke Mitra (Gudang Utama) -->
-    <div class="card" style="grid-column: span 2;">
+    <div class="card">
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div>
                 <h2 class="card-title">
-                    <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: #10b981;"></i>
+                    <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: var(--ok-fg);"></i>
                     <span>Daftar Fisik Gudang Utama</span>
                 </h2>
                 <div class="card-description">Seluruh kemasan berstatus aktif yang masih tersimpan di gudang utama transit</div>
@@ -173,7 +173,7 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <!-- Filter Bar Interaktif: Bulan, Pemasok, No Surat Jalan, & Pencarian -->
-        <div style="padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid var(--border);">
+        <div style="padding: 14px 20px; background: var(--bg-muted); border-bottom: 1px solid var(--border);">
             <form method="GET" action="index.php" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
                 <input type="hidden" name="page" value="stok_opname">
 
@@ -249,7 +249,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 12px; flex-wrap: wrap;">
                     <span style="font-weight: 700; color: var(--text-muted);">Filter Terpasang:</span>
                     <?php if (!empty($namaBulanIndo)): ?>
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 800; font-size: 11.5px;">Bulan: <?= htmlspecialchars($namaBulanIndo) ?></span>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--ok-fg); font-weight: 800; font-size: 11.5px;">Bulan: <?= htmlspecialchars($namaBulanIndo) ?></span>
                     <?php endif; ?>
                     <?php if ($filterPemasok): 
                         $pObj = array_values(array_filter($pemasokList, fn($p) => (int)$p['id'] === $filterPemasok))[0] ?? null;
@@ -323,7 +323,7 @@ require_once __DIR__ . '/layout/header.php';
                             <td>
                                 <?php if ($isMutasi): ?>
                                     <div style="display: flex; flex-direction: column; gap: 3px;">
-                                        <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #7c3aed; font-weight: 800; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; width: fit-content;">
+                                        <span class="badge" style="background: rgba(3, 105, 161, 0.15); color: var(--aktif-fg); font-weight: 800; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; width: fit-content;">
                                             <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i>
                                             Mutasi ke: <?= htmlspecialchars($namaMitraTujuan) ?>
                                         </span>
@@ -334,7 +334,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <?php endif; ?>
                                     </div>
                                 <?php else: ?>
-                                    <span class="badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 700; font-size: 11px;">
+                                    <span class="badge" style="background: rgba(2, 132, 199, 0.12); color: var(--aktif-fg); font-weight: 700; font-size: 11px;">
                                         Gudang Utama
                                     </span>
                                 <?php endif; ?>
@@ -348,24 +348,24 @@ require_once __DIR__ . '/layout/header.php';
                                 <strong><?= htmlspecialchars($g['nama_item']) ?></strong>
                                 <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($g['nama_jenis']) ?></div>
                             </td>
-                            <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: #10b981;">
+                            <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: var(--ok-fg);">
                                 <?= Helper::formatKg($berat) ?>
                             </td>
                             <td><code style="font-size: 11px;"><?= htmlspecialchars($sj) ?></code></td>
                             <td id="status-<?= $barcode ?>" style="text-align: center;">
                                 <?php if ($isMutasi): ?>
-                                    <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #475569; font-weight: 700; font-size: 11px;" title="Barang ini sudah dipindahkan ke gudang mitra sehingga tidak lagi berada di fisik gudang utama">
+                                    <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--text-muted); font-weight: 700; font-size: 11px;" title="Barang ini sudah dipindahkan ke gudang mitra sehingga tidak lagi berada di fisik gudang utama">
                                         Sudah di <?= htmlspecialchars($namaMitraTujuan) ?>
                                     </span>
                                 <?php elseif ($isOpnameVerified): ?>
-                                    <span class="badge badge-success" style="background: #10b981; color: #fff; font-weight: 800;">
+                                    <span class="badge badge-success" style="background: var(--ok-solid); color: #fff; font-weight: 800;">
                                         COCOK FISIK
                                     </span>
-                                    <div style="font-size: 10px; color: #059669; margin-top: 3px; font-weight: 600;">
+                                    <div style="font-size: 10px; color: var(--ok-fg); margin-top: 3px; font-weight: 600;">
                                         <?= $tglOpname ?>
                                     </div>
                                 <?php else: ?>
-                                    <span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 700;">
+                                    <span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: var(--warn-fg); font-weight: 700;">
                                         Menunggu Scan Barcode
                                     </span>
                                 <?php endif; ?>
@@ -454,10 +454,10 @@ require_once __DIR__ . '/layout/header.php';
                     row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
                     statusCell.innerHTML = `
-                        <span class="badge badge-success" style="background: #10b981; color: #fff; font-weight: 800;">
+                        <span class="badge badge-success" style="background: var(--ok-solid); color: #fff; font-weight: 800;">
                             ✓ COCOK FISIK
                         </span>
-                        <div style="font-size: 10px; color: #059669; margin-top: 3px; font-weight: 600;">
+                        <div style="font-size: 10px; color: var(--ok-fg); margin-top: 3px; font-weight: 600;">
                             ${data.formatted_time || 'Baru saja'}
                         </div>
                     `;

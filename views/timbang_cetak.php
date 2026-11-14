@@ -139,17 +139,17 @@ function renderStockGudangTh(string $label, string $ascKey, string $descKey, str
     $arrowColor = 'opacity: 0.35;';
     if ($isDesc) {
         $arrow = '↓';
-        $arrowColor = 'color: #4f46e5; opacity: 1; font-weight: 900;';
+        $arrowColor = 'color: var(--aktif-fg); opacity: 1; font-weight: 900;';
     } elseif ($isAsc) {
         $arrow = '↑';
-        $arrowColor = 'color: #4f46e5; opacity: 1; font-weight: 900;';
+        $arrowColor = 'color: var(--aktif-fg); opacity: 1; font-weight: 900;';
     }
 
     $justify = 'flex-start';
     if ($align === 'center') $justify = 'center';
     if ($align === 'right') $justify = 'flex-end';
 
-    $activeBg = $isActive ? 'background: rgba(79, 70, 229, 0.08); border-radius: 6px; padding: 2px 6px;' : '';
+    $activeBg = $isActive ? 'background: rgba(2, 132, 199, 0.08); border-radius: 6px; padding: 2px 6px;' : '';
 
     return "
         <th style='text-align: {$align}; user-select: none; white-space: nowrap; {$extraStyle}'>
@@ -226,14 +226,14 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <div id="sectionOneStopWeigh" style="<?= $activeTab === 'timbang_cetak' ? 'display: block;' : 'display: none;' ?>">
     <!-- Grid Desktop 2-Kolom: Form Timbang & Stiker di Kiri, Live Rekap Surat Jalan di Kanan -->
-    <div style="display: grid; grid-template-columns: minmax(380px, 1.25fr) minmax(360px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
+    <div style="display: grid; grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
         
         <!-- KOLOM KIRI: STASIUN KERJA PENIMBANGAN & CETAK LANGSUNG -->
         <div class="card no-print" style="box-shadow: var(--shadow-md);">
             <div class="card-header" style="border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h2 class="card-title" style="font-size: 16px; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="scale" style="width: 18px; height: 18px; color: #10b981;"></i>
+                        <i data-lucide="scale" style="width: 18px; height: 18px; color: var(--ok-fg);"></i>
                         <span>Input Timbang & Cetak Barcode</span>
                     </h2>
                     <div class="card-description">Input penimbangan keranjang masuk per surat jalan</div>
@@ -242,15 +242,15 @@ require_once __DIR__ . '/layout/header.php';
 
             <div style="padding: 16px;">
                 <!-- 1. HEADER SESI SURAT JALAN -->
-                <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                    <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                <div style="background: var(--bg-muted); border: 1.5px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
                         <span>Informasi Surat Jalan</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label" for="onestop_pemasok_id" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="building-2" style="width: 14px; height: 14px; color: #64748b;"></i>
-                                <span>Pemasok <span style="color: #ef4444;">*</span></span>
+                            <label class="form-label" for="onestop_pemasok_id" style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="building-2" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                <span>Pemasok <span style="color: var(--bad-fg);">*</span></span>
                             </label>
                             <select id="onestop_pemasok_id" class="form-control" style="font-weight: 700; height: 42px; font-size: 13px;" onchange="onOneStopPemasokChanged()">
                                 <?php foreach ($pemasokList as $p): ?>
@@ -262,24 +262,24 @@ require_once __DIR__ . '/layout/header.php';
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                                <label class="form-label" for="onestop_no_sj" style="font-size: 12px; font-weight: 700; color: #334155; margin: 0; display: flex; align-items: center; gap: 5px;">
-                                    <i data-lucide="file-text" style="width: 14px; height: 14px; color: #64748b;"></i>
-                                    <span>No. Surat Jalan <span style="color: #ef4444;">*</span></span>
+                                <label class="form-label" for="onestop_no_sj" style="font-size: 12px; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 5px;">
+                                    <i data-lucide="file-text" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                    <span>No. Surat Jalan <span style="color: var(--bad-fg);">*</span></span>
                                 </label>
                                 <span class="badge badge-secondary" style="font-size: 10px; cursor: pointer;" onclick="onOneStopPemasokChanged()" title="Klik untuk refresh nomor surat jalan">Auto</span>
                             </div>
-                            <input type="text" id="onestop_no_sj" class="form-control" value="<?= htmlspecialchars($defaultSuratJalan) ?>" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #1e40af; height: 42px; background: #ffffff; border: 1.5px solid #93c5fd; font-size: 13.5px;" placeholder="No Surat Jalan..." onchange="onOneStopSjChanged()">
+                            <input type="text" id="onestop_no_sj" class="form-control" value="<?= htmlspecialchars($defaultSuratJalan) ?>" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--aktif-fg); height: 42px; background: var(--bg-card); border: 1.5px solid var(--border-hover); font-size: 13.5px;" placeholder="No Surat Jalan..." onchange="onOneStopSjChanged()">
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. PEMILIHAN KATEGORI & PRODUK -->
                 <div style="margin-bottom: 16px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label" for="onestop_jenis_filter" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="layers" style="width: 14px; height: 14px; color: #64748b;"></i>
-                                <span>Kategori <span style="color: #ef4444;">*</span></span>
+                            <label class="form-label" for="onestop_jenis_filter" style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="layers" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                <span>Kategori <span style="color: var(--bad-fg);">*</span></span>
                             </label>
                             <select id="onestop_jenis_filter" class="form-control" style="font-weight: 700; height: 42px; font-size: 13px;" onchange="onOneStopJenisChanged()">
                                 <option value="">-- Pilih Kategori --</option>
@@ -289,9 +289,9 @@ require_once __DIR__ . '/layout/header.php';
                             </select>
                         </div>
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label" for="onestop_item_id" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="package" style="width: 14px; height: 14px; color: #64748b;"></i>
-                                <span>Produk <span style="color: #ef4444;">*</span></span>
+                            <label class="form-label" for="onestop_item_id" style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="package" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                <span>Produk <span style="color: var(--bad-fg);">*</span></span>
                             </label>
                             <select id="onestop_item_id" class="form-control" disabled style="font-weight: 800; height: 42px; font-size: 13.5px;" onchange="onOneStopProductChanged(this.value)">
                                 <option value="">-- Pilih Kategori Dahulu --</option>
@@ -301,9 +301,9 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
 
                 <!-- 3. DISPLAY TIMBANGAN DIGITAL & INPUT NETTO -->
-                <div style="background: #f8fafc; border: 2px solid #10b981; border-radius: 10px; padding: 16px; margin-bottom: 16px; text-align: center;">
+                <div style="background: var(--bg-muted); border: 2px solid var(--ok-solid); border-radius: 10px; padding: 16px; margin-bottom: 16px; text-align: center;">
                     <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 12px; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 12px; font-weight: 800; color: var(--ok-fg); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
                             <i data-lucide="scale" style="width: 15px; height: 15px;"></i>
                             <span>Berat Bersih</span>
                         </span>
@@ -311,18 +311,18 @@ require_once __DIR__ . '/layout/header.php';
 
                     <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                         <input type="number" id="onestop_berat_netto" step="0.01" min="0.01" max="999.99" class="form-control" placeholder="0.00" 
-                               style="font-family: 'JetBrains Mono', monospace; font-size: 44px; font-weight: 900; text-align: center; color: #0f172a; height: 70px; width: 220px; border: 2px solid #10b981; border-radius: 8px; background: #ffffff;"
+                               style="font-family: 'JetBrains Mono', monospace; font-size: 44px; font-weight: 900; text-align: center; color: var(--text-main); height: 70px; width: 220px; border: 2px solid var(--ok-solid); border-radius: 8px; background: var(--bg-card);"
                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleSaveWeighedBox(); }">
-                        <span style="font-size: 26px; font-weight: 900; color: #047857;">KG</span>
+                        <span style="font-size: 26px; font-weight: 900; color: var(--ok-fg);">KG</span>
                     </div>
 
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; font-size: 11.5px; color: #64748b; flex-wrap: wrap;">
-                        <span>Tekan <strong style="color: #0f172a; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">[ENTER]</strong> untuk tambah box</span>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap;">
+                        <span>Tekan <strong style="color: var(--text-main); background: var(--border); padding: 2px 6px; border-radius: 4px;">[ENTER]</strong> untuk tambah box</span>
                     </div>
                 </div>
 
                 <!-- 4. TOMBOL TAMBAH BOX KE DAFTAR -->
-                <button type="button" id="btnSaveWeighedBox" class="btn btn-primary" onclick="handleSaveWeighedBox()" style="width: 100%; height: 46px; font-size: 14.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; background: #059669; border-color: #059669; border-radius: 8px; cursor: pointer;">
+                <button type="button" id="btnSaveWeighedBox" class="btn btn-primary" onclick="handleSaveWeighedBox()" style="width: 100%; height: 46px; font-size: 14.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--ok-solid); border-color: var(--ok-solid); border-radius: 8px; cursor: pointer;">
                     <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
                     <span id="labelBtnSaveWeighed">Tambah Box</span>
                 </button>
@@ -334,7 +334,7 @@ require_once __DIR__ . '/layout/header.php';
             <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
                     <h2 class="card-title" style="font-size: 16px; display: flex; align-items: center; gap: 6px;">
-                        <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: #3b82f6;"></i>
+                        <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: var(--aktif-fg);"></i>
                         <span>Ringkasan Surat Jalan</span>
                     </h2>
                     <div class="card-description" id="summarySjSubtitle">No. SJ: <?= htmlspecialchars($defaultSuratJalan) ?></div>
@@ -345,8 +345,8 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Rincian Produk di Surat Jalan Ini (Sama Persis seperti Tabel Scan Pengeluaran) -->
                 <div style="margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 11.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Rincian Produk:</span>
-                        <span style="font-size: 11.5px; color: #94a3b8;">Terbaru di atas</span>
+                        <span style="font-size: 11.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Rincian Produk:</span>
+                        <span style="font-size: 11.5px; color: var(--text-muted);">Terbaru di atas</span>
                     </div>
                     <div id="containerProductBreakdown" style="display: none;"></div>
                     <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
@@ -381,14 +381,14 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
 
                 <!-- Tombol Cetak Semua Barcode Thermal di Sesi Ini -->
-                <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                <div style="background: var(--bg-muted); border: 1.5px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-size: 11.5px; font-weight: 800; color: #334155; text-transform: uppercase;">
+                        <span style="font-size: 11.5px; font-weight: 800; color: var(--text-main); text-transform: uppercase;">
                             Cetak Barcode Box:
                         </span>
                         <span class="badge badge-purple" id="badgePrintCount" style="font-size: 11px; font-weight: 800;">0 Barcode</span>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="printAllBarcodesInSession('thermal')" id="btnPrintBatchThermal" style="width: 100%; font-weight: 700; font-size: 13px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #4f46e5; border-color: #4f46e5; border-radius: 6px; cursor: pointer;">
+                    <button type="button" class="btn btn-primary" onclick="printAllBarcodesInSession('thermal')" id="btnPrintBatchThermal" style="width: 100%; font-weight: 700; font-size: 13px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #0284c7; border-color: #0284c7; border-radius: 6px; cursor: pointer;">
                         <i data-lucide="tag" style="width: 15px; height: 15px;"></i>
                         <span>Cetak Barcode</span>
                     </button>
@@ -409,13 +409,13 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <div id="sectionMassal" style="<?= $activeTab === 'massal' ? 'display: block;' : 'display: none;' ?>">
     <!-- Grid Desktop 2-Kolom: Form Pembuatan di Kiri, Live Result & Preview di Kanan -->
-    <div style="display: grid; grid-template-columns: minmax(360px, 1.15fr) minmax(360px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
+    <div style="display: grid; grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
         <!-- Kolom Kiri: Formulir Cetak Barcode Baru -->
         <div class="card no-print" style="box-shadow: var(--shadow-md);">
             <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
                     <h2 class="card-title" style="font-size: 17px;">
-                        <i data-lucide="printer" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
+                        <i data-lucide="printer" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                         <span>Cetak Barcode Keranjang Baru</span>
                     </h2>
                     <div class="card-description">Pilih pemasok, nama barang, dan tentukan jumlah stiker yang ingin dicetak</div>
@@ -440,12 +440,12 @@ require_once __DIR__ . '/layout/header.php';
                             <label class="form-label" for="bulk_no_sj" style="margin: 0;">No. Surat Jalan <span style="color:red;">*</span></label>
                             <span class="badge badge-purple" style="font-size: 10px; padding: 2px 6px; font-weight: 700;">Otomatis Sistem</span>
                         </div>
-                        <input type="text" name="no_surat_jalan" id="bulk_no_sj" class="form-control" value="<?= htmlspecialchars($defaultSuratJalan) ?>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary); height: 42px; background: #f8fafc; cursor: not-allowed; border: 1.5px solid #cbd5e1;" title="Nomor Surat Jalan otomatis berurutan dari sistem dan tidak dapat diedit manual oleh pengguna">
+                        <input type="text" name="no_surat_jalan" id="bulk_no_sj" class="form-control" value="<?= htmlspecialchars($defaultSuratJalan) ?>" required readonly style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary); height: 42px; background: var(--bg-muted); cursor: not-allowed; border: 1.5px solid var(--border);" title="Nomor Surat Jalan otomatis berurutan dari sistem dan tidak dapat diedit manual oleh pengguna">
                     </div>
                 </div>
 
                 <!-- Dropdown Kategori & Produk -->
-                <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 14px; margin-bottom: 14px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" for="bulk_jenis_filter">Jenis / Kategori <span style="color:red;">*</span></label>
                         <select id="bulk_jenis_filter" class="form-control" required style="font-weight: 700; height: 42px;">
@@ -466,7 +466,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Input Jumlah Barcode yang Ingin Dicetak -->
                 <div style="background: var(--bg-muted); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 18px;">
                     <div class="form-group" style="margin: 0;">
-                        <label class="form-label" for="bulk_quantity" style="font-weight: 800; font-size: 13.5px; color: #8b5cf6; display: flex; justify-content: space-between; align-items: center;">
+                        <label class="form-label" for="bulk_quantity" style="font-weight: 800; font-size: 13.5px; color: var(--aktif-fg); display: flex; justify-content: space-between; align-items: center;">
                             <span>Jumlah Barcode yang Ingin Dicetak <span style="color:red;">*</span></span>
                             <span class="badge badge-purple" style="font-size: 11px;">10 Pcs / Lembar A4</span>
                         </label>
@@ -475,7 +475,7 @@ require_once __DIR__ . '/layout/header.php';
                             <input type="number" min="1" max="200" step="1" name="quantity_barcode" id="bulk_quantity" class="form-control" value="10" required 
                                    onkeydown="if(['-', '+', 'e', 'E', '.'].includes(event.key)) event.preventDefault();"
                                    oninput="let v = this.value.replace(/[^0-9]/g, ''); if(v === '' || parseInt(v) < 1) { this.value = 1; } else { this.value = Math.min(200, parseInt(v)); }"
-                                   style="font-size: 24px; font-weight: 900; text-align: center; color: #8b5cf6; height: 46px; width: 100px;">
+                                   style="font-size: 24px; font-weight: 900; text-align: center; color: var(--aktif-fg); height: 46px; width: 100px;">
                             
                             <!-- Pilihan Cepat Kuantitas Sederhana -->
                             <div class="qty-pill-group">
@@ -487,7 +487,7 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg" id="btnGenerateBulk" style="width: 100%; height: 50px; font-weight: 800; font-size: 15px; background: #8b5cf6; border-color: #8b5cf6; cursor: pointer;">
+                <button type="submit" class="btn btn-primary btn-lg" id="btnGenerateBulk" style="width: 100%; height: 50px; font-weight: 800; font-size: 15px; background: var(--primary); border-color: var(--primary); cursor: pointer;">
                     <i data-lucide="barcode" style="width: 18px; height: 18px;"></i>
                     <span>Buat Barcode Kemasan</span>
                 </button>
@@ -499,14 +499,14 @@ require_once __DIR__ . '/layout/header.php';
             <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
                     <h2 class="card-title" style="font-size: 16px;">
-                        <i data-lucide="check-circle-2" style="width: 18px; height: 18px; color: #10b981;"></i>
+                        <i data-lucide="check-circle-2" style="width: 18px; height: 18px; color: var(--ok-fg);"></i>
                         <span>Hasil Barcode Massal Siap Cetak</span>
                     </h2>
                     <div class="card-description" id="bulkResultDesc">Daftar barcode siap cetak lembar PDF</div>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button type="button" class="btn btn-outline btn-sm" id="btnPreviewSheet" style="display: none;" onclick="openSheetPreviewModal()">
-                        <i data-lucide="eye" style="width: 15px; height: 15px; color: #8b5cf6;"></i>
+                        <i data-lucide="eye" style="width: 15px; height: 15px; color: var(--aktif-fg);"></i>
                         <span>Pratinjau Lembar</span>
                     </button>
                     <button type="button" class="btn btn-success btn-sm" id="btnCetakSemuaBulk" style="display: none;" onclick="printBulkContainer()">
@@ -535,13 +535,13 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <div id="sectionScanTimbang" style="<?= $activeTab === 'scantimbang' ? 'display: block;' : 'display: none;' ?>">
     <!-- Grid Desktop 2-Kolom: Stasiun Timbang di Kiri, Live History Sesi Timbang di Kanan -->
-    <div style="display: grid; grid-template-columns: minmax(360px, 1.25fr) minmax(340px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
+    <div style="display: grid; grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr); gap: 24px; align-items: start; margin-bottom: 30px;">
         <!-- Formulir Scan Barcode & Rekam Timbangan Riil -->
         <div class="card no-print" style="box-shadow: var(--shadow-md);">
             <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
                     <h2 class="card-title" style="font-size: 17px;">
-                        <i data-lucide="scale" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <i data-lucide="scale" style="width: 20px; height: 20px; color: var(--ok-fg);"></i>
                         <span>Stasiun Timbang Barang Masuk</span>
                     </h2>
                     <div class="card-description">Scan barcode di keranjang, lalu masukkan bobot riil timbangan</div>
@@ -550,11 +550,11 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <!-- 0. Pemilihan Surat Jalan Penerimaan & List Barcode Belum Ditimbang -->
-            <div style="background: #ffffff; border: 2px solid #3b82f6; border-radius: var(--radius); padding: 16px; margin: 16px 0 14px 0; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);">
+            <div style="background: var(--bg-card); border: 2px solid var(--primary); border-radius: var(--radius); padding: 16px; margin: 16px 0 14px 0; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                     <div>
-                        <label for="selectWeighSJ" style="font-size: 14px; font-weight: 800; color: #1e40af; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                            <i data-lucide="file-text" style="width: 18px; height: 18px; color: #2563eb;"></i>
+                        <label for="selectWeighSJ" style="font-size: 14px; font-weight: 800; color: var(--aktif-fg); display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                            <i data-lucide="file-text" style="width: 18px; height: 18px; color: var(--aktif-fg);"></i>
                             <span>Pilih Surat Jalan Penerimaan Barang Masuk:</span>
                         </label>
                         <div style="font-size: 11.5px; color: var(--text-muted);">
@@ -566,11 +566,11 @@ require_once __DIR__ . '/layout/header.php';
                             <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
                             <span>Refresh SJ</span>
                         </button>
-                        <button type="button" id="btnSelesaiTimbangSJ" class="btn btn-sm" onclick="handleSelesaiTimbangClick()" disabled style="padding: 4px 12px; font-size: 12px; font-weight: 800; height: 32px; display: inline-flex; align-items: center; gap: 6px; background: #cbd5e1; border-color: #cbd5e1; color: #64748b; cursor: not-allowed; transition: all 0.2s;" title="Scan barcode dan isi berat timbangan terlebih dahulu">
+                        <button type="button" id="btnSelesaiTimbangSJ" class="btn btn-sm" onclick="handleSelesaiTimbangClick()" disabled style="padding: 4px 12px; font-size: 12px; font-weight: 800; height: 32px; display: inline-flex; align-items: center; gap: 6px; background: var(--border); border-color: var(--border); color: var(--text-muted); cursor: not-allowed; transition: all 0.2s;" title="Scan barcode dan isi berat timbangan terlebih dahulu">
                             <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
                             <span id="labelBtnSelesaiTimbang">Selesai Timbang</span>
                         </button>
-                        <a id="btnCetakSJPenerimaan" href="#" target="_blank" class="btn btn-primary btn-sm" onclick="handleCetakSJClick(event)" style="padding: 4px 12px; font-size: 12px; font-weight: 700; height: 32px; display: inline-flex; align-items: center; gap: 6px; background: #64748b; border-color: #64748b; color: #ffffff; opacity: 0.55; cursor: not-allowed; transition: all 0.2s;" title="Tombol cetak terkunci. Klik 'Selesai Timbang' terlebih dahulu setelah selesai menimbang.">
+                        <a id="btnCetakSJPenerimaan" href="#" target="_blank" class="btn btn-primary btn-sm" onclick="handleCetakSJClick(event)" style="padding: 4px 12px; font-size: 12px; font-weight: 700; height: 32px; display: inline-flex; align-items: center; gap: 6px; background: var(--text-muted); border-color: #64748b; color: #ffffff; opacity: 0.55; cursor: not-allowed; transition: all 0.2s;" title="Tombol cetak terkunci. Klik 'Selesai Timbang' terlebih dahulu setelah selesai menimbang.">
                             <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
                             <span>Cetak Surat Jalan</span>
                         </a>
@@ -600,20 +600,20 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
 
                 <!-- Box Ringkasan Surat Jalan Terpilih (Bersih & Ringkas tanpa tumpukan chip barcode) -->
-                <div id="containerSJUnweighed" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1.5px dashed #cbd5e1;">
+                <div id="containerSJUnweighed" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1.5px dashed var(--border);">
                     <!-- Ringkasan Info SJ Terpilih -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-muted); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                         <div>
                             <span style="font-size: 12px; color: var(--text-muted);">Surat Jalan:</span>
-                            <span id="infoSJNo" style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 800; color: #1d4ed8; margin-left: 4px;">-</span>
-                            <span style="font-size: 12px; color: #64748b; margin-left: 8px;">• Item: <strong id="infoSJItem" style="color: #0f172a;">-</strong></span>
-                            <span style="font-size: 12px; color: #64748b; margin-left: 8px;">• Pemasok: <strong id="infoSJPemasok" style="color: #0f172a;">-</strong></span>
+                            <span id="infoSJNo" style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 800; color: var(--aktif-fg); margin-left: 4px;">-</span>
+                            <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">• Item: <strong id="infoSJItem" style="color: var(--text-main);">-</strong></span>
+                            <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">• Pemasok: <strong id="infoSJPemasok" style="color: var(--text-main);">-</strong></span>
                         </div>
                         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                             <span class="badge badge-secondary" id="badgeSJTotal">Total: 0 Pcs</span>
                             <span class="badge badge-warning" id="badgeSJSisa" style="font-weight: 800;">Belum: 0 Pcs</span>
                             <span class="badge badge-success" id="badgeSJSelesai">Sudah: 0 Pcs</span>
-                            <button type="button" class="btn btn-outline btn-sm" id="btnLihatBarcodeDiRiwayat" onclick="openSJBarcodeHistoryModal(document.getElementById('infoSJNo')?.innerText)" style="font-size: 11.5px; font-weight: 700; color: #4f46e5; border-color: #c7d2fe; background: #eef2ff; cursor: pointer;" title="Lihat daftar barcode keranjang surat jalan ini di riwayat">
+                            <button type="button" class="btn btn-outline btn-sm" id="btnLihatBarcodeDiRiwayat" onclick="openSJBarcodeHistoryModal(document.getElementById('infoSJNo')?.innerText)" style="font-size: 11.5px; font-weight: 700; color: var(--aktif-fg); border-color: var(--border-hover); background: var(--info-bg); cursor: pointer;" title="Lihat daftar barcode keranjang surat jalan ini di riwayat">
                                 <i data-lucide="list" style="width: 13px; height: 13px;"></i>
                                 <span>Lihat Daftar Barcode</span>
                             </button>
@@ -621,12 +621,12 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
 
                     <!-- Banner jika semua keranjang pada SJ terpilih sudah selesai ditimbang -->
-                    <div id="allWeighedSuccessNotice" style="display: none; background: #ecfdf5; border: 1.5px solid #10b981; border-radius: 8px; padding: 14px; text-align: center;">
-                        <div style="font-size: 15px; font-weight: 800; color: #047857; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;">
+                    <div id="allWeighedSuccessNotice" style="display: none; background: var(--ok-bg); border: 1.5px solid var(--ok-solid); border-radius: 8px; padding: 14px; text-align: center;">
+                        <div style="font-size: 15px; font-weight: 800; color: var(--ok-fg); display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;">
                             <i data-lucide="check-circle-2" style="width: 20px; height: 20px;"></i>
                             <span>Semua Keranjang pada Surat Jalan Ini Telah Selesai Ditimbang!</span>
                         </div>
-                        <div style="font-size: 12.5px; color: #065f46; margin-bottom: 0;">
+                        <div style="font-size: 12.5px; color: var(--ok-fg); margin-bottom: 0;">
                             Total berat riil penerimaan barang masuk telah tercatat lengkap di sistem.
                             Gunakan tombol Selesai Timbang dan Cetak Surat Jalan di bagian atas.
                         </div>
@@ -668,16 +668,16 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- 3. Form Input Bobot Timbangan Riil -->
             <div id="formWeighArea" style="display: none;">
-                <div style="background: rgba(16, 185, 129, 0.08); border: 2px solid #10b981; border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
+                <div style="background: rgba(16, 185, 129, 0.08); border: 2px solid var(--ok-solid); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <label class="form-label" for="scanWeightValue" style="margin: 0; font-size: 14px; font-weight: 800; color: #047857;">
+                        <label class="form-label" for="scanWeightValue" style="margin: 0; font-size: 14px; font-weight: 800; color: var(--ok-fg);">
                             Berat Timbangan Riil (KG) <span style="color:red;">*</span>
                         </label>
                     </div>
 
                     <div style="position: relative; margin-bottom: 10px;">
-                        <input type="number" step="0.01" id="scanWeightValue" class="form-control" placeholder="0.00" style="font-size: 28px; font-weight: 900; color: #047857; padding-right: 60px; height: 52px;">
-                        <span style="position: absolute; right: 16px; top: 12px; font-size: 18px; font-weight: 900; color: #047857;">KG</span>
+                        <input type="number" step="0.01" id="scanWeightValue" class="form-control" placeholder="0.00" style="font-size: 28px; font-weight: 900; color: var(--ok-fg); padding-right: 60px; height: 52px;">
+                        <span style="position: absolute; right: 16px; top: 12px; font-size: 18px; font-weight: 900; color: var(--ok-fg);">KG</span>
                     </div>
 
                     <!-- Tombol Cepat Pilihan Berat Sederhana -->
@@ -703,7 +703,7 @@ require_once __DIR__ . '/layout/header.php';
             <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
                     <h2 class="card-title" style="font-size: 16px;">
-                        <i data-lucide="history" style="width: 18px; height: 18px; color: #10b981;"></i>
+                        <i data-lucide="history" style="width: 18px; height: 18px; color: var(--ok-fg);"></i>
                         <span>Barcode yang Baru Saja Ditimbang</span>
                     </h2>
                     <div class="card-description">Daftar barcode yang sudah selesai ditimbang pada sesi ini</div>
@@ -797,7 +797,7 @@ require_once __DIR__ . '/layout/header.php';
                 <i data-lucide="sliders-horizontal" style="width: 15px; height: 15px;"></i>
                 <span>Filter Lanjutan</span>
                 <?php if ($activeFilterCount > 0): ?>
-                    <span class="badge" style="background: #ffffff; color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeFilterCount ?></span>
+                    <span class="badge" style="background: var(--bg-card); color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeFilterCount ?></span>
                 <?php endif; ?>
             </button>
 
@@ -814,10 +814,10 @@ require_once __DIR__ . '/layout/header.php';
     <!-- JUMBOTRON PANEL FILTER LENGKAP & DETAIL (COLLAPSIBLE / MODAL-LIKE)    -->
     <!-- ===================================================================== -->
     <div id="panelJumbotronFilterGudang" class="no-print" style="display: none; margin-bottom: 22px;">
-        <div class="card" style="background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border: 1.5px solid #cbd5e1; border-radius: var(--radius); padding: 22px 24px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);">
+        <div class="card" style="background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid var(--border);">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3);">
+                    <div style="background: var(--primary); color: white; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3);">
                         <i data-lucide="sliders" style="width: 18px; height: 18px;"></i>
                     </div>
                     <div>
@@ -894,7 +894,7 @@ require_once __DIR__ . '/layout/header.php';
                     <!-- Blok Rentang Tanggal Range Langsung Terlihat & Interaktif -->
                     <div style="flex: 2; min-width: 320px;">
                         <label class="form-label" style="font-size: 11.5px; margin-bottom: 4px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
-                            <span><i data-lucide="calendar-range" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; color: #4f46e5;"></i> Rentang Tanggal Masuk:</span>
+                            <span><i data-lucide="calendar-range" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; color: var(--aktif-fg);"></i> Rentang Tanggal Masuk:</span>
                             <!-- Dropdown Preset Tanggal Tunggal -->
                             <div style="display: flex; gap: 4px; align-items: center;">
                                 <select onchange="setDateRangePreset(this.value); this.value='';" style="font-size: 11px; font-weight: 700; height: 24px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--primary); cursor: pointer;" title="Pilih preset tanggal cepat">
@@ -908,12 +908,12 @@ require_once __DIR__ . '/layout/header.php';
                             </div>
                         </label>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; flex: 1;">
                                 <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); white-space: nowrap;">Mulai:</span>
                                 <input type="date" name="start_date" id="gudangStartDate" value="<?= htmlspecialchars($filterGudangStartDate) ?>" style="border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-main); height: 100%; padding: 0; outline: none; cursor: pointer; flex: 1; min-width: 0;" title="Tanggal Mulai Masuk">
                             </div>
                             <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">s/d</span>
-                            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; flex: 1;">
                                 <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); white-space: nowrap;">Sampai:</span>
                                 <input type="date" name="end_date" id="gudangEndDate" value="<?= htmlspecialchars($filterGudangEndDate) ?>" style="border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-main); height: 100%; padding: 0; outline: none; cursor: pointer; flex: 1; min-width: 0;" title="Sampai Tanggal Masuk">
                             </div>
@@ -931,7 +931,7 @@ require_once __DIR__ . '/layout/header.php';
 
                     <!-- Tombol Aksi Filter -->
                     <div style="display: flex; gap: 8px; align-items: flex-end;">
-                        <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);">
+                        <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);">
                             <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
                             <span>Terapkan Filter</span>
                         </button>
@@ -1054,11 +1054,11 @@ require_once __DIR__ . '/layout/header.php';
             </div>
             <div style="display: flex; gap: 8px;">
                 <button type="button" class="btn btn-outline btn-sm" onclick="exportGudangCsv()" style="font-weight: 600; padding: 6px 12px;">
-                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
+                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
                     <span>Ekspor CSV</span>
                 </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="window.print()" style="font-weight: 600; padding: 6px 12px;">
-                    <i data-lucide="printer" style="width: 14px; height: 14px; color: #6366f1;"></i>
+                    <i data-lucide="printer" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                     <span>Cetak</span>
                 </button>
             </div>
@@ -1119,7 +1119,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <span style="font-size: 11.5px; color: var(--text-muted);"> pcs</span>
                                     </td>
                                     <td style="text-align: right; padding: 12px 20px 12px 14px; white-space: nowrap;">
-                                        <strong style="font-size: 15px; color: #4f46e5;">
+                                        <strong style="font-size: 15px; color: var(--aktif-fg);">
                                             <?= number_format((float)$row['total_kg'], 2, ',', '.') ?>
                                         </strong>
                                         <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;"> KG</span>
@@ -1192,7 +1192,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <?= $idx + 1 + $gudangOffset ?>
                                     </td>
                                     <td style="padding: 12px 14px; white-space: nowrap;">
-                                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 13px; color: #4f46e5; letter-spacing: 0.5px;">
+                                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 13px; color: var(--aktif-fg); letter-spacing: 0.5px;">
                                             <?= htmlspecialchars($lbl['id_label']) ?>
                                         </span>
                                     </td>
@@ -1213,7 +1213,7 @@ require_once __DIR__ . '/layout/header.php';
                                         </span>
                                     </td>
                                     <td style="text-align: right; padding: 12px 20px 12px 14px; white-space: nowrap;">
-                                        <strong style="color: #10b981; font-size: 14px;">
+                                        <strong style="color: var(--ok-fg); font-size: 14px;">
                                             <?= number_format((float)$lbl['berat_netto'], 2, ',', '.') ?>
                                         </strong>
                                         <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;"> KG</span>
@@ -1291,7 +1291,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="sheet-preview-dialog">
         <div class="sheet-preview-header">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6; padding: 6px; border-radius: 8px;">
+                <div style="background: rgba(3, 105, 161, 0.15); color: var(--aktif-fg); padding: 6px; border-radius: 8px;">
                     <i data-lucide="file-text" style="width: 20px; height: 20px;"></i>
                 </div>
                 <div>
@@ -1318,7 +1318,7 @@ require_once __DIR__ . '/layout/header.php';
 <!-- Modal Pilihan Cetak Barcode Ulang (1 Pcs Jadi 1 Lembar 10 Pcs / Kelompok SJ) -->
 <div class="sheet-preview-backdrop" id="modalReprintChoice" style="display: none; align-items: center; justify-content: center; z-index: 100000;">
     <div style="background: var(--bg-card, #ffffff); border-radius: 16px; width: 560px; max-width: 95vw; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1.5px solid var(--border); overflow: hidden; animation: popIn 0.2s ease;">
-        <div style="padding: 16px 20px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
+        <div style="padding: 16px 20px; background: var(--primary); color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 
                 <div>
@@ -1335,30 +1335,30 @@ require_once __DIR__ . '/layout/header.php';
                     <span style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">Barcode Terpilih</span>
                     <span class="badge badge-purple" id="reprintTargetMitra" style="font-size: 11px;">PEMASOK</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 800; color: #4f46e5;" id="reprintTargetBarcode">-</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 800; color: var(--aktif-fg);" id="reprintTargetBarcode">-</div>
                 <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="reprintTargetMeta">-</div>
             </div>
 
             <!-- Pilihan Menu Cetak -->
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <!-- Opsi 1: Cetak Barcode Ini dengan Pilihan Jumlah Lembar (Custom Qty) -->
-                <div style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 14px 16px;">
+                <div style="background: var(--info-bg); border: 2px solid var(--primary); border-radius: 12px; padding: 14px 16px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 14px;">
                             <div>
                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                    <strong style="color: #4338ca; font-size: 14px;">Cetak Barcode Ini</strong>
+                                    <strong style="color: var(--aktif-fg); font-size: 14px;">Cetak Barcode Ini</strong>
                                 </div>
-                                <div style="font-size: 12px; color: #4b5563; margin-top: 3px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
                                     Jumlah stiker yang dicetak:
                                 </div>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
                             <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-weight: 800; height: 36px;" onclick="stepReprintQty(-1)">−</button>
-                            <input type="number" id="reprintQtyInput" min="1" max="100" value="10" style="width: 58px; height: 36px; text-align: center; font-weight: 800; font-size: 14px; border: 1.5px solid #6366f1; border-radius: 6px; background: #fff;" onchange="validateReprintQty(this)">
+                            <input type="number" id="reprintQtyInput" min="1" max="100" value="10" style="width: 58px; height: 36px; text-align: center; font-weight: 800; font-size: 14px; border: 1.5px solid var(--primary); border-radius: 6px; background: var(--bg-card);" onchange="validateReprintQty(this)">
                             <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-weight: 800; height: 36px;" onclick="stepReprintQty(1)">+</button>
-                            <button type="button" onclick="executeReprintCustomQty()" class="btn btn-primary" style="padding: 6px 16px; height: 36px; font-weight: 700; background: #4f46e5; border-color: #4f46e5; display: flex; align-items: center; gap: 6px;">
+                            <button type="button" onclick="executeReprintCustomQty()" class="btn btn-primary" style="padding: 6px 16px; height: 36px; font-weight: 700; background: var(--primary); border-color: var(--primary); display: flex; align-items: center; gap: 6px;">
                                 <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
                                 <span>Cetak</span>
                             </button>
@@ -1367,10 +1367,10 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
 
                 <!-- Opsi 2: Cetak Seluruh Barcode di Surat Jalan Ini -->
-                <button type="button" onclick="executeReprintGroupSJ()" class="btn" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; background: #f0fdf4; border: 1.5px solid #22c55e; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                <button type="button" onclick="executeReprintGroupSJ()" class="btn" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; background: var(--ok-bg); border: 1.5px solid var(--ok-solid); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
                     <div style="flex: 1;">
-                        <strong style="color: #15803d; font-size: 14px;">Cetak Seluruh Barcode di Surat Jalan Ini</strong>
-                        <div style="font-size: 12px; color: #4b5563; margin-top: 3px;" id="reprintGroupDesc">
+                        <strong style="color: var(--ok-fg); font-size: 14px;">Cetak Seluruh Barcode di Surat Jalan Ini</strong>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;" id="reprintGroupDesc">
                             Mencetak seluruh stiker barcode pada kelompok surat jalan ini.
                         </div>
                     </div>
@@ -1387,23 +1387,23 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL DAFTAR BARCODE SURAT JALAN (RIWAYAT & ARSIP PENERIMAAN)             -->
 <!-- ========================================================================= -->
 <div class="sheet-preview-backdrop no-print" id="modalSJBarcodeList" style="display: none; align-items: center; justify-content: center; z-index: 100000; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); padding: 18px;">
-    <div style="background: var(--bg-card, #ffffff); border-radius: 12px; width: 100%; max-width: 840px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid var(--border, #e2e8f0);">
+    <div style="background: var(--bg-card, #ffffff); border-radius: 12px; width: 100%; max-width: 840px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid var(--border, var(--border));">
         <!-- Header Modal -->
-        <div style="padding: 16px 20px; background: #ffffff; border-bottom: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; align-items: center;">
+        <div style="padding: 16px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border, var(--border)); display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <div style="font-size: 16px; font-weight: 800; color: var(--text-main, #0f172a); display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="package" style="width: 18px; height: 18px; color: var(--primary, #4f46e5);"></i>
+                    <i data-lucide="package" style="width: 18px; height: 18px; color: var(--primary, #0284c7);"></i>
                     <span>Daftar Box Surat Jalan</span>
                 </div>
                 <div style="font-size: 12.5px; color: var(--text-muted, #64748b); margin-top: 2px;">
-                    No. Surat Jalan: <code id="modalSJNoText" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary, #2563eb); background: #eff6ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">-</code>
+                    No. Surat Jalan: <code id="modalSJNoText" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary, #2563eb); background: var(--info-bg); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-hover);">-</code>
                 </div>
             </div>
-            <button type="button" onclick="closeSJBarcodeListModal()" style="background: transparent; border: 1px solid var(--border, #e2e8f0); color: #64748b; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; transition: all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.color='#64748b';" title="Tutup">✕</button>
+            <button type="button" onclick="closeSJBarcodeListModal()" style="background: transparent; border: 1px solid var(--border, var(--border)); color: var(--text-muted); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; transition: all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.color='#64748b';" title="Tutup">✕</button>
         </div>
 
         <!-- Meta Info Bar: Produk, Pemasok & Counter -->
-        <div style="padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="padding: 12px 20px; background: var(--bg-muted); border-bottom: 1px solid var(--border, var(--border)); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="font-size: 12.5px; color: var(--text-muted, #64748b);">
                 <span>Pemasok:</span> <strong id="modalSJPemasokText" style="color: var(--text-main, #0f172a);">-</strong>
                 <span style="color: #cbd5e1; margin: 0 8px;">•</span>
@@ -1412,9 +1412,9 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <!-- Body Modal: Tabel Elegan Seluruh Box -->
-        <div style="padding: 0; overflow-y: auto; flex: 1; max-height: 440px; background: #ffffff;">
+        <div style="padding: 0; overflow-y: auto; flex: 1; max-height: 440px; background: var(--bg-card);">
             <table class="table-custom" style="margin: 0; border: none;">
-                <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
+                <thead style="position: sticky; top: 0; z-index: 5; background: var(--bg-muted);">
                     <tr>
                         <th style="width: 45px; text-align: center;">No</th>
                         <th>Kode Box / Barcode</th>
@@ -1427,7 +1427,7 @@ require_once __DIR__ . '/layout/header.php';
                     <!-- Diisi via JS -->
                 </tbody>
                 <tfoot id="modalSJTableFoot" style="display: none;">
-                    <tr style="background: #f8fafc;">
+                    <tr style="background: var(--bg-muted);">
                         <td colspan="3" style="text-align: right; font-weight: 700; color: var(--text-muted, #64748b); font-size: 12.5px;">Total <span id="modalSJTotalCount">0</span> box</td>
                         <td id="modalSJTotalNetto" style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px;">0.00 kg</td>
                         <td></td>
@@ -1437,13 +1437,13 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <!-- Footer Modal -->
-        <div style="padding: 14px 20px; background: #f8fafc; border-top: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="padding: 14px 20px; background: var(--bg-muted); border-top: 1px solid var(--border, var(--border)); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" id="btnModalPrintAllBarcodes" onclick="printAllModalBarcodes()" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px;">
                     <i data-lucide="tag" style="width: 14px; height: 14px;"></i>
                     <span>Cetak Semua Barcode</span>
                 </button>
-                <a id="btnModalCetakSuratJalan" href="#" target="_blank" class="btn btn-outline" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; color: #047857; border-color: #a7f3d0; background: #ecfdf5;">
+                <a id="btnModalCetakSuratJalan" href="#" target="_blank" class="btn btn-outline" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; color: var(--ok-fg); border-color: var(--border-hover); background: var(--ok-bg);">
                     <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
                     <span>Cetak Surat Jalan</span>
                 </a>
@@ -1460,7 +1460,7 @@ require_once __DIR__ . '/layout/header.php';
 <div class="card no-print" id="detailsRiwayatPenerimaan" style="margin-top: 10px; border: 1.5px solid var(--border);">
     <div style="padding: 18px 22px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; user-select: none; background: var(--bg-card); border-bottom: 1px solid var(--border);">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: rgba(79, 70, 229, 0.1); width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
+            <div style="background: rgba(2, 132, 199, 0.1); width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
                 <i data-lucide="archive" style="width: 22px; height: 22px; color: var(--primary);"></i>
             </div>
             <div>
@@ -1493,13 +1493,13 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <!-- 2. Filter Tanggal Mulai Dari -->
-            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; min-width: 145px; flex: 1;">
+            <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; min-width: 145px; flex: 1;">
                 <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); white-space: nowrap;">Mulai:</span>
                 <input type="date" name="filter_start_date" value="<?= htmlspecialchars($filterStartDate) ?>" style="border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-main); height: 100%; padding: 0; outline: none; cursor: pointer; flex: 1; min-width: 0;" title="Tanggal Mulai Dari">
             </div>
 
             <!-- 3. Filter Sampai Dengan Tanggal -->
-            <div style="display: flex; align-items: center; gap: 6px; background: #ffffff; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; min-width: 145px; flex: 1;">
+            <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; min-width: 145px; flex: 1;">
                 <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); white-space: nowrap;">Sampai:</span>
                 <input type="date" name="filter_end_date" value="<?= htmlspecialchars($filterEndDate) ?>" style="border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-main); height: 100%; padding: 0; outline: none; cursor: pointer; flex: 1; min-width: 0;" title="Sampai Dengan Tanggal">
             </div>
@@ -1593,8 +1593,8 @@ require_once __DIR__ . '/layout/header.php';
                     <?php $sjBatal = (int)($grp['jml_void'] ?? 0) > 0 && (int)($grp['jml_void'] ?? 0) === (int)($grp['total_pcs'] ?? 0); ?>
                     <tr style="border-bottom: 1px solid var(--border);<?= $sjBatal ? ' opacity: 0.65;' : '' ?>">
                         <td>
-                            <a href="javascript:void(0)" onclick="openSJBarcodeHistoryModal('<?= htmlspecialchars(addslashes($noSj)) ?>')" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border-bottom: 1.5px dashed #93c5fd; padding-bottom: 1px; cursor: pointer;" title="Klik untuk melihat rincian barcode Surat Jalan ini">
-                                <i data-lucide="file-text" style="width: 14px; height: 14px; color: #3b82f6;"></i>
+                            <a href="javascript:void(0)" onclick="openSJBarcodeHistoryModal('<?= htmlspecialchars(addslashes($noSj)) ?>')" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: var(--aktif-fg); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border-bottom: 1.5px dashed var(--border-hover); padding-bottom: 1px; cursor: pointer;" title="Klik untuk melihat rincian barcode Surat Jalan ini">
+                                <i data-lucide="file-text" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                 <span><?= htmlspecialchars($noSj) ?></span>
                             </a>
                             <?php if ($sjBatal): ?>
@@ -1603,11 +1603,11 @@ require_once __DIR__ . '/layout/header.php';
                             <?php endif; ?>
                         </td>
                         <td style="white-space: nowrap;">
-                            <div style="font-size: 12px; font-weight: 700; color: #334155;"><?= date('d M Y', strtotime($grp['created_at'])) ?></div>
+                            <div style="font-size: 12px; font-weight: 700; color: var(--text-main);"><?= date('d M Y', strtotime($grp['created_at'])) ?></div>
                             <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;"><?= date('H:i', strtotime($grp['created_at'])) ?> WIB</div>
                         </td>
                         <td>
-                            <span class="badge" style="background: #0284c7; color: #fff; padding: 2px 7px; font-size: 11px; font-weight: 700; border-radius: 4px;">
+                            <span class="badge" style="background: var(--primary); color: #fff; padding: 2px 7px; font-size: 11px; font-weight: 700; border-radius: 4px;">
                                 <?= htmlspecialchars($pmsKode) ?>
                             </span>
                             <span style="font-size: 12px; font-weight: 600; margin-left: 4px;"><?= htmlspecialchars($pmsNama) ?></span>
@@ -1622,7 +1622,7 @@ require_once __DIR__ . '/layout/header.php';
                             </span>
                         </td>
                         <td style="text-align: right;">
-                            <strong style="color: #10b981; font-size: 13.5px; font-weight: 800; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatKg($grp['total_berat']) ?></strong>
+                            <strong style="color: var(--ok-fg); font-size: 13.5px; font-weight: 800; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatKg($grp['total_berat']) ?></strong>
                         </td>
                         <td>
                             <code style="font-size: 11px;"><?= htmlspecialchars($grp['min_barcode']) ?></code>
@@ -1630,12 +1630,12 @@ require_once __DIR__ . '/layout/header.php';
                             <code style="font-size: 11px;"><?= htmlspecialchars($grp['max_barcode']) ?></code>
                         </td>
                         <td style="text-align: center;" class="no-print">
-                            <button type="button" class="btn btn-outline btn-sm" onclick="openSJBarcodeHistoryModal('<?= htmlspecialchars(addslashes($noSj)) ?>')" style="font-weight: 700; font-size: 11.5px; padding: 5px 14px; display: inline-flex; align-items: center; gap: 5px; color: #4f46e5; border-color: #c7d2fe; background: #eef2ff; border-radius: 6px; cursor: pointer; transition: all 0.2s;" title="Lihat Rincian Barcode Surat Jalan <?= htmlspecialchars($noSj) ?>">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="openSJBarcodeHistoryModal('<?= htmlspecialchars(addslashes($noSj)) ?>')" style="font-weight: 700; font-size: 11.5px; padding: 5px 14px; display: inline-flex; align-items: center; gap: 5px; color: var(--aktif-fg); border-color: var(--border-hover); background: var(--info-bg); border-radius: 6px; cursor: pointer; transition: all 0.2s;" title="Lihat Rincian Barcode Surat Jalan <?= htmlspecialchars($noSj) ?>">
                                 <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
                                 <span>Detail</span>
                             </button>
                             <?php if (!$sjBatal): ?>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_penerimaan', { no_surat_jalan: '<?= htmlspecialchars(addslashes($noSj), ENT_QUOTES) ?>' }, 'penerimaan <?= htmlspecialchars(addslashes($noSj), ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: #dc2626; border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_penerimaan', { no_surat_jalan: '<?= htmlspecialchars(addslashes($noSj), ENT_QUOTES) ?>' }, 'penerimaan <?= htmlspecialchars(addslashes($noSj), ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: var(--bad-fg); border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -1687,7 +1687,7 @@ require_once __DIR__ . '/layout/header.php';
                             </strong>
                         </td>
                         <td>
-                            <span class="badge" style="background: #0284c7; color: #fff; padding: 2px 7px; font-size: 11px; font-weight: 700; border-radius: 4px;">
+                            <span class="badge" style="background: var(--primary); color: #fff; padding: 2px 7px; font-size: 11px; font-weight: 700; border-radius: 4px;">
                                 <?= htmlspecialchars($lblPmsKode) ?>
                             </span>
                             <span style="font-size: 12px; font-weight: 600; margin-left: 4px;"><?= htmlspecialchars($lblPmsNama) ?></span>
@@ -1697,7 +1697,7 @@ require_once __DIR__ . '/layout/header.php';
                             <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($lbl['nama_jenis'] ?? '') ?></div>
                         </td>
                         <td style="text-align: right;">
-                            <strong style="color: #10b981; font-size: 14px; font-weight: 900;"><?= Helper::formatKg($netto) ?></strong>
+                            <strong style="color: var(--ok-fg); font-size: 14px; font-weight: 900;"><?= Helper::formatKg($netto) ?></strong>
                         </td>
                         <td>
                             <code style="font-size: 11.5px; font-weight: 700; color: var(--primary);"><?= htmlspecialchars($noSj) ?></code>
@@ -1765,9 +1765,9 @@ require_once __DIR__ . '/layout/header.php';
 <!-- MODAL POPUP: PERINGATAN BARCODE SUDAH DIGUNAKAN (ANTI-DUPLIKAT DATA)      -->
 <!-- ========================================================================= -->
 <div id="modalBarcodeAlreadyUsed" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: var(--card-bg, #ffffff); border-radius: 16px; max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 2px solid #ef4444; overflow: hidden; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="background: var(--card-bg, #ffffff); border-radius: 16px; max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); border: 2px solid var(--bad-solid); overflow: hidden; animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
         <!-- Header Banner Merah Menyala -->
-        <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 18px 22px; color: #ffffff; display: flex; align-items: center; gap: 14px;">
+        <div style="background: var(--bad-solid); padding: 18px 22px; color: #ffffff; display: flex; align-items: center; gap: 14px;">
             <div style="background: rgba(255, 255, 255, 0.2); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <i data-lucide="shield-alert" style="width: 26px; height: 26px; color: #ffffff;"></i>
             </div>
@@ -1779,29 +1779,29 @@ require_once __DIR__ . '/layout/header.php';
 
         <!-- Body Modal Informasi -->
         <div style="padding: 22px;">
-            <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;">
-                <div style="font-size: 13.5px; color: #991b1b; line-height: 1.5; font-weight: 600;" id="usedModalWarningText">
+            <div style="background: var(--bad-bg); border: 1.5px solid var(--border-hover); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;">
+                <div style="font-size: 13.5px; color: var(--bad-fg); line-height: 1.5; font-weight: 600;" id="usedModalWarningText">
                     Barcode ini <strong>sudah pernah discan dan ditimbang</strong>. Sistem menolak penimbangan ulang agar tidak terjadi pencatatan ganda pada stok fisik gudang.
                 </div>
             </div>
 
             <!-- Rincian Data Barcode yang Ditolak -->
-            <div style="background: var(--bg-muted, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 10px; padding: 14px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, #e2e8f0); margin-bottom: 8px;">
+            <div style="background: var(--bg-muted, #f8fafc); border: 1px solid var(--border, var(--border)); border-radius: 10px; padding: 14px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, var(--border)); margin-bottom: 8px;">
                     <span style="color: var(--text-muted, #64748b);">ID Barcode:</span>
-                    <strong id="usedBarcodeId" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #dc2626;">-</strong>
+                    <strong id="usedBarcodeId" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--bad-fg);">-</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, #e2e8f0); margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, var(--border)); margin-bottom: 8px;">
                     <span style="color: var(--text-muted, #64748b);">Nama Komoditas:</span>
                     <strong id="usedBarcodeItem" style="color: var(--text-main, #1e293b);">-</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, #e2e8f0); margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, var(--border)); margin-bottom: 8px;">
                     <span style="color: var(--text-muted, #64748b);">Pemasok / Mitra:</span>
                     <span id="usedBarcodeMitra" style="font-weight: 700; color: var(--text-main, #1e293b);">-</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, #e2e8f0); margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed var(--border, var(--border)); margin-bottom: 8px;">
                     <span style="color: var(--text-muted, #64748b);">No. Surat Jalan:</span>
-                    <strong id="usedBarcodeSJ" style="color: var(--primary, #4f46e5);">-</strong>
+                    <strong id="usedBarcodeSJ" style="color: var(--primary, #0284c7);">-</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
                     <span style="color: var(--text-muted, #64748b); font-weight: 700;">Bobot Tercatat:</span>
@@ -1811,7 +1811,7 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- Tombol Tutup / Kembali -->
             <div style="margin-top: 20px;">
-                <button type="button" id="btnCloseUsedModal" class="btn btn-danger" style="width: 100%; height: 46px; font-size: 14.5px; font-weight: 800; justify-content: center; border-radius: 10px; background: #dc2626; border-color: #dc2626; cursor: pointer;">
+                <button type="button" id="btnCloseUsedModal" class="btn btn-danger" style="width: 100%; height: 46px; font-size: 14.5px; font-weight: 800; justify-content: center; border-radius: 10px; background: var(--bad-solid); border-color: var(--bad-solid); cursor: pointer;">
                     <span>Tutup & Scan Barcode Lain</span>
                 </button>
             </div>
@@ -2097,7 +2097,7 @@ require_once __DIR__ . '/layout/header.php';
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0.5mm 0;">
-                        <div class="square-barcode-svg" style="width: 100%; height: 17mm; max-height: 17mm; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #ffffff;">
+                        <div class="square-barcode-svg" style="width: 100%; height: 17mm; max-height: 17mm; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg-card);">
                             ${barcodeSvg}
                         </div>
                         <div style="font-size: 12px; font-weight: 800; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.8px; color: #000; margin-top: 0.5mm; text-align: center; line-height: 1;">
@@ -2232,7 +2232,7 @@ require_once __DIR__ . '/layout/header.php';
                         <td>
                             <span class="badge badge-outline" style="font-size: 11px;">${b.nama_jenis || '-'}</span>
                         </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #10b981;">
+                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ok-fg);">
                             ${netto.toFixed(2)} kg
                         </td>
                         <td style="text-align: center; position: sticky; right: 0; background: var(--bg-card, #ffffff); z-index: 5; box-shadow: -2px 0 4px rgba(0,0,0,0.04);">
@@ -2599,7 +2599,7 @@ require_once __DIR__ . '/layout/header.php';
                         width: 100% !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        background: #ffffff !important;
+                        background: var(--bg-card) !important;
                     }
                     .app-layout, .app-main-container, .main-wrapper {
                         display: block !important;
@@ -2652,7 +2652,7 @@ require_once __DIR__ . '/layout/header.php';
                         margin: 0 !important;
                         box-sizing: border-box !important;
                         border: 2px solid #000000 !important;
-                        background: #ffffff !important;
+                        background: var(--bg-card) !important;
                     }
                     .square-barcode-svg svg {
                         width: 100% !important;
@@ -2700,7 +2700,7 @@ require_once __DIR__ . '/layout/header.php';
             pageWrapper.style.cssText = 'background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;';
             
             const pageHeader = document.createElement('div');
-            pageHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; width: 64mm; padding-bottom: 4px; margin-bottom: 8px; font-size: 11px; font-weight: 800; color: #4f46e5;';
+            pageHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; width: 64mm; padding-bottom: 4px; margin-bottom: 8px; font-size: 11px; font-weight: 800; color: var(--aktif-fg);';
             pageHeader.innerHTML = `
                 <span>🏷️ STIKER #${idx + 1} DARI ${totalSheets}</span>
                 <span>FORMAT: 70 × 50 MM</span>
@@ -3007,8 +3007,8 @@ require_once __DIR__ . '/layout/header.php';
             const isPlaceholder = !selectEl.value || selectEl.value === "";
 
             trigger.innerHTML = `
-                <span style="${isPlaceholder ? 'color: #94a3b8; font-weight: 500;' : 'color: #0f172a; font-weight: 700;'} overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>
-                <i data-lucide="chevron-down" class="shadcn-select-chevron" style="width: 16px; height: 16px; color: #64748b; flex-shrink: 0; transition: transform 0.2s;"></i>
+                <span style="${isPlaceholder ? 'color: var(--text-muted); font-weight: 500;' : 'color: var(--text-main); font-weight: 700;'} overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>
+                <i data-lucide="chevron-down" class="shadcn-select-chevron" style="width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s;"></i>
             `;
             if (window.lucide) window.lucide.createIcons({ root: trigger });
 
@@ -3030,8 +3030,8 @@ require_once __DIR__ . '/layout/header.php';
                 const isPlaceholder = !opt.value || opt.value === "";
 
                 item.innerHTML = `
-                    <span style="${isPlaceholder ? 'color: #94a3b8;' : ''}">${opt.textContent.trim()}</span>
-                    ${isSelected && !isPlaceholder ? '<i data-lucide="check" style="width: 14px; height: 14px; color: #2563eb; flex-shrink: 0;"></i>' : ''}
+                    <span style="${isPlaceholder ? 'color: var(--text-muted);' : ''}">${opt.textContent.trim()}</span>
+                    ${isSelected && !isPlaceholder ? '<i data-lucide="check" style="width: 14px; height: 14px; color: var(--aktif-fg); flex-shrink: 0;"></i>' : ''}
                 `;
                 if (window.lucide) window.lucide.createIcons({ root: item });
 
@@ -3343,7 +3343,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <td><strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--primary);">${data.label.id_label}</strong></td>
                                 <td><span class="mitra-tag ${data.label.kode_mitra.toLowerCase()}" style="background: ${data.label.warna_identitas}; padding: 2px 7px; font-size: 11px;">${data.label.kode_mitra}</span></td>
                                 <td><strong>${data.label.nama_item}</strong></td>
-                                <td style="text-align: right; font-weight: 800; color: #10b981;">${parseFloat(data.label.berat_netto).toFixed(2)} kg</td>
+                                <td style="text-align: right; font-weight: 800; color: var(--ok-fg);">${parseFloat(data.label.berat_netto).toFixed(2)} kg</td>
                                 <td><code style="font-size: 11.5px; font-weight: 700; color: var(--primary);">${sj}</code></td>
                                 <td style="font-size: 12px; color: var(--text-muted);">Baru Saja</td>
                                 <td style="text-align: center;"><button type="button" class="btn btn-outline btn-sm" onclick="reprintBarcodeDirect('${data.label.id_label}')" style="padding: 3px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer;" title="Cetak Barcode Thermal 70x50 mm"><i data-lucide="printer" style="width: 12px; height: 12px;"></i><span>Cetak</span></button></td>
@@ -3504,7 +3504,7 @@ require_once __DIR__ . '/layout/header.php';
                         <p style="margin-bottom: 7px;"><strong>Barang:</strong> ${namaItem}</p>
                         <p style="margin-bottom: 7px;"><strong>Surat Jalan:</strong> <code>${noSJ}</code></p>
                         <p style="margin-bottom: 12px;"><strong>Jumlah Cetak:</strong> <strong style="color: var(--primary);">${qtyVal} Barcode</strong> (${totalLembar} Lembar A4)</p>
-                        <div style="background: rgba(79, 70, 229, 0.08); border-left: 4px solid var(--primary); padding: 10px; border-radius: 6px; font-size: 12.5px;">
+                        <div style="background: rgba(2, 132, 199, 0.08); border-left: 4px solid var(--primary); padding: 10px; border-radius: 6px; font-size: 12.5px;">
                             Apakah Anda yakin data sudah benar dan ingin membuat barcode ini sekarang?
                         </div>
                     </div>
@@ -3553,13 +3553,13 @@ require_once __DIR__ . '/layout/header.php';
 
                         // Banner Jembatan Cepat ke Langkah 2 (Timbang)
                         const bridgeBanner = document.createElement('div');
-                        bridgeBanner.style.cssText = 'background: #ecfdf5; border: 1.5px solid #10b981; border-radius: 8px; padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;';
+                        bridgeBanner.style.cssText = 'background: var(--ok-bg); border: 1.5px solid #10b981; border-radius: 8px; padding: 12px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;';
                         bridgeBanner.innerHTML = `
                             <div>
-                                <div style="font-weight: 800; font-size: 13.5px; color: #065f46;">✓ ${data.labels.length} Barcode Selesai Dibuat!</div>
-                                <div style="font-size: 12px; color: #047857; margin-top: 2px;">Cetak stiker, tempelkan ke keranjang, lalu timbang bobot riilnya.</div>
+                                <div style="font-weight: 800; font-size: 13.5px; color: var(--ok-fg);">✓ ${data.labels.length} Barcode Selesai Dibuat!</div>
+                                <div style="font-size: 12px; color: var(--ok-fg); margin-top: 2px;">Cetak stiker, tempelkan ke keranjang, lalu timbang bobot riilnya.</div>
                             </div>
-                            <button type="button" class="btn btn-success btn-sm" onclick="window.location.href='index.php?page=timbang_cetak&tab=scantimbang'" style="font-weight: 800; font-size: 12px; background: #059669; border-color: #059669; cursor: pointer;">
+                            <button type="button" class="btn btn-success btn-sm" onclick="window.location.href='index.php?page=timbang_cetak&tab=scantimbang'" style="font-weight: 800; font-size: 12px; background: var(--ok-solid); border-color: var(--ok-solid); cursor: pointer;">
                                 Buka Menu Timbang Berat Sekarang ➔
                             </button>
                         `;
@@ -3899,16 +3899,16 @@ require_once __DIR__ . '/layout/header.php';
 
             let htmlPesan = `<div style="text-align: left; font-size: 13.5px;">` +
                 `<p style="margin-bottom: 8px;"><strong>Surat Jalan:</strong> <code>${noSj}</code></p>` +
-                `<p style="margin-bottom: 8px;">• Total Sudah Ditimbang: <strong style="color: #10b981;">${sudah}</strong> Keranjang</p>`;
+                `<p style="margin-bottom: 8px;">• Total Sudah Ditimbang: <strong style="color: var(--ok-fg);">${sudah}</strong> Keranjang</p>`;
 
             if (sisa > 0) {
-                htmlPesan += `<p style="margin-bottom: 12px; color: #f59e0b;">• Sisa Belum Ditimbang: <strong>${sisa}</strong> Keranjang</p>` +
-                    `<div style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13px;">` +
+                htmlPesan += `<p style="margin-bottom: 12px; color: var(--warn-fg);">• Sisa Belum Ditimbang: <strong>${sisa}</strong> Keranjang</p>` +
+                    `<div style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--warn-solid); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13px;">` +
                     `⚠️ <strong>Perhatian:</strong> Masih ada <strong>${sisa} keranjang</strong> yang belum ditimbang pada Surat Jalan ini.<br>` +
                     `Apakah Anda yakin ingin menyelesaikan proses timbang sekarang dan mengaktifkan cetak surat jalan penerimaan?` +
                     `</div></div>`;
             } else {
-                htmlPesan += `<div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13px;">` +
+                htmlPesan += `<div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ok-solid); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13px;">` +
                     `✅ <strong>Seluruh keranjang telah selesai ditimbang.</strong><br>` +
                     `Apakah Anda yakin ingin menyelesaikan penimbangan dan mengaktifkan cetak surat jalan penerimaan?` +
                     `</div></div>`;
@@ -4119,7 +4119,7 @@ require_once __DIR__ . '/layout/header.php';
                         <strong style="color: var(--text-main, #0f172a); font-size: 13px;">${lbl.nama_item || currentModalSJData?.nama_item || '-'}</strong>
                         ${lbl.nama_jenis ? `<span style="font-size: 11px; color: var(--text-muted, #64748b); margin-left: 4px;">(${lbl.nama_jenis})</span>` : ''}
                     </td>
-                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #10b981;">
+                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ok-fg);">
                         ${netto.toFixed(2)} kg
                     </td>
                     <td style="text-align: center;">
@@ -4667,7 +4667,7 @@ require_once __DIR__ . '/layout/header.php';
                 overlay.className = 'ajax-filter-loading-overlay';
                 overlay.style.cssText = 'position: absolute; inset: 0; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(2px); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--radius); min-height: 200px;';
                 overlay.innerHTML = `
-                    <div style="background: white; padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--border);">
+                    <div style="background: var(--bg-card); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--border);">
                         <svg class="animate-spin" style="width: 24px; height: 24px; color: var(--primary); animation: spin 1s linear infinite;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
