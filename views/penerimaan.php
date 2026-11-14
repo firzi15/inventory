@@ -16,7 +16,7 @@ require_once __DIR__ . '/layout/header.php';
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Penerimaan Barang (Inbound Batching)</h1>
+        <h1 class="page-title">Penerimaan Barang</h1>
         <p class="page-subtitle">Label tercetak otomatis berstatus 'AKTIF' dan dikelompokkan ke sesi penerimaan per mitra</p>
     </div>
     <div style="display: flex; gap: 8px;">
@@ -37,10 +37,7 @@ require_once __DIR__ . '/layout/header.php';
             <div class="card-description">Unit kemasan yang telah ditimbang dan memiliki barcode aktif</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tablePenerimaanActive', 'Laporan_Penerimaan_Barang')">
-                <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                <span>Ekspor Excel (.xlsx)</span>
-            </button>
+            <?php $eksporTabel = 'tablePenerimaanActive'; $eksporNama = 'Laporan_Penerimaan_Barang'; include __DIR__ . '/layout/ekspor.php'; ?>
             <span class="badge badge-success">Status: Aktif</span>
         </div>
     </div>

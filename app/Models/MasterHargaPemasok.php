@@ -79,8 +79,11 @@ class MasterHargaPemasok {
     /**
      * Simpan atau perbarui harga satu produk untuk pemasok tertentu
      */
-    public static function saveHarga(int $pemasokId, int $itemId, float $hargaPerKg, ?string $catatan = null): bool {
+    public static function saveHarga(int $pemasokId, int $itemId, float $hargaPerKg, ?string $catatan = null, ?string $alasan = null): bool {
         $db = Database::getConnection();
+        $lama = $db->prepare("SELECT harga_per_kg FROM master_harga_pemasok WHERE pemasok_id = ? AND item_id = ?");
+        $lama->execute([$pemasokId, $itemId]);
+        $hargaLama = $lama->fetchColumn();
         
         // Ambil jenis_id dari item
         $stmtItem = $db->prepare("SELECT jenis_id FROM items WHERE id = ?");
@@ -97,7 +100,9 @@ class MasterHargaPemasok {
                 catatan = VALUES(catatan),
                 updated_at = CURRENT_TIMESTAMP
         ");
-        return $stmt->execute([$pemasokId, $itemId, $jenisId, $hargaPerKg, $catatan]);
+        $ok = $stmt->execute([$pemasokId, $itemId, $jenisId, $hargaPerKg, $catatan]);
+        if ($ok) \App\Services\LogHargaService::catat('PEMASOK', $pemasokId, $itemId, $hargaLama === false ? null : (float)$hargaLama, $hargaPerKg, $alasan);
+        return $ok;
     }
 
     /**

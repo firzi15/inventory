@@ -226,13 +226,13 @@ $barcodeBast = $trx['no_bast'] ?? $trx['no_transaksi'];
         <!-- Header Perusahaan -->
         <div class="header-company">
             <div class="logo-title">
-                <h1>PT LOGISTIK BERSAMA GUDANG</h1>
+                <h1>AR_BAROKAH</h1>
                 <p>Warehouse Execution System & Cold Chain Logistics Multi-Mitra</p>
                 <p style="font-size: 11px;">Kawasan Industri Pergudangan Terpadu • Telp: (021) 8899-7722</p>
             </div>
             <div style="text-align: right;">
                 <div style="width: 140px; margin-left: auto;">
-                    <?= BarcodeService::generateCode128Svg($barcodeBast, 35, 1.2) ?>
+                    <?= BarcodeService::generateCode128Svg($barcodeBast, 50, 1.8) ?>
                 </div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; margin-top: 2px;">
                     <?= htmlspecialchars($barcodeBast) ?>

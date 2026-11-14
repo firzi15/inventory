@@ -1,0 +1,60 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: barcode_inventory_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8085}:80"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-db_barcode_inventory}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASS=${DB_PASS:-secret123}
+      - TZ=Asia/Jakarta
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/scratch
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:10.11
+    container_name: barcode_inventory_db
+    restart: unless-stopped
+    ports:
+      - "${DB_EXTERNAL_PORT:-3307}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASS:-secret123}
+      - MYSQL_DATABASE=${DB_NAME:-db_barcode_inventory}
+      - TZ=Asia/Jakarta
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: barcode_inventory_pma
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8082}:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=${DB_USER:-root}
+      - PMA_PASSWORD=${DB_PASS:-secret123}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:
+

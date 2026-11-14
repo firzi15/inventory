@@ -1,200 +1,228 @@
 <?php
 /**
- * Model Rekonsiliasi Bukti Setoran Bank
- * Menyediakan pencocokan sederhana antara nominal pembayaran AR
- * dengan bukti screenshot transfer / foto slip setor tunai dari admin.
+ * Rekonsiliasi Bank Harian.
+ * Sehari satu kali: total setoran mitra pada tanggal itu (dari sistem) dicocokkan dengan total uang yang
+ * benar-benar masuk di bank, dengan lampiran screenshot / slip bank sebagai bukti audit.
+ * Setoran pada hari yang sudah direkonsiliasi ikut terkunci (tidak bisa dibatalkan) sampai rekonsiliasinya dibuka kembali.
  */
 
 namespace App\Models;
 
 use App\Core\Database;
-use PDO;
 use Exception;
+use PDO;
 
 class RekonsiliasiBank {
 
-    /**
-     * Ringkasan Status Rekonsiliasi
-     */
-    public static function getSummaryKpi(array $filters = []): array {
-        $pdo = Database::getConnection();
+    private static bool $ready = false;
 
-        $where = ["1=1"];
-        $params = [];
-
-        if (!empty($filters['mitra_id'])) {
-            $where[] = "p.mitra_id = :mitra_id";
-            $params[':mitra_id'] = (int)$filters['mitra_id'];
+    /** Buat tabel bila belum ada. Jalankan di luar transaksi (dipanggil dari Migrasi). */
+    public static function ensureTables(): void {
+        if (self::$ready) return;
+        $db = Database::getConnection();
+        if (!$db->query("SHOW TABLES LIKE 'rekonsiliasi_harian'")->fetchColumn()) {
+            if ($db->inTransaction()) throw new Exception('Tabel rekonsiliasi belum ada. Muat ulang halaman.');
+            $db->exec("
+                CREATE TABLE rekonsiliasi_harian (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    tanggal DATE NOT NULL,
+                    jumlah_setoran INT NOT NULL DEFAULT 0,
+                    total_tunai DECIMAL(14,2) NOT NULL DEFAULT 0,
+                    total_transfer DECIMAL(14,2) NOT NULL DEFAULT 0,
+                    total_sistem DECIMAL(14,2) NOT NULL DEFAULT 0,
+                    total_bank DECIMAL(14,2) NOT NULL DEFAULT 0,
+                    selisih DECIMAL(14,2) NOT NULL DEFAULT 0,
+                    status ENUM('SESUAI','SELISIH') NOT NULL,
+                    catatan VARCHAR(255) DEFAULT NULL,
+                    verified_by INT DEFAULT NULL,
+                    verified_at DATETIME DEFAULT NULL,
+                    UNIQUE KEY uq_tanggal (tanggal)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
+            $db->exec("
+                CREATE TABLE rekonsiliasi_harian_bukti (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    rekon_id INT NOT NULL,
+                    file_path VARCHAR(255) NOT NULL,
+                    nama_asli VARCHAR(150) DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_rekon (rekon_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ");
         }
-        if (!empty($filters['date_start'])) {
-            $where[] = "p.tanggal_bayar >= :date_start";
-            $params[':date_start'] = $filters['date_start'];
-        }
-        if (!empty($filters['date_end'])) {
-            $where[] = "p.tanggal_bayar <= :date_end";
-            $params[':date_end'] = $filters['date_end'];
-        }
-
-        $whereSql = implode(' AND ', $where);
-
-        $sql = "
-            SELECT 
-                COUNT(p.id) as total_setoran,
-                COALESCE(SUM(p.jumlah_bayar), 0) as total_nominal,
-                COUNT(CASE WHEN p.status_rekonsiliasi = 'MATCHED' THEN 1 END) as count_matched,
-                COALESCE(SUM(CASE WHEN p.status_rekonsiliasi = 'MATCHED' THEN p.jumlah_bayar ELSE 0 END), 0) as nominal_matched,
-                COUNT(CASE WHEN p.status_rekonsiliasi != 'MATCHED' OR p.status_rekonsiliasi IS NULL THEN 1 END) as count_pending,
-                COALESCE(SUM(CASE WHEN p.status_rekonsiliasi != 'MATCHED' OR p.status_rekonsiliasi IS NULL THEN p.jumlah_bayar ELSE 0 END), 0) as nominal_pending
-            FROM ar_pembayaran p
-            WHERE {$whereSql}
-        ";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return [
-            'total_setoran'   => (int)$res['total_setoran'],
-            'total_nominal'   => (float)$res['total_nominal'],
-            'count_matched'   => (int)$res['count_matched'],
-            'nominal_matched' => (float)$res['nominal_matched'],
-            'count_pending'   => (int)$res['count_pending'],
-            'nominal_pending' => (float)$res['nominal_pending']
-        ];
+        self::$ready = true;
     }
 
     /**
-     * Mengambil Seluruh Transaksi Setoran AR untuk Dicocokkan Buktinya
+     * Daftar hari yang punya setoran (atau sudah direkonsiliasi) pada rentang tanggal.
+     * Tiap baris: tanggal, jumlah_setoran, total_tunai, total_transfer, total_sistem, rekon (atau null), status_hari.
+     * status_hari: BELUM | SESUAI | SELISIH | BERUBAH (total sistem berubah setelah direkonsiliasi).
      */
-    public static function getRekonsiliasiList(array $filters = []): array {
-        $pdo = Database::getConnection();
+    public static function daftarHari(string $dari, string $sampai, string $status = ''): array {
+        self::ensureTables();
+        $db = Database::getConnection();
 
-        $where = ["1=1"];
-        $params = [];
+        $st = $db->prepare("
+            SELECT tanggal_bayar tanggal, COUNT(*) jumlah,
+                   SUM(CASE WHEN metode_bayar = 'TUNAI' THEN jumlah_bayar ELSE 0 END) tunai,
+                   SUM(CASE WHEN metode_bayar <> 'TUNAI' THEN jumlah_bayar ELSE 0 END) transfer,
+                   SUM(jumlah_bayar) total
+            FROM ar_pembayaran
+            WHERE status = 'AKTIF' AND jumlah_bayar > 0 AND tanggal_bayar BETWEEN ? AND ?
+            GROUP BY tanggal_bayar");
+        $st->execute([$dari, $sampai]);
+        $hari = [];
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $hari[$r['tanggal']] = [
+                'tanggal' => $r['tanggal'], 'jumlah_setoran' => (int)$r['jumlah'],
+                'total_tunai' => (float)$r['tunai'], 'total_transfer' => (float)$r['transfer'], 'total_sistem' => (float)$r['total'],
+                'rekon' => null,
+            ];
+        }
 
-        if (!empty($filters['status'])) {
-            if ($filters['status'] === 'MATCHED') {
-                $where[] = "p.status_rekonsiliasi = 'MATCHED'";
-            } elseif ($filters['status'] === 'PENDING') {
-                $where[] = "(p.status_rekonsiliasi != 'MATCHED' OR p.status_rekonsiliasi IS NULL)";
+        $st = $db->prepare("
+            SELECT r.*, u.nama_lengkap verifikator, (SELECT COUNT(*) FROM rekonsiliasi_harian_bukti b WHERE b.rekon_id = r.id) jumlah_bukti
+            FROM rekonsiliasi_harian r LEFT JOIN users u ON u.id = r.verified_by
+            WHERE r.tanggal BETWEEN ? AND ?");
+        $st->execute([$dari, $sampai]);
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            if (!isset($hari[$r['tanggal']])) {
+                // hari sudah direkonsiliasi tetapi setorannya kini kosong (dibatalkan)
+                $hari[$r['tanggal']] = ['tanggal' => $r['tanggal'], 'jumlah_setoran' => 0, 'total_tunai' => 0.0, 'total_transfer' => 0.0, 'total_sistem' => 0.0, 'rekon' => null];
             }
+            $hari[$r['tanggal']]['rekon'] = $r;
         }
 
-        if (!empty($filters['metode_bayar'])) {
-            $where[] = "p.metode_bayar = :metode";
-            $params[':metode'] = $filters['metode_bayar'];
+        $out = [];
+        foreach ($hari as $h) {
+            if ($h['rekon']) {
+                $berubah = abs((float)$h['rekon']['total_sistem'] - $h['total_sistem']) > 0.009;
+                $h['status_hari'] = $berubah ? 'BERUBAH' : $h['rekon']['status'];
+            } else {
+                $h['status_hari'] = 'BELUM';
+            }
+            if ($status !== '' && $h['status_hari'] !== $status) continue;
+            $out[] = $h;
         }
+        usort($out, fn($a, $b) => strcmp($b['tanggal'], $a['tanggal']));
+        return $out;
+    }
 
-        if (!empty($filters['mitra_id'])) {
-            $where[] = "p.mitra_id = :mitra_id";
-            $params[':mitra_id'] = (int)$filters['mitra_id'];
+    /** Ringkasan untuk kartu: jumlah hari per status dan total selisih. */
+    public static function ringkas(array $hari): array {
+        $r = ['hari' => count($hari), 'belum' => 0, 'sesuai' => 0, 'selisih' => 0, 'berubah' => 0, 'total_sistem' => 0.0, 'total_bank' => 0.0, 'total_selisih' => 0.0, 'belum_nominal' => 0.0];
+        foreach ($hari as $h) {
+            $r['total_sistem'] += $h['total_sistem'];
+            switch ($h['status_hari']) {
+                case 'BELUM': $r['belum']++; $r['belum_nominal'] += $h['total_sistem']; break;
+                case 'SESUAI': $r['sesuai']++; break;
+                case 'SELISIH': $r['selisih']++; break;
+                case 'BERUBAH': $r['berubah']++; break;
+            }
+            if ($h['rekon']) { $r['total_bank'] += (float)$h['rekon']['total_bank']; $r['total_selisih'] += (float)$h['rekon']['selisih']; }
         }
+        return $r;
+    }
 
-        if (!empty($filters['date_start'])) {
-            $where[] = "p.tanggal_bayar >= :date_start";
-            $params[':date_start'] = $filters['date_start'];
-        }
+    /** Setoran aktif pada satu tanggal (rincian per mitra). */
+    public static function setoranTanggal(string $tanggal): array {
+        $st = Database::getConnection()->prepare("
+            SELECT p.id, p.no_bukti_bayar, p.metode_bayar, p.bank_tujuan, p.jumlah_bayar, p.keterangan, m.kode_mitra, m.nama_mitra
+            FROM ar_pembayaran p JOIN mitra m ON m.id = p.mitra_id
+            WHERE p.status = 'AKTIF' AND p.jumlah_bayar > 0 AND p.tanggal_bayar = ?
+            ORDER BY p.id");
+        $st->execute([$tanggal]);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        if (!empty($filters['date_end'])) {
-            $where[] = "p.tanggal_bayar <= :date_end";
-            $params[':date_end'] = $filters['date_end'];
-        }
-
-        if (!empty($filters['search'])) {
-            $where[] = "(p.no_bukti_bayar LIKE :search OR m.nama_mitra LIKE :search OR p.keterangan LIKE :search OR p.catatan_rekonsiliasi LIKE :search)";
-            $params[':search'] = '%' . trim($filters['search']) . '%';
-        }
-
-        $whereSql = implode(' AND ', $where);
-
-        $sql = "
-            SELECT 
-                p.id,
-                p.no_bukti_bayar,
-                p.mitra_id,
-                p.tanggal_bayar,
-                p.metode_bayar,
-                p.bank_tujuan,
-                p.jumlah_bayar as nominal_ar,
-                p.keterangan as keterangan_ar,
-                COALESCE(p.status_rekonsiliasi, 'PENDING') as status_rekonsiliasi,
-                p.bukti_transfer as bukti_gambar,
-                p.catatan_rekonsiliasi,
-                p.verified_at,
-                m.kode_mitra,
-                m.nama_mitra,
-                uKasir.nama_lengkap as nama_kasir,
-                uVerif.nama_lengkap as nama_verifikator,
-                (
-                    SELECT GROUP_CONCAT(
-                        COALESCE(ts.no_referensi_eksternal, ts.no_bast, ts.no_transaksi) 
-                        SEPARATOR ', '
-                    )
-                    FROM ar_alokasi_pembayaran al
-                    JOIN transaksi_stok ts ON al.transaksi_stok_id = ts.id
-                    WHERE al.pembayaran_id = p.id
-                ) as daftar_nota_terpotong
-            FROM ar_pembayaran p
-            JOIN mitra m ON p.mitra_id = m.id
-            LEFT JOIN users uKasir ON p.user_id = uKasir.id
-            LEFT JOIN users uVerif ON p.verified_by = uVerif.id
-            WHERE {$whereSql}
-            ORDER BY 
-                CASE WHEN p.status_rekonsiliasi = 'MATCHED' THEN 1 ELSE 0 END ASC,
-                p.tanggal_bayar DESC, 
-                p.id DESC
-        ";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public static function ambil(string $tanggal): ?array {
+        self::ensureTables();
+        $db = Database::getConnection();
+        $st = $db->prepare("SELECT r.*, u.nama_lengkap verifikator FROM rekonsiliasi_harian r LEFT JOIN users u ON u.id = r.verified_by WHERE r.tanggal = ?");
+        $st->execute([$tanggal]);
+        $r = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$r) return null;
+        $b = $db->prepare("SELECT id, file_path, nama_asli FROM rekonsiliasi_harian_bukti WHERE rekon_id = ? ORDER BY id");
+        $b->execute([$r['id']]);
+        $r['bukti'] = $b->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
     }
 
     /**
-     * Lampirkan Bukti Gambar Setoran (Screenshot M-Banking / Slip Struk Setor Tunai CDM)
-     * Otomatis mengubah status menjadi MATCHED
+     * Simpan rekonsiliasi satu hari. $bukti: [[file_path, nama_asli], ...] (minimal satu).
+     * Setoran hari itu ditandai MATCHED (sesuai) atau SELISIH sehingga terkunci dari pembatalan.
      */
-    public static function attachBukti(int $arId, string $filePath, ?string $catatan = null, int $userId = 1): bool {
-        $pdo = Database::getConnection();
+    public static function simpan(string $tanggal, float $totalBank, string $catatan, array $bukti, int $userId): array {
+        self::ensureTables();
+        $db = Database::getConnection();
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) throw new Exception('Tanggal tidak valid.');
+        if ($tanggal > date('Y-m-d')) throw new Exception('Tanggal rekonsiliasi tidak boleh di masa depan.');
+        if (!$bukti) throw new Exception('Lampirkan minimal satu screenshot / slip bank sebagai bukti.');
+        if ($totalBank < 0) throw new Exception('Total uang di bank tidak valid.');
+        if (self::ambil($tanggal)) throw new Exception('Tanggal ini sudah direkonsiliasi. Buka kembali dulu bila perlu mengubahnya.');
 
-        $stmt = $pdo->prepare("
-            UPDATE ar_pembayaran SET
-                status_rekonsiliasi  = 'MATCHED',
-                nominal_aktual       = jumlah_bayar,
-                selisih_nominal      = 0.00,
-                bukti_transfer       = :file_path,
-                catatan_rekonsiliasi = :catatan,
-                verified_at          = NOW(),
-                verified_by          = :user_id
-            WHERE id = :id
-        ");
+        $setoran = self::setoranTanggal($tanggal);
+        if (!$setoran) throw new Exception('Tidak ada setoran pada tanggal ini.');
+        $tunai = $transfer = 0.0;
+        foreach ($setoran as $s) {
+            if ($s['metode_bayar'] === 'TUNAI') $tunai += (float)$s['jumlah_bayar']; else $transfer += (float)$s['jumlah_bayar'];
+        }
+        $sistem = $tunai + $transfer;
+        $selisih = round($totalBank - $sistem, 2);
+        $catatan = trim($catatan);
+        if (abs($selisih) >= 0.01 && mb_strlen($catatan) < 3) {
+            throw new Exception('Total bank berbeda dari total sistem. Isi catatan penyebab selisih.');
+        }
+        $status = abs($selisih) < 0.01 ? 'SESUAI' : 'SELISIH';
 
-        return $stmt->execute([
-            ':file_path' => $filePath,
-            ':catatan'   => $catatan ?: null,
-            ':user_id'   => $userId,
-            ':id'        => $arId
-        ]);
+        $db->beginTransaction();
+        try {
+            $db->prepare("INSERT INTO rekonsiliasi_harian (tanggal, jumlah_setoran, total_tunai, total_transfer, total_sistem, total_bank, selisih, status, catatan, verified_by, verified_at)
+                          VALUES (?,?,?,?,?,?,?,?,?,?,NOW())")
+               ->execute([$tanggal, count($setoran), $tunai, $transfer, $sistem, $totalBank, $selisih, $status, $catatan ?: null, $userId]);
+            $id = (int)$db->lastInsertId();
+            $ib = $db->prepare("INSERT INTO rekonsiliasi_harian_bukti (rekon_id, file_path, nama_asli) VALUES (?,?,?)");
+            foreach ($bukti as [$path, $asli]) $ib->execute([$id, $path, mb_substr($asli, 0, 150)]);
+            $db->prepare("UPDATE ar_pembayaran SET status_rekonsiliasi = ?, nominal_aktual = jumlah_bayar, selisih_nominal = 0,
+                                 catatan_rekonsiliasi = ?, verified_at = NOW(), verified_by = ?
+                          WHERE status = 'AKTIF' AND tanggal_bayar = ?")
+               ->execute([$status === 'SESUAI' ? 'MATCHED' : 'SELISIH', $catatan ?: null, $userId, $tanggal]);
+            self::audit($userId, 'REKONSILIASI_HARIAN', $tanggal, "Status {$status}, sistem {$sistem}, bank {$totalBank}");
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
+        return ['status' => $status, 'selisih' => $selisih, 'total_sistem' => $sistem];
     }
 
-    /**
-     * Hapus Bukti / Batalkan Status Matched (Kembalikan ke PENDING)
-     */
-    public static function removeBukti(int $arId): bool {
-        $pdo = Database::getConnection();
+    /** Buka kembali rekonsiliasi satu hari: setoran kembali PENDING; file bukti dibiarkan sebagai jejak. */
+    public static function bukaKembali(string $tanggal, string $alasan, int $userId): void {
+        self::ensureTables();
+        $db = Database::getConnection();
+        $alasan = trim($alasan);
+        if (mb_strlen($alasan) < 3) throw new Exception('Alasan membuka kembali wajib diisi.');
+        $r = self::ambil($tanggal);
+        if (!$r) throw new Exception('Tanggal ini belum direkonsiliasi.');
 
-        $stmt = $pdo->prepare("
-            UPDATE ar_pembayaran SET
-                status_rekonsiliasi  = 'PENDING',
-                nominal_aktual       = NULL,
-                selisih_nominal      = 0.00,
-                bukti_transfer       = NULL,
-                catatan_rekonsiliasi = NULL,
-                verified_at          = NULL,
-                verified_by          = NULL
-            WHERE id = ?
-        ");
+        $db->beginTransaction();
+        try {
+            $db->prepare("DELETE FROM rekonsiliasi_harian_bukti WHERE rekon_id = ?")->execute([$r['id']]);
+            $db->prepare("DELETE FROM rekonsiliasi_harian WHERE id = ?")->execute([$r['id']]);
+            $db->prepare("UPDATE ar_pembayaran SET status_rekonsiliasi = 'PENDING', nominal_aktual = NULL, selisih_nominal = 0,
+                                 catatan_rekonsiliasi = NULL, verified_at = NULL, verified_by = NULL
+                          WHERE tanggal_bayar = ?")->execute([$tanggal]);
+            self::audit($userId, 'BUKA_REKONSILIASI', $tanggal, $alasan . ' (sebelumnya ' . $r['status'] . ', bank ' . $r['total_bank'] . ')');
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
+    }
 
-        return $stmt->execute([$arId]);
+    private static function audit(int $userId, string $aksi, string $target, string $alasan): void {
+        Database::getConnection()
+            ->prepare("INSERT INTO audit_logs (user_id, action_name, target_table, target_id, reason, ip_address) VALUES (?,?,?,?,?,?)")
+            ->execute([$userId, $aksi, 'rekonsiliasi_harian', $target, mb_substr($alasan, 0, 255), $_SERVER['REMOTE_ADDR'] ?? 'cli']);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * Stasiun Pemindahan Stok (Mutasi) & Log Alur Siklus Hidup Barang
- * Alur Pergerakan: Pemasok ➔ Mitra Bisnis ➔ Pengeluaran (Outbound)
+ * Alur Pergerakan: Pemasok Mitra Bisnis Pengeluaran (Outbound)
  * Sepenuhnya mengacu pada 7 Mitra Bisnis (Master Lokasi Gudang Telah Dihapus)
  */
 
@@ -99,10 +99,10 @@ require_once __DIR__ . '/layout/header.php';
             <!-- 1. Pilihan Alur Pemindahan -->
             <div class="form-group">
                 <label class="form-label" for="alur_pergerakan">Jenis Alur Pemindahan <span style="color:red;">*</span></label>
-                <select name="alur_pergerakan" id="alur_pergerakan" class="form-control" required style="font-weight: 700; color: var(--primary); font-size: 13px;">
-                    <option value="PEMASOK_KE_MITRA" selected>🚚 Alokasi Stok: Pemasok ➔ Mitra Bisnis</option>
-                    <option value="MUTASI_ANTAR_MITRA">🔄 Pemindahan Antar-Mitra (Transfer Stok)</option>
-                    <option value="KE_PEMBELI_POS">🛒 Pengeluaran: Mitra ➔ Pembeli / POS</option>
+                <select name="alur_pergerakan" id="alur_pergerakan" class="form-control" required style="font-weight: 700; font-size: 13px;">
+                    <option value="PEMASOK_KE_MITRA" selected>Alokasi Stok: Pemasok Mitra Bisnis</option>
+                    <option value="MUTASI_ANTAR_MITRA">Pemindahan Antar-Mitra (Transfer Stok)</option>
+                    <option value="KE_PEMBELI_POS">Pengeluaran: Mitra Pembeli / POS</option>
                 </select>
             </div>
 
@@ -121,7 +121,7 @@ require_once __DIR__ . '/layout/header.php';
 
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" for="mutasi_mitra_tujuan_id" style="font-size: 12px;">Mitra Penerima / Tujuan <span style="color:red;">*</span></label>
-                    <select name="mitra_tujuan_id" id="mutasi_mitra_tujuan_id" class="form-control" style="font-weight: 700; color: #7c3aed;">
+                    <select name="mitra_tujuan_id" id="mutasi_mitra_tujuan_id" class="form-control" style="font-weight: 700;">
                         <?php foreach ($mitraList as $m): ?>
                             <option value="<?= $m['id'] ?>">
                                 <?= htmlspecialchars($m['kode_mitra']) ?> - <?= htmlspecialchars($m['nama_mitra']) ?>
@@ -146,7 +146,7 @@ require_once __DIR__ . '/layout/header.php';
 
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" for="mutasi_mitra_tujuan_id_2" style="font-size: 12px;">Mitra Tujuan Transfer <span style="color:red;">*</span></label>
-                    <select id="mutasi_mitra_tujuan_id_2" class="form-control" style="font-weight: 700; color: #7c3aed;">
+                    <select id="mutasi_mitra_tujuan_id_2" class="form-control" style="font-weight: 700;">
                         <?php foreach ($mitraList as $idx => $m): ?>
                             <option value="<?= $m['id'] ?>" <?= $idx === 1 ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($m['kode_mitra']) ?> - <?= htmlspecialchars($m['nama_mitra']) ?>
@@ -159,7 +159,7 @@ require_once __DIR__ . '/layout/header.php';
             <!-- 3. Form Pihak Serah Terima (BAST) -->
             <div style="background: var(--bg-muted); padding: 14px; border-radius: var(--radius); border: 1.5px solid var(--border); margin-bottom: 14px;">
                 <div style="font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 8px;">
-                    📝 Pihak Serah Terima (Berita Acara)
+                    Pihak Serah Terima (Berita Acara)
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
@@ -171,7 +171,7 @@ require_once __DIR__ . '/layout/header.php';
                     <label class="form-label" for="nama_penerima" style="font-size: 12px;">Diterima Oleh (Pihak Penerima) <span style="color:red;">*</span></label>
                     <input type="text" name="nama_penerima" id="nama_penerima" class="form-control" value="<?= htmlspecialchars($currentUser['nama_lengkap']) ?>" required style="font-size: 13px; font-weight: 700; color: #10b981;">
                     <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
-                        ✓ Terikat ke akun operator: <strong><?= htmlspecialchars($currentUser['nama_lengkap']) ?></strong>
+                        Terikat ke akun operator: <strong><?= htmlspecialchars($currentUser['nama_lengkap']) ?></strong>
                     </div>
                 </div>
 
@@ -192,7 +192,7 @@ require_once __DIR__ . '/layout/header.php';
             <!-- 5. Input Scan Barcode Kemasan -->
             <div class="form-group">
                 <label class="form-label" for="inputBarcodeScanMutasi">
-                    🎯 Input Scan Barcode yang Dipindahkan
+                    Input Scan Barcode yang Dipindahkan
                 </label>
                 <div style="display: flex; gap: 6px;">
                     <input type="text" id="inputBarcodeScanMutasi" class="form-control" placeholder="Scan barcode & Enter..." autofocus style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
@@ -307,17 +307,14 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <h2 class="card-title">
                     <i data-lucide="history" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                    <span>Log Perjalanan Kemasan Barcode (Pemasok ➔ Mitra ➔ Pengeluaran)</span>
+                    <span>Log Perjalanan Kemasan Barcode (Pemasok Mitra Pengeluaran)</span>
                 </h2>
                 <div class="card-description">
                     Pelacakan riwayat dan status perjalanan setiap kemasan dari pertama diterima sampai dengan keluar gudang
                 </div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableLifecycleLogs', 'Log_Alur_Siklus_Stok')">
-                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                    <span>Ekspor Excel</span>
-                </button>
+                <?php $eksporTabel = 'tableLifecycleLogs'; $eksporNama = 'Log_Alur_Siklus_Stok'; include __DIR__ . '/layout/ekspor.php'; ?>
                 <span class="badge badge-purple" style="font-weight: 700;"><?= number_format($totalLifecycle, 0, ',', '.') ?> Total Kemasan</span>
             </div>
         </div>
@@ -331,31 +328,7 @@ require_once __DIR__ . '/layout/header.php';
         if (!empty($search)) $activeMutasiFilterCount++;
         $hasAnyMutasiFilter = $activeMutasiFilterCount > 0;
         ?>
-        <div style="padding: 14px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <!-- Sisi Kiri: Filter Quick Pills -->
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;">
-                    Filter Cepat:
-                </span>
-
-                <a href="index.php?page=mutasi" 
-                   class="badge <?= !$hasAnyMutasiFilter ? 'badge-primary' : 'badge-secondary' ?>" 
-                   style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= !$hasAnyMutasiFilter ? 'font-weight: 800;' : '' ?>">
-                    Semua Barang
-                </a>
-
-                <a href="index.php?page=mutasi&filter_status=AKTIF" 
-                   class="badge <?= $filterStatus === 'AKTIF' ? 'badge-primary' : 'badge-secondary' ?>" 
-                   style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $filterStatus === 'AKTIF' ? 'border: 1.5px solid #10b981; font-weight: 800;' : '' ?>">
-                    ● Di Gudang Mitra (Aktif)
-                </a>
-
-                <a href="index.php?page=mutasi&filter_status=KELUAR" 
-                   class="badge <?= $filterStatus === 'KELUAR' ? 'badge-primary' : 'badge-secondary' ?>" 
-                   style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $filterStatus === 'KELUAR' ? 'border: 1.5px solid #6366f1; font-weight: 800;' : '' ?>">
-                    ✓ Selesai Keluar
-                </a>
-            </div>
+        <div style="padding: 14px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px;">
 
             <!-- Sisi Kanan: Tombol Buka Jumbotron Filter & Reset -->
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -389,7 +362,7 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                 </div>
                 <button type="button" onclick="toggleMutasiFilterPanel(false)" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 8px;">
-                    ✕ Tutup Panel
+                    Tutup Panel
                 </button>
             </div>
 
@@ -429,7 +402,7 @@ require_once __DIR__ . '/layout/header.php';
                         <select name="filter_status" class="form-control" style="font-size: 12.5px; font-weight: 600; height: 38px;">
                             <option value="" <?= $filterStatus === '' ? 'selected' : '' ?>>-- Semua Status --</option>
                             <option value="AKTIF" <?= $filterStatus === 'AKTIF' ? 'selected' : '' ?>>● Di Gudang Mitra (Aktif)</option>
-                            <option value="KELUAR" <?= $filterStatus === 'KELUAR' ? 'selected' : '' ?>>✓ Selesai Keluar (Outbound)</option>
+                            <option value="KELUAR" <?= $filterStatus === 'KELUAR' ? 'selected' : '' ?>>Selesai Keluar (Outbound)</option>
                         </select>
                     </div>
                 </div>
@@ -604,10 +577,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div class="card-description">Daftar dokumen fisik serah terima barang yang telah diterbitkan dan ditandatangani</div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableRiwayatMutasi', 'Riwayat_BAST_Mutasi')">
-                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                    <span>Ekspor Excel</span>
-                </button>
+                <?php $eksporTabel = 'tableRiwayatMutasi'; $eksporNama = 'Riwayat_BAST_Mutasi'; include __DIR__ . '/layout/ekspor.php'; ?>
             </div>
         </div>
 
@@ -631,12 +601,12 @@ require_once __DIR__ . '/layout/header.php';
                     <?php else: ?>
                         <?php foreach ($recentMutasi as $rm): 
                             $alurLabel = match($rm['alur_pergerakan']) {
-                                'PEMASOK_KE_MITRA'   => '🚚 Pemasok ➔ Mitra',
-                                'MUTASI_ANTAR_MITRA' => '🔄 Antar-Mitra',
-                                'PENGEPUL_KE_GUDANG' => '🚚 Pemasok ➔ Mitra',
-                                'GUDANG_KE_OFFICE'   => '🔄 Mitra ➔ Outlet POS',
-                                'KE_PEMBELI_POS'     => '🛒 Mitra ➔ Pembeli POS',
-                                default              => '🔄 Pemindahan Stok'
+                                'PEMASOK_KE_MITRA'   => 'Pemasok Mitra',
+                                'MUTASI_ANTAR_MITRA' => 'Antar-Mitra',
+                                'PENGEPUL_KE_GUDANG' => 'Pemasok Mitra',
+                                'GUDANG_KE_OFFICE'   => 'Mitra Outlet POS',
+                                'KE_PEMBELI_POS'     => 'Mitra Pembeli POS',
+                                default              => 'Pemindahan Stok'
                             };
                             $alurBadge = match($rm['alur_pergerakan']) {
                                 'PEMASOK_KE_MITRA'   => 'badge-info',
@@ -734,7 +704,7 @@ require_once __DIR__ . '/layout/header.php';
             <!-- Kotak Pesan Peringatan Proporsional -->
             <div style="background: rgba(245, 158, 11, 0.1); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;">
                 <div style="font-size: 13px; color: var(--text-main); line-height: 1.55; font-weight: 600;" id="notWeighedModalWarningText">
-                    ⚠️ Barcode keranjang ini <strong>belum memiliki berat riil timbangan (0.00 KG)</strong>. Semua barang masuk wajib ditimbang di <strong>Stasiun Penerimaan & Timbang</strong> agar bobot fisik tercatat sebelum dapat dipindahkan antar mitra.
+                    Barcode keranjang ini <strong>belum memiliki berat riil timbangan (0.00 KG)</strong>. Semua barang masuk wajib ditimbang di <strong>Stasiun Penerimaan & Timbang</strong> agar bobot fisik tercatat sebelum dapat dipindahkan antar mitra.
                 </div>
             </div>
 
@@ -759,7 +729,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
                     <span style="color: var(--text-muted); font-weight: 700;">Status Timbangan:</span>
                     <span class="badge badge-warning" id="notWeighedBarcodeBadge" style="font-size: 13px; font-weight: 900; padding: 4px 10px; background: #fef3c7; color: #b45309; border: 1px solid #f59e0b;">
-                        ⚠ BELUM DITIMBANG (0.00 KG)
+                        BELUM DITIMBANG (0.00 KG)
                     </span>
                 </div>
             </div>
@@ -769,10 +739,10 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Tombol Utama: Langsung Menuju Stasiun Timbang dengan Barcode Ini -->
                 <button type="button" id="btnGoToWeighStation" class="btn btn-success" style="width: 100%; height: 46px; font-size: 14px; font-weight: 800; justify-content: center; border-radius: 10px; background: #10b981; border: none; cursor: pointer; color: white;">
                     <i data-lucide="scale" style="width: 17px; height: 17px; margin-right: 6px;"></i>
-                    <span>⚖️ Buka Stasiun Timbang Sekarang</span>
+                    <span>Buka Stasiun Timbang Sekarang</span>
                 </button>
                 <button type="button" id="btnCloseNotWeighedModal" onclick="closeBarcodeNotWeighedModal()" class="btn btn-outline" style="width: 100%; height: 40px; font-size: 13px; font-weight: 700; justify-content: center; border-radius: 10px; cursor: pointer;">
-                    <span>✕ Tutup & Lanjutkan Scan (Tekan Esc)</span>
+                    <span>Tutup & Lanjutkan Scan (Tekan Esc)</span>
                 </button>
             </div>
         </div>
@@ -842,7 +812,7 @@ require_once __DIR__ . '/layout/header.php';
             <!-- Tombol Aksi Bawah -->
             <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 8px;">
                 <button type="button" id="btnCloseMovedModal" onclick="closeBarcodeAlreadyMovedModal()" class="btn btn-primary" style="width: 100%; height: 44px; font-size: 14px; font-weight: 800; justify-content: center; border-radius: 10px; background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%); border: none; cursor: pointer;">
-                    <span>✓ Tutup & Lanjutkan Scan (Tekan Enter / Esc)</span>
+                    <span>Tutup & Lanjutkan Scan (Tekan Enter / Esc)</span>
                 </button>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <button type="button" id="btnOpenMovedBast" class="btn btn-outline" style="height: 38px; font-size: 12px; font-weight: 700; justify-content: center; border-radius: 8px;" title="Cetak atau Lihat Berita Acara Serah Terima">
@@ -994,7 +964,7 @@ require_once __DIR__ . '/layout/header.php';
                 }
             }
 
-            mutasiCart.set(barcode, label);
+            mutasiCart.set(label.id_label, label);
             renderMutasiCart();
             showMutasiAlert(`Kemasan ditambahkan ke pemindahan: ${label.nama_item} (${parseFloat(label.berat_netto || 0).toFixed(2)} kg)`, true);
 

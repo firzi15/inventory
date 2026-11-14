@@ -25,13 +25,19 @@ class Database {
     }
 
     private static function connect(): void {
+        $host = Config::getDbHost();
+        $port = Config::getDbPort();
+        $dbname = Config::getDbName();
+        $user = Config::getDbUser();
+        $pass = Config::getDbPass();
+
         try {
             // Coba koneksi MySQL terlebih dahulu
             $dsn = sprintf(
                 'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
-                Config::DB_HOST,
-                Config::DB_PORT,
-                Config::DB_NAME
+                $host,
+                $port,
+                $dbname
             );
             $options = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -39,19 +45,30 @@ class Database {
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ];
 
-            self::$instance = new PDO($dsn, Config::DB_USER, Config::DB_PASS, $options);
+            self::$instance = new PDO($dsn, $user, $pass, $options);
             self::$driverUsed = 'mysql';
         } catch (PDOException $e) {
+            // Jika Access Denied (1045) di host lokal, coba coba fallback password kosong (standar XAMPP)
+            if ($e->getCode() == 1045 && ($host === '127.0.0.1' || $host === 'localhost')) {
+                try {
+                    self::$instance = new PDO($dsn, $user, '', $options);
+                    self::$driverUsed = 'mysql';
+                    return;
+                } catch (\Throwable $ex2) {
+                    // Lanjut ke penanganan selanjutnya
+                }
+            }
+
             // Jika database belum dibuat di MySQL, coba koneksi tanpa dbname lalu buat db
             if ($e->getCode() == 1049 || str_contains($e->getMessage(), 'Unknown database')) {
                 try {
                     $initPdo = new PDO(
-                        sprintf('mysql:host=%s;port=%s;charset=utf8mb4', Config::DB_HOST, Config::DB_PORT),
-                        Config::DB_USER,
-                        Config::DB_PASS
+                        sprintf('mysql:host=%s;port=%s;charset=utf8mb4', $host, $port),
+                        $user,
+                        $pass
                     );
-                    $initPdo->exec("CREATE DATABASE IF NOT EXISTS `" . Config::DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                    self::$instance = new PDO($dsn, Config::DB_USER, Config::DB_PASS, $options);
+                    $initPdo->exec("CREATE DATABASE IF NOT EXISTS `" . $dbname . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                    self::$instance = new PDO($dsn, $user, $pass, $options);
                     self::$driverUsed = 'mysql';
                     return;
                 } catch (\Throwable $ex) {

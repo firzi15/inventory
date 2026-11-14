@@ -1,4 +1,4 @@
-ok<?php
+<?php
 /**
  * View Dashboard Utama (Vibrant & Eyecatching Edition)
  */
@@ -10,9 +10,12 @@ use App\Models\Transaksi;
 use App\Services\StockService;
 
 $pageTitle = 'Dashboard - Sistem Barcode Inventory Multi-Mitra';
-$kpi = StockService::getDashboardKpi();
+$ov = StockService::getDashboardOverview();
 $mitraSummary = Mitra::getStockSummaryPerMitra();
 $recentTrx = Transaksi::getRecent(6);
+$mitraTop = $mitraSummary;
+usort($mitraTop, fn($x, $y) => ($y['total_kg'] <=> $x['total_kg']));
+$mitraTop = array_slice($mitraTop, 0, 5);
 
 require_once __DIR__ . '/layout/header.php';
 ?>
@@ -21,151 +24,120 @@ require_once __DIR__ . '/layout/header.php';
 <div class="page-header">
     <div>
         <h1 class="page-title">Ringkasan Operasional Gudang</h1>
-        <p class="page-subtitle">Pusat kendali 2 proses utama: Penerimaan Barang (Masuk) dan Pengeluaran Barang (Keluar ke Mitra)</p>
+        <p class="page-subtitle">Kondisi stok, aktivitas hari ini, dan hal yang perlu ditindaklanjuti</p>
     </div>
 </div>
 
-
-<!-- 4 Eyecatching Clickable KPI Cards with Glowing Colorful Icon Pods -->
-<div class="grid grid-cols-4" style="margin-bottom: 26px;">
-    <!-- KPI 1: Total Stok Fisik (Blue) -> Buka Stok Mitra -->
-    <a href="index.php?page=stok_mitra" class="kpi-card blue" style="text-decoration: none; cursor: pointer;" title="Klik untuk melihat rincian stok fisik per mitra">
-        <div>
-            <div class="kpi-label" style="color: #0284c7; display: flex; align-items: center; gap: 4px;">
-                <span>Total Stok Fisik</span>
-                <i data-lucide="arrow-up-right" style="width: 14px; height: 14px; opacity: 0.7;"></i>
-            </div>
-            <div class="kpi-value"><?= Helper::formatKg($kpi['total_stok_kg']) ?></div>
-            <div class="kpi-sub">
-                <span class="badge badge-info" style="font-weight: 700;">
-                    <?= Helper::formatNumber($kpi['total_label_aktif']) ?> Kemasan
-                </span>
-                <span style="margin-left: 4px;">Label Aktif &rarr;</span>
-            </div>
+<!-- KPI harian -->
+<div class="grid grid-cols-4" style="margin-bottom: 24px;">
+    <a class="kpi-card" href="index.php?page=timbang_cetak&tab=stok_gudang" title="Buka stok gudang utama">
+        <div class="kpi-body">
+            <div class="kpi-label">Stok Gudang Utama</div>
+            <div class="kpi-value"><?= Helper::formatKg($ov['gudang_kg']) ?></div>
+            <div class="kpi-sub"><?= Helper::formatNumber($ov['gudang_keranjang']) ?> keranjang, belum dimutasi ke mitra</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="scale" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="warehouse" style="width: 18px; height: 18px;"></i></div>
     </a>
-
-    <!-- KPI 2: Mitra Terdaftar (Green) -> Buka Master Mitra -->
-    <a href="index.php?page=master&tab=mitra" class="kpi-card green" style="text-decoration: none; cursor: pointer;" title="Klik untuk membuka Master Mitra Bisnis">
-        <div>
-            <div class="kpi-label" style="color: #059669; display: flex; align-items: center; gap: 4px;">
-                <span>Mitra Bisnis</span>
-                <i data-lucide="arrow-up-right" style="width: 14px; height: 14px; opacity: 0.7;"></i>
-            </div>
-            <div class="kpi-value"><?= $kpi['total_mitra'] ?> Mitra</div>
-            <div class="kpi-sub">
-                <span class="badge badge-success" style="font-weight: 700;">Kelola Master</span>
-                <span style="margin-left: 4px;">7 Mitra &rarr;</span>
-            </div>
+    <a class="kpi-card" href="index.php?page=timbang_cetak&tab=riwayat_penerimaan" title="Buka riwayat penerimaan">
+        <div class="kpi-body">
+            <div class="kpi-label">Masuk Hari Ini</div>
+            <div class="kpi-value"><?= Helper::formatKg($ov['masuk_kg']) ?></div>
+            <div class="kpi-sub"><?= Helper::formatNumber($ov['masuk_sj']) ?> surat jalan, <?= Helper::formatNumber($ov['masuk_pcs']) ?> keranjang</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="building-2" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="arrow-down-to-line" style="width: 18px; height: 18px;"></i></div>
     </a>
-
-    <!-- KPI 3: Aktivitas Hari Ini (Purple) -> Buka Mutasi & Riwayat Transaksi -->
-    <a href="index.php?page=mutasi" class="kpi-card purple" style="text-decoration: none; cursor: pointer;" title="Klik untuk melihat riwayat mutasi & transaksi">
-        <div>
-            <div class="kpi-label" style="color: #7c3aed; display: flex; align-items: center; gap: 4px;">
-                <span>Total Transaksi</span>
-                <i data-lucide="arrow-up-right" style="width: 14px; height: 14px; opacity: 0.7;"></i>
-            </div>
-            <div class="kpi-value"><?= Helper::formatNumber($kpi['trx_hari_ini']) ?> Transaksi</div>
-            <div class="kpi-sub">
-                <span class="badge badge-purple" style="font-weight: 700;">
-                    <?= Helper::formatKg($kpi['trx_kg_hari_ini']) ?>
-                </span>
-                <span style="margin-left: 4px;">Mutasi & Keluar &rarr;</span>
-            </div>
+    <a class="kpi-card" href="index.php?page=pengeluaran&tab=riwayat" title="Buka riwayat pengeluaran">
+        <div class="kpi-body">
+            <div class="kpi-label">Keluar Hari Ini</div>
+            <div class="kpi-value"><?= Helper::formatKg($ov['keluar_kg']) ?></div>
+            <div class="kpi-sub"><?= Helper::formatNumber($ov['keluar_nota']) ?> nota pengeluaran ke mitra</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="activity" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="arrow-up-from-line" style="width: 18px; height: 18px;"></i></div>
     </a>
-
-    <!-- KPI 4: Antrean Accurate (Amber) -> Buka Settingan API Accurate -->
-    <a href="index.php?page=master&tab=accurate" class="kpi-card amber" style="text-decoration: none; cursor: pointer;" title="Klik untuk membuka Settingan & Antrean API Accurate">
-        <div>
-            <div class="kpi-label" style="color: #d97706; display: flex; align-items: center; gap: 4px;">
-                <span>Antrean Accurate</span>
-                <i data-lucide="arrow-up-right" style="width: 14px; height: 14px; opacity: 0.7;"></i>
-            </div>
-            <div class="kpi-value"><?= $kpi['queue_pending'] ?> Dokumen</div>
-            <div class="kpi-sub">
-                <?php if ($kpi['queue_pending'] > 0): ?>
-                    <span class="badge badge-warning" style="font-weight: 700;">⏳ Sedang Sinkron</span>
-                <?php else: ?>
-                    <span class="badge badge-success" style="font-weight: 700;">✓ 100% Tersinkron</span>
-                <?php endif; ?>
-                <span style="margin-left: 4px;">Sync API &rarr;</span>
-            </div>
+    <a class="kpi-card" href="index.php?page=ar_aging" title="Buka AR Aging">
+        <div class="kpi-body">
+            <div class="kpi-label">Piutang Lewat Tempo</div>
+            <div class="kpi-value"><?= Helper::formatRupiah($ov['piutang_overdue']) ?></div>
+            <div class="kpi-sub">Belum disetor lebih dari 7 hari</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="refresh-cw" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="hand-coins" style="width: 18px; height: 18px;"></i></div>
     </a>
 </div>
 
-<!-- Grid 2 Kolom: Stok per 7 Mitra & Transaksi Terakhir -->
-<div class="grid grid-cols-2" style="margin-bottom: 26px;">
-    <!-- Kolom Kiri: Breakdown Stok Mitra -->
+<!-- Perlu tindakan & Tren -->
+<div class="grid" style="grid-template-columns: minmax(320px, 4fr) minmax(0, 6fr); gap: 20px; margin-bottom: 24px; align-items: stretch;">
     <div class="card">
         <div class="card-header">
             <div>
-                <h2 class="card-title">
-                    <i data-lucide="layers" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                    <span>Stok Fisik Mitra</span>
-                </h2>
-                <div class="card-description">Distribusi bobot kilogram dan kemasan per entitas bisnis</div>
+                <h2 class="card-title"><span>Perlu Tindakan</span></h2>
+                <div class="card-description">Yang perlu dicek hari ini</div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableDashMitra', 'Dashboard_Stok_Mitra')">
-                    <i data-lucide="file-spreadsheet" style="width: 13px; height: 13px; color: #10b981;"></i>
-                    <span>Excel</span>
-                </button>
-                <a href="index.php?page=stok_mitra" class="btn btn-outline btn-sm">
-                    <span>Matriks</span>
-                    <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i>
-                </a>
+        </div>
+        <?php
+        $actions = [
+            ['Surat jalan belum selesai ditimbang', $ov['sj_belum_timbang'], Helper::formatNumber($ov['sj_belum_timbang']) . ' surat jalan', 'index.php?page=timbang_cetak&tab=timbang_cetak'],
+            ['Stok mengendap lebih dari 3 hari', $ov['gudang_mengendap'], Helper::formatNumber($ov['gudang_mengendap']) . ' keranjang', 'index.php?page=timbang_cetak&tab=stok_gudang'],
+            ['Piutang mitra lewat tempo', $ov['piutang_overdue'], Helper::formatRupiah($ov['piutang_overdue']), 'index.php?page=ar_aging'],
+            ['Utang pemasok lewat tempo', $ov['utang_overdue'], Helper::formatRupiah($ov['utang_overdue']), 'index.php?page=ap_aging'],
+        ];
+        // yang perlu tindakan tampil di atas
+        usort($actions, fn($x, $y) => (($y[1] > 0) <=> ($x[1] > 0)));
+        ?>
+        <div>
+            <?php foreach ($actions as $act): $clear = !($act[1] > 0); ?>
+            <a href="<?= $act[3] ?>" class="dash-action<?= $clear ? ' is-clear' : '' ?>">
+                <span class="dash-action-text"><?= htmlspecialchars($act[0]) ?></span>
+                <span class="dash-action-val"><?= $clear ? 'Aman' : $act[2] ?></span>
+                <i data-lucide="chevron-right" style="width: 15px; height: 15px; color: var(--text-muted);"></i>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title"><span>Barang Masuk vs Keluar</span></h2>
+                <div class="card-description">Total kg per hari, 14 hari terakhir</div>
             </div>
+        </div>
+        <div style="padding: 0 20px 18px; height: 240px; position: relative;">
+            <canvas id="chartMasukKeluar"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Stok per mitra & transaksi terakhir -->
+<div class="grid grid-cols-2" style="gap: 20px;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title"><span>Stok Fisik Mitra</span></h2>
+                <div class="card-description">5 mitra dengan stok terbesar</div>
+            </div>
+            <a href="index.php?page=stok_mitra" class="btn btn-outline btn-sm">
+                <span>Lihat semua</span>
+                <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i>
+            </a>
         </div>
         <div class="table-responsive">
             <table class="table-custom" id="tableDashMitra">
                 <thead>
                     <tr>
-                        <th>Mitra Pemilik</th>
-                        <th>Gudang Accurate</th>
+                        <th>Mitra</th>
                         <th style="text-align: right;">Kemasan</th>
                         <th style="text-align: right;">Total Netto</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
-                    $totalAllKg = max(1, $kpi['total_stok_kg']);
-                    foreach ($mitraSummary as $m): 
-                        $pct = round(($m['total_kg'] / $totalAllKg) * 100, 1);
-                        $warna = $m['warna_identitas'] ?? '#4f46e5';
-                    ?>
+                    <?php foreach ($mitraTop as $m): $warna = $m['warna_identitas'] ?? '#4f46e5'; ?>
                     <tr>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span class="mitra-tag <?= strtolower($m['kode_mitra']) ?>" style="background: <?= htmlspecialchars($warna) ?>;">
-                                    <?= htmlspecialchars($m['kode_mitra']) ?>
-                                </span>
-                                <span style="font-weight: 700; font-size: 13.5px;"><?= htmlspecialchars($m['nama_mitra']) ?></span>
-                            </div>
-                            <div style="margin-top: 8px; background: var(--bg-muted); border-radius: 9999px; height: 6px; width: 100%; overflow: hidden;">
-                                <div style="background: <?= htmlspecialchars($warna) ?>; height: 100%; width: <?= max(4, $pct) ?>%; border-radius: 9999px; box-shadow: 0 0 6px <?= htmlspecialchars($warna) ?>;"></div>
-                            </div>
+                            <span class="mitra-tag <?= strtolower($m['kode_mitra']) ?>" style="background: <?= htmlspecialchars($warna) ?>;"><?= htmlspecialchars($m['kode_mitra']) ?></span>
+                            <span style="font-weight: 600; font-size: 13px; margin-left: 6px;"><?= htmlspecialchars($m['nama_mitra']) ?></span>
                         </td>
-                        <td><code style="font-size: 11px;"><?= htmlspecialchars($m['kode_gudang_accurate']) ?></code></td>
-                        <td style="text-align: right; font-weight: 700; font-size: 13px;"><?= Helper::formatNumber($m['total_kemasan']) ?> pcs</td>
-                        <td style="text-align: right; font-weight: 800; font-size: 15px; color: <?= htmlspecialchars($warna) ?>;">
-                            <?= Helper::formatKg($m['total_kg']) ?>
-                        </td>
+                        <td style="text-align: right;"><?= Helper::formatNumber($m['total_kemasan']) ?></td>
+                        <td style="text-align: right; font-weight: 700;"><?= Helper::formatKg($m['total_kg']) ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -173,26 +145,16 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </div>
 
-    <!-- Kolom Kanan: Transaksi Terakhir & Status Accurate -->
     <div class="card">
         <div class="card-header">
             <div>
-                <h2 class="card-title">
-                    <i data-lucide="clock" style="width: 18px; height: 18px; color: var(--purple);"></i>
-                    <span>Transaksi Terakhir & Sinkronisasi</span>
-                </h2>
-                <div class="card-description">Pergerakan barang masuk/keluar dan status API</div>
+                <h2 class="card-title"><span>Transaksi Terakhir</span></h2>
+                <div class="card-description">Pergerakan barang masuk dan keluar</div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableDashTrx', 'Dashboard_Transaksi_Terakhir')">
-                    <i data-lucide="file-spreadsheet" style="width: 13px; height: 13px; color: #10b981;"></i>
-                    <span>Excel</span>
-                </button>
-                <a href="index.php?page=master&tab=accurate" class="btn btn-outline btn-sm">
-                    <span>Antrean API</span>
-                    <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
-                </a>
-            </div>
+            <a href="index.php?page=pengeluaran&tab=riwayat" class="btn btn-outline btn-sm">
+                <span>Lihat semua</span>
+                <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i>
+            </a>
         </div>
         <div class="table-responsive">
             <table class="table-custom" id="tableDashTrx">
@@ -202,41 +164,23 @@ require_once __DIR__ . '/layout/header.php';
                         <th>Mitra</th>
                         <th>Jenis</th>
                         <th style="text-align: right;">Total Kg</th>
-                        <th>Status Accurate</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($recentTrx)): ?>
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Belum ada riwayat transaksi.</td></tr>
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Belum ada riwayat transaksi.</td></tr>
                     <?php else: ?>
                         <?php foreach ($recentTrx as $t): ?>
                         <tr>
                             <td>
-                                <div style="font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text-main);"><?= htmlspecialchars($t['no_transaksi']) ?></div>
+                                <div style="font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;"><?= htmlspecialchars($t['no_transaksi']) ?></div>
                                 <div style="font-size: 11px; color: var(--text-muted);"><?= Helper::formatDateTime($t['created_at']) ?></div>
                             </td>
                             <td>
-                                <span class="mitra-tag <?= strtolower($t['kode_mitra']) ?>" style="background: <?= htmlspecialchars($t['warna_identitas']) ?>; padding: 2px 7px; font-size: 11px;">
-                                    <?= htmlspecialchars($t['kode_mitra']) ?>
-                                </span>
+                                <span class="mitra-tag <?= strtolower($t['kode_mitra']) ?>" style="background: <?= htmlspecialchars($t['warna_identitas']) ?>; padding: 2px 7px; font-size: 11px;"><?= htmlspecialchars($t['kode_mitra']) ?></span>
                             </td>
-                            <td>
-                                <?php if ($t['jenis_transaksi'] === 'PENGELUARAN'): ?>
-                                    <span class="badge badge-info">📤 KELUAR</span>
-                                <?php else: ?>
-                                    <span class="badge badge-success">📥 MASUK</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="text-align: right; font-weight: 800; font-size: 14px; color: #10b981;"><?= Helper::formatKg($t['total_kg']) ?></td>
-                            <td>
-                                <?php if ($t['status_accurate'] === 'SENT'): ?>
-                                    <span class="badge badge-success">✓ Terkirim</span>
-                                <?php elseif ($t['status_accurate'] === 'PENDING'): ?>
-                                    <span class="badge badge-warning">⏳ Pending</span>
-                                <?php else: ?>
-                                    <span class="badge badge-destructive">⚠ Gagal</span>
-                                <?php endif; ?>
-                            </td>
+                            <td><?= $t['jenis_transaksi'] === 'PENGELUARAN' ? 'Keluar' : 'Masuk' ?></td>
+                            <td style="text-align: right; font-weight: 700;"><?= Helper::formatKg($t['total_kg']) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -245,5 +189,34 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('chartMasukKeluar');
+    if (!el || typeof Chart === 'undefined') return;
+    var t = <?= json_encode($ov['trend']) ?>;
+    var css = getComputedStyle(document.documentElement);
+    var muted = (css.getPropertyValue('--text-muted') || '#64748b').trim();
+    var grid = (css.getPropertyValue('--border') || '#e2e8f0').trim();
+    new Chart(el, {
+        type: 'bar',
+        data: {
+            labels: t.labels,
+            datasets: [
+                { label: 'Masuk (kg)', data: t.masuk, backgroundColor: '#4f46e5', borderRadius: 3, maxBarThickness: 18 },
+                { label: 'Keluar (kg)', data: t.keluar, backgroundColor: '#94a3b8', borderRadius: 3, maxBarThickness: 18 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, color: muted, font: { size: 12 } } } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: muted, font: { size: 11 } } },
+                y: { beginAtZero: true, grid: { color: grid }, ticks: { color: muted, font: { size: 11 } } }
+            }
+        }
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

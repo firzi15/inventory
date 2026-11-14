@@ -7,6 +7,10 @@
     <script src="assets/js/scanner.js"></script>
     <script src="assets/js/xlsx.full.min.js"></script>
     <script src="assets/js/chart.umd.min.js"></script>
+    <script src="assets/js/table-tools.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/table-tools.js') ?>"></script>
+    <script src="assets/js/select-ui.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/select-ui.js') ?>"></script>
+    <script src="assets/js/ekspor.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/ekspor.js') ?>"></script>
+    <script src="assets/js/batal.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/batal.js') ?>"></script>
 
     <script>
         // Toggle Sidebar Drawer (Mobile & Tablet)
@@ -39,41 +43,6 @@
             }
         });
 
-        // Global Export to Excel (.xlsx) Handler using SheetJS
-        function exportTableToExcel(tableId, baseFilename) {
-            const table = document.getElementById(tableId);
-            if (!table) {
-                if (window.showAppAlert) {
-                    window.showAppAlert({
-                        title: 'Tabel Tidak Ditemukan',
-                        text: 'Tabel data tidak dapat ditemukan untuk diekspor.',
-                        icon: 'warning'
-                    });
-                } else {
-                    alert('Tabel tidak ditemukan');
-                }
-                return;
-            }
-            if (typeof XLSX === 'undefined') {
-                if (window.showAppAlert) {
-                    window.showAppAlert({
-                        title: 'Pustaka Excel Belum Siap',
-                        text: 'Modul SheetJS sedang dimuat, silakan coba sesaat lagi.',
-                        icon: 'info'
-                    });
-                } else {
-                    alert('Pustaka Excel belum siap.');
-                }
-                return;
-            }
-            const d = new Date().toISOString().slice(0, 10);
-            const wb = XLSX.utils.table_to_book(table, { raw: false, cellDates: true });
-            XLSX.writeFile(wb, `${baseFilename}_${d}.xlsx`);
-            if (window.showToast) {
-                window.showToast(`Berhasil mengekspor data ke ${baseFilename}_${d}.xlsx!`, 'success');
-            }
-        }
-
         // Tema Gelap/Terang Toggle (Shadcn Theme Controller)
         const themeBtn = document.getElementById('themeToggle');
         const sunIcon = document.getElementById('sunIcon');
@@ -104,6 +73,28 @@
                 applyTheme(next);
             });
         }
+
+        // Dropdown Profil User & Role Switcher
+        function toggleUserDropdown(event) {
+            if (event) event.stopPropagation();
+            const menu = document.getElementById('userDropdownMenu');
+            const btn = document.getElementById('btnUserMenu');
+            if (menu) {
+                const isShown = menu.classList.contains('show');
+                menu.classList.toggle('show');
+                if (btn) btn.classList.toggle('active', !isShown);
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('userDropdownMenu');
+            const wrapper = document.getElementById('userMenuWrapper');
+            if (menu && wrapper && !wrapper.contains(e.target)) {
+                menu.classList.remove('show');
+                const btn = document.getElementById('btnUserMenu');
+                if (btn) btn.classList.remove('active');
+            }
+        });
 
         // Initialize Lucide Icons
         if (typeof lucide !== 'undefined') {

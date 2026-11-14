@@ -1,500 +1,343 @@
 <?php
 /**
- * Halaman Estimasi Keuntungan (Profit) & Analisa Keuangan
- * Fitur:
- * 1. Rekap Metrik Finansial Keseluruhan (Total Beli, Total Jual, Total Profit, Rata-rata Margin %)
- * 2. Simulator Kalkulator Keuntungan Real-Time (Pemasok x Mitra x Produk x Bobot Kg)
- * 3. Tabel Komparasi Lengkap Harga Beli Pemasok vs Harga Jual Mitra per Produk SKU
- * 4. Riwayat Finansial Surat Jalan Pengeluaran Barang
+ * Laba Rugi - seluruh angka dari jurnal (akrual).
+ * 4000 Penjualan, 5000 HPP, 6000 Biaya Operasional.
  */
 
 use App\Core\Helper;
-use App\Models\Pemasok;
-use App\Models\Mitra;
-use App\Models\Item;
-use App\Models\MasterHarga;
-use App\Models\MasterHargaPemasok;
-use App\Models\Transaksi;
+use App\Services\CoaService;
+use App\Services\JurnalService;
 
-$pageTitle = 'Profit and Loss - Analisa Laba & Margin';
+$pageTitle = 'Laba Rugi';
 
-$pemasokList = Pemasok::getAll();
-$mitraList   = Mitra::getAll();
-$itemList    = Item::getAll();
+$tab = ($_GET['tab'] ?? '') === 'laba_sj' || ($_GET['tab'] ?? '') === 'riwayat_sj' ? 'laba_sj' : 'ringkasan';
 
-// Filter untuk Tabel Analisa Komparasi
-$activeTab = $_GET['tab'] ?? 'komparasi';
-if (!in_array($activeTab, ['komparasi', 'riwayat_sj', 'semua'])) {
-    $activeTab = 'komparasi';
-}
+$tahunList = JurnalService::tahunTersedia();
+$tahun = (int)($_GET['year'] ?? date('Y'));
+if (!in_array($tahun, $tahunList, true)) $tahun = (int)date('Y');
+// bulan 0 = setahun penuh
+$bulan = isset($_GET['month']) ? (int)$_GET['month'] : ($tahun === (int)date('Y') ? (int)date('n') : 12);
+if ($bulan < 0 || $bulan > 12) $bulan = 0;
 
-$filterPemasokId = isset($_GET['f_pemasok']) && $_GET['f_pemasok'] !== '' ? (int)$_GET['f_pemasok'] : null;
-$filterMitraId   = isset($_GET['f_mitra']) && $_GET['f_mitra'] !== '' ? (int)$_GET['f_mitra'] : null;
-$search          = trim($_GET['search'] ?? '');
+$namaBulan = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
+              7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+$bulanPendek = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'];
 
-$profitLossData = MasterHargaPemasok::getProfitLossSummary($filterPemasokId, $filterMitraId, $search);
+$rentang = function (int $th, int $bl): array {
+    if ($bl === 0) return [sprintf('%04d-01-01', $th), sprintf('%04d-12-31', $th)];
+    $awal = sprintf('%04d-%02d-01', $th, $bl);
+    return [$awal, date('Y-m-t', strtotime($awal))];
+};
+[$dari, $sampai] = $rentang($tahun, $bulan);
+$labelPeriode = $bulan === 0 ? "Tahun $tahun" : $namaBulan[$bulan] . " $tahun";
 
-// Riwayat Transaksi Finansial Pengeluaran
-$hSearch  = trim($_GET['h_search'] ?? '');
-$hFilters = [];
-if (!empty($hSearch)) $hFilters['search'] = $hSearch;
-$historyTransactions = Transaksi::getHistoryPengeluaran($hFilters, 15, 0);
-
-// Hitung Agregasi Finansial dari Seluruh Riwayat Pengeluaran
-$db = \App\Core\Database::getConnection();
-$aggRow = $db->query("
-    SELECT 
-        COUNT(id) AS total_transaksi,
-        COALESCE(SUM(total_label), 0) AS total_kemasan,
-        COALESCE(SUM(total_kg), 0) AS total_kg,
-        COALESCE(SUM(total_nilai_beli), 0) AS total_beli,
-        COALESCE(SUM(total_nilai_jual), 0) AS total_jual,
-        COALESCE(SUM(total_profit), 0) AS total_profit
-    FROM transaksi_stok 
-    WHERE jenis_transaksi = 'PENGELUARAN'
-")->fetch(PDO::FETCH_ASSOC);
-
-$totalAllBeli   = (float)($aggRow['total_beli'] ?? 0);
-$totalAllJual   = (float)($aggRow['total_jual'] ?? 0);
-$totalAllProfit = (float)($aggRow['total_profit'] ?? 0);
-$avgMarginPct   = $totalAllBeli > 0 ? (($totalAllProfit / $totalAllBeli) * 100) : 0.0;
+$hitung = function (array $a): array {
+    $jual = (float)$a['4000']; $hpp = (float)$a['5000']; $biaya = (float)$a['6000'];
+    $kotor = $jual - $hpp;
+    return ['jual' => $jual, 'hpp' => $hpp, 'kotor' => $kotor, 'biaya' => $biaya, 'bersih' => $kotor - $biaya];
+};
+$pct = fn(float $a, float $b): string => $b != 0.0 ? number_format($a / $b * 100, 1, ',', '.') . '%' : '-';
+$rp = fn($n) => Helper::formatRupiah($n);
+$warna = fn($n) => $n < 0 ? '#b91c1c' : 'inherit';
+$linkAkun = fn(string $akun, string $d, string $s) => 'index.php?page=coa&akun=' . $akun . '&dari=' . $d . '&sampai=' . $s;
 
 require_once __DIR__ . '/layout/header.php';
 ?>
 
-<div class="page-header no-print">
-    <div>
-        <h1 class="page-title">Profit and Loss</h1>
-        <p class="page-subtitle">Pantau laba kotor, selisih harga beli pemasok vs harga jual ke mitra, serta analisa margin keuntungan per produk</p>
-    </div>
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableProfitLoss', 'Laporan_Profit_and_Loss')">
-            <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-            <span>Ekspor Excel (.xlsx)</span>
-        </button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">
-            <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-            <span>Cetak Laporan</span>
-        </button>
-    </div>
-</div>
+<div class="content-wrapper">
 
-<!-- 4 KARTU METRIK FINANSIAL KESELURUHAN -->
-<div class="grid grid-cols-4 no-print" style="gap: 16px; margin-bottom: 24px;">
-    <!-- 1. Modal Beli Pemasok -->
-    <div class="card" style="padding: 16px 20px; border-left: 4px solid #3b82f6;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 12px; font-weight: 700; color: #1d4ed8; text-transform: uppercase;">🏷️ Total Modal Beli (Pemasok)</span>
-            <i data-lucide="shopping-bag" style="width: 18px; height: 18px; color: #3b82f6;"></i>
-        </div>
-        <div style="font-size: 22px; font-weight: 900; color: #1e3a8a; font-family: 'JetBrains Mono', monospace;">
-            <?= Helper::formatRupiah($totalAllBeli) ?>
-        </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
-            Total pengeluaran modal beli ke pemasok
-        </div>
-    </div>
-
-    <!-- 2. Nilai Penjualan ke Mitra -->
-    <div class="card" style="padding: 16px 20px; border-left: 4px solid #10b981;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 12px; font-weight: 700; color: #15803d; text-transform: uppercase;">💰 Total Nilai Jual (Mitra)</span>
-            <i data-lucide="badge-dollar-sign" style="width: 18px; height: 18px; color: #10b981;"></i>
-        </div>
-        <div style="font-size: 22px; font-weight: 900; color: #065f46; font-family: 'JetBrains Mono', monospace;">
-            <?= Helper::formatRupiah($totalAllJual) ?>
-        </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
-            Total tagihan omzet penjualan ke 7 mitra
-        </div>
-    </div>
-
-    <!-- 3. Total Keuntungan Bersih (Profit) -->
-    <div class="card" style="padding: 16px 20px; border-left: 4px solid <?= $totalAllProfit >= 0 ? '#059669' : '#dc2626' ?>; background: <?= $totalAllProfit >= 0 ? 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)' : 'linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)' ?>;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 12px; font-weight: 800; color: <?= $totalAllProfit >= 0 ? '#047857' : '#b91c1c' ?>; text-transform: uppercase;">📈 Total Keuntungan (Profit)</span>
-            <i data-lucide="trending-up" style="width: 18px; height: 18px; color: <?= $totalAllProfit >= 0 ? '#059669' : '#dc2626' ?>;"></i>
-        </div>
-        <div style="font-size: 22px; font-weight: 900; color: <?= $totalAllProfit >= 0 ? '#047857' : '#b91c1c' ?>; font-family: 'JetBrains Mono', monospace;">
-            <?= ($totalAllProfit > 0 ? '+' : '') . Helper::formatRupiah($totalAllProfit) ?>
-        </div>
-        <div style="font-size: 11.5px; color: <?= $totalAllProfit >= 0 ? '#047857' : '#b91c1c' ?>; margin-top: 4px; font-weight: 600;">
-            Selisih harga jual dikurangi modal beli
-        </div>
-    </div>
-
-    <!-- 4. Rata-Rata Margin Keuntungan -->
-    <div class="card" style="padding: 16px 20px; border-left: 4px solid #8b5cf6;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 12px; font-weight: 700; color: #6d28d9; text-transform: uppercase;">📊 Rata-Rata Margin</span>
-            <i data-lucide="percent" style="width: 18px; height: 18px; color: #8b5cf6;"></i>
-        </div>
-        <div style="font-size: 22px; font-weight: 900; color: #5b21b6; font-family: 'JetBrains Mono', monospace;">
-            <?= ($avgMarginPct > 0 ? '+' : '') . number_format($avgMarginPct, 1) ?>%
-        </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">
-            Persentase margin laba dari total modal
-        </div>
-    </div>
-</div>
-
-<?php if ($activeTab === 'komparasi' || $activeTab === 'semua'): ?>
-<!-- ========================================================================= -->
-<!-- SIMULATOR KALKULATOR KEUNTUNGAN REAL-TIME                                  -->
-<!-- ========================================================================= -->
-<div class="card no-print" style="margin-bottom: 24px; box-shadow: var(--shadow-sm); border: 1.5px solid #c7d2fe;">
-    <div class="card-header" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(16, 185, 129, 0.06)); padding-bottom: 14px; border-bottom: 1px solid var(--border);">
+    <div class="page-header no-print">
         <div>
-            <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="calculator" style="width: 20px; height: 20px; color: var(--primary);"></i>
-                <span>Simulasi Kalkulator Keuntungan Real-Time</span>
-            </h2>
-            <div class="card-description">
-                Pilih pemasok, mitra tujuan, produk SKU, dan bobot untuk menghitung estimasi modal beli, omzet jual, dan keuntungan secara instan
-            </div>
+            <h1 class="page-title"><?= $tab === 'laba_sj' ? 'Laba per Surat Jalan' : 'Laba Rugi' ?></h1>
+            <p class="page-subtitle">Dihitung dari jurnal: penjualan diakui saat barang keluar, HPP memakai harga beli yang sudah dibekukan</p>
         </div>
-    </div>
-
-    <div style="padding: 18px 20px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 1.4fr; gap: 14px; align-items: end;">
-            <div>
-                <label class="form-label" for="simPemasok" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px;">🚚 Pemasok (Asal Beli):</label>
-                <select id="simPemasok" class="form-control" style="font-size: 13px; font-weight: 600; height: 40px;" onchange="runSimulasiProfit()">
-                    <?php foreach ($pemasokList as $p): ?>
-                        <option value="<?= $p['id'] ?>">[<?= htmlspecialchars($p['kode_pemasok']) ?>] <?= htmlspecialchars($p['nama_pemasok']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label class="form-label" for="simMitra" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px;">🏢 Mitra (Tujuan Jual):</label>
-                <select id="simMitra" class="form-control" style="font-size: 13px; font-weight: 600; height: 40px;" onchange="runSimulasiProfit()">
-                    <?php foreach ($mitraList as $m): ?>
-                        <option value="<?= $m['id'] ?>">[<?= htmlspecialchars($m['kode_mitra']) ?>] <?= htmlspecialchars($m['nama_mitra']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label class="form-label" for="simItem" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px;">📦 Produk SKU:</label>
-                <select id="simItem" class="form-control" style="font-size: 13px; font-weight: 600; height: 40px;" onchange="runSimulasiProfit()">
-                    <?php foreach ($itemList as $it): ?>
-                        <option value="<?= $it['id'] ?>" data-jenis="<?= $it['jenis_id'] ?>">
-                            <?= htmlspecialchars($it['nama_item']) ?> (<?= htmlspecialchars($it['kode_item']) ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label class="form-label" for="simBerat" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px;">⚖️ Simulasi Bobot (Kg):</label>
-                <input type="number" id="simBerat" class="form-control" value="50" min="0.1" step="any" style="font-size: 14px; font-weight: 800; text-align: right; height: 40px; font-family: 'JetBrains Mono', monospace;" oninput="runSimulasiProfit()">
-            </div>
-            <!-- Kotak Hasil Real-Time -->
-            <div id="boxSimHasil" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 12px 16px; border-radius: 8px; border: 1.5px solid #10b981;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <span style="font-size: 11px; color: #065f46; font-weight: 800; text-transform: uppercase;">Estimasi Laba Bersih:</span>
-                    <span id="simMarginBadge" class="badge badge-success" style="font-size: 10px; font-weight: 800;">Margin +0.0%</span>
-                </div>
-                <div id="simHasilProfit" style="font-size: 20px; font-weight: 900; color: #047857; font-family: 'JetBrains Mono', monospace;">+ Rp 0</div>
-                <div id="simHasilDetail" style="font-size: 11px; color: #065f46; margin-top: 2px;">Beli: Rp 0 • Jual: Rp 0</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- TABEL KOMPARASI HARGA BELI PEMASOK VS HARGA JUAL MITRA PER PRODUK SKU     -->
-<!-- ========================================================================= -->
-<div class="card" style="margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-        <div>
-            <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="scale" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
-                <span>Matriks Komparasi Harga Beli vs Harga Jual per Produk</span>
-            </h2>
-            <div class="card-description">
-                Perbandingan komparatif tarif beli dari pemasok dengan tarif jual ke mitra untuk setiap produk/item SKU
-            </div>
-        </div>
-        <span class="badge badge-purple" style="font-weight: 700;"><?= count($profitLossData) ?> Kombinasi Harga</span>
-    </div>
-
-    <!-- Filter Bar Komparasi -->
-    <div style="padding: 12px 20px; background: var(--bg-muted); border-bottom: 1px solid var(--border);">
-        <form method="GET" action="index.php" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <?php $eksporNama = ($tab === 'laba_sj' ? 'Laba_per_Surat_Jalan' : 'Laba_Rugi') . '_' . $tahun . ($bulan ? sprintf('-%02d', $bulan) : ''); $eksporJudul = ($tab === 'laba_sj' ? 'Laba per Surat Jalan ' : 'Laba Rugi ') . $labelPeriode; include __DIR__ . '/layout/ekspor.php'; ?>
+        <form method="GET" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <input type="hidden" name="page" value="profit_loss">
-            <input type="hidden" name="tab" value="<?= htmlspecialchars($activeTab) ?>">
-
-            <div style="flex: 1; min-width: 180px;">
-                <input type="text" name="search" class="form-control" value="<?= htmlspecialchars($search) ?>" placeholder="Cari nama produk, SKU, pemasok, atau mitra..." style="height: 38px;">
-            </div>
-
-            <div style="width: 210px;">
-                <select name="f_pemasok" class="form-control" style="height: 38px;">
-                    <option value="">-- Semua Pemasok Beli --</option>
-                    <?php foreach ($pemasokList as $p): ?>
-                        <option value="<?= $p['id'] ?>" <?= $filterPemasokId === (int)$p['id'] ? 'selected' : '' ?>>
-                            [<?= htmlspecialchars($p['kode_pemasok']) ?>] <?= htmlspecialchars($p['nama_pemasok']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div style="width: 210px;">
-                <select name="f_mitra" class="form-control" style="height: 38px;">
-                    <option value="">-- Semua Mitra Jual --</option>
-                    <?php foreach ($mitraList as $m): ?>
-                        <option value="<?= $m['id'] ?>" <?= $filterMitraId === (int)$m['id'] ? 'selected' : '' ?>>
-                            [<?= htmlspecialchars($m['kode_mitra']) ?>] <?= htmlspecialchars($m['nama_mitra']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="height: 38px;">
-                <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
-                <span>Filter</span>
-            </button>
-            <?php if (!empty($search) || $filterPemasokId || $filterMitraId): ?>
-                <a href="index.php?page=profit_loss&tab=<?= htmlspecialchars($activeTab) ?>" class="btn btn-outline" style="height: 38px;">Reset</a>
-            <?php endif; ?>
+            <input type="hidden" name="tab" value="<?= $tab ?>">
+            <select name="year" class="form-control" style="width: auto;" onchange="this.form.submit()">
+                <?php foreach ($tahunList as $t): ?>
+                    <option value="<?= $t ?>" <?= $t === $tahun ? 'selected' : '' ?>><?= $t ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="month" class="form-control" style="width: auto;" onchange="this.form.submit()">
+                <option value="0" <?= $bulan === 0 ? 'selected' : '' ?>>Setahun</option>
+                <?php foreach ($namaBulan as $n => $nm): ?>
+                    <option value="<?= $n ?>" <?= $n === $bulan ? 'selected' : '' ?>><?= $nm ?></option>
+                <?php endforeach; ?>
+            </select>
         </form>
+        </div>
     </div>
 
-    <!-- Tabel Data Komparasi -->
-    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-        <table class="table-custom" id="tableProfitLoss">
-            <thead>
-                <tr>
-                    <th style="width: 40px; text-align: center;">No</th>
-                    <th>Pemasok Asal</th>
-                    <th>Produk / Item SKU</th>
-                    <th>Kategori</th>
-                    <th style="text-align: right; background: rgba(245, 158, 11, 0.05);">Hrg Beli Pemasok</th>
-                    <th>Mitra Bisnis Tujuan</th>
-                    <th style="text-align: right; background: rgba(16, 185, 129, 0.05);">Hrg Jual Mitra</th>
-                    <th style="text-align: right;">Margin Profit / Kg</th>
-                    <th style="text-align: center;">Margin %</th>
-                    <th style="text-align: center; width: 130px;">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($profitLossData)): ?>
+    <?php if ($tab === 'ringkasan'):
+        $bulanan = JurnalService::labaRugiBulanan($tahun);
+        $hasilBulan = [];
+        $ytd = ['4000' => 0.0, '5000' => 0.0, '6000' => 0.0];
+        foreach ($bulanan as $m => $a) {
+            $hasilBulan[$m] = $hitung($a);
+            foreach ($ytd as $k => $_) $ytd[$k] += $a[$k];
+        }
+        $hasilYtd = $hitung($ytd);
+
+        // Pemeriksaan terhadap COA (seluruh periode)
+        $semua = JurnalService::labaRugiRentang('1900-01-01', '2999-12-31');
+        $hs = $hitung($semua);
+        $saldoCoa = CoaService::balances();
+        $grupCoa = ['REVENUE' => 0.0, 'COGS' => 0.0, 'EXPENSE' => 0.0];
+        foreach (CoaService::accounts() as $kodeC => $c) {
+            if (!isset($grupCoa[$c[6]])) continue;
+            $grupCoa[$c[6]] += ($c[2] === CoaService::TIPE[$c[6]][2] ? 1 : -1) * $saldoCoa[$kodeC];
+        }
+        $labaCoa = $grupCoa['REVENUE'] - $grupCoa['COGS'] - $grupCoa['EXPENSE'];
+        $cocok = abs($labaCoa - $hs['bersih']) < 1;
+
+        $detailMitra  = JurnalService::detailPerMitra($dari, $sampai);
+        $detailVendor = JurnalService::detailPerVendor($dari, $sampai);
+    ?>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Laba Rugi <?= $tahun ?> per bulan</div>
+        <div class="table-responsive">
+            <table class="table-custom" data-no-tools style="min-width: 1250px;">
+                <thead>
                     <tr>
-                        <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 36px;">
-                            Tidak ada kombinasi harga yang cocok dengan filter yang dipilih.
-                        </td>
+                        <th style="min-width: 190px;">Keterangan</th>
+                        <?php foreach ($bulanPendek as $n => $nm): ?>
+                            <th style="text-align: right; <?= $n === $bulan ? 'background: var(--bg-muted);' : '' ?>"><?= $nm ?></th>
+                        <?php endforeach; ?>
+                        <th style="text-align: right;">Total <?= $tahun ?></th>
                     </tr>
-                <?php else: ?>
-                    <?php $plNo = 1; foreach ($profitLossData as $row): 
-                        $profitKg = (float)$row['profit_per_kg'];
-                        $isProfit = $profitKg > 0;
-                        $isRugi   = $profitKg < 0;
-                    ?>
-                    <tr>
-                        <td style="text-align: center; color: var(--text-muted); font-size: 11.5px;"><?= $plNo++ ?></td>
-                        <td>
-                            <strong style="color: var(--text-main); font-size: 13px;"><?= htmlspecialchars($row['nama_pemasok']) ?></strong>
-                            <div style="font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;"><?= htmlspecialchars($row['kode_pemasok']) ?></div>
-                        </td>
-                        <td>
-                            <strong style="color: var(--text-main); font-size: 13.5px;"><?= htmlspecialchars($row['nama_item']) ?></strong>
-                            <div style="font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;"><?= htmlspecialchars($row['kode_item']) ?></div>
-                        </td>
-                        <td>
-                            <span class="badge badge-purple" style="font-size: 10.5px;"><?= htmlspecialchars($row['nama_jenis']) ?></span>
-                        </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #d97706; background: rgba(245, 158, 11, 0.02);">
-                            Rp <?= number_format($row['harga_pemasok'], 0, ',', '.') ?>
-                        </td>
-                        <td>
-                            <span class="mitra-tag <?= strtolower($row['kode_mitra']) ?>" style="background: <?= htmlspecialchars($row['warna_identitas']) ?>; font-size: 11px;">
-                                <?= htmlspecialchars($row['kode_mitra']) ?>
-                            </span>
-                            <span style="font-size: 12px; margin-left: 4px; font-weight: 600;"><?= htmlspecialchars($row['nama_mitra']) ?></span>
-                        </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #10b981; background: rgba(16, 185, 129, 0.02);">
-                            Rp <?= number_format($row['harga_mitra'], 0, ',', '.') ?>
-                        </td>
-                        <td style="text-align: right; font-weight: 900; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: <?= $isProfit ? '#10b981' : ($isRugi ? '#ef4444' : 'var(--text-muted)') ?>;">
-                            <?= $isProfit ? '+' : '' ?>Rp <?= number_format($profitKg, 0, ',', '.') ?>
-                        </td>
-                        <td style="text-align: center; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: <?= $isProfit ? '#059669' : ($isRugi ? '#dc2626' : 'var(--text-muted)') ?>;">
-                            <?= ($row['margin_persen'] > 0 ? '+' : '') . number_format($row['margin_persen'], 1) ?>%
-                        </td>
-                        <td style="text-align: center;">
-                            <?php if ($isProfit): ?>
-                                <span class="badge badge-success" style="font-size: 11px;">✓ Untung (Profit)</span>
-                            <?php elseif ($isRugi): ?>
-                                <span class="badge badge-danger" style="font-size: 11px;">⚠️ Rugi</span>
-                            <?php else: ?>
-                                <span class="badge badge-secondary" style="font-size: 11px;">Impas (0)</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $akunBulan = JurnalService::labaRugiAkunBulanan($tahun);
+                    $coaAkun = CoaService::accounts();
+                    $tipeGrup = ['4000' => 'REVENUE', '5000' => 'COGS', '6000' => 'EXPENSE'];
+                    $baris = [
+                        ['Penjualan', 'jual', '4000', false],
+                        ['HPP', 'hpp', '5000', false],
+                        ['Laba Kotor', 'kotor', null, true],
+                        ['Biaya Operasional', 'biaya', '6000', false],
+                        ['Laba Bersih', 'bersih', null, true],
+                    ];
+                    foreach ($baris as [$label, $key, $grup, $tebal]): ?>
+                        <tr style="<?= $tebal ? 'background: var(--bg-muted);' : '' ?> font-weight: 800;">
+                            <td><?= $label ?></td>
+                            <?php foreach ($hasilBulan as $m => $h): ?>
+                                <td style="text-align: right; color: <?= $warna($h[$key]) ?>;"><?= $h[$key] != 0 ? $rp($h[$key]) : '-' ?></td>
+                            <?php endforeach; ?>
+                            <td style="text-align: right; color: <?= $warna($hasilYtd[$key]) ?>;"><?= $hasilYtd[$key] != 0 ? $rp($hasilYtd[$key]) : '-' ?></td>
+                        </tr>
+                        <?php if ($grup):
+                            foreach ($akunBulan as $kodeAk => $perBulan):
+                                if (!isset($coaAkun[$kodeAk]) || $coaAkun[$kodeAk][6] !== $tipeGrup[$grup]) continue; ?>
+                            <tr style="font-size: 12.5px;">
+                                <td style="padding-left: 28px; font-weight: 500;"><?= $kodeAk ?> &nbsp;<?= htmlspecialchars($coaAkun[$kodeAk][0]) ?></td>
+                                <?php for ($m = 1; $m <= 12; $m++):
+                                    $v = $perBulan[$m] ?? 0.0;
+                                    [$d1, $s1] = $rentang($tahun, $m); ?>
+                                    <td style="text-align: right; color: <?= $warna($v) ?>;">
+                                        <?php if ($v != 0): ?><a href="<?= $linkAkun($kodeAk, $d1, $s1) ?>" style="color: inherit;"><?= $rp($v) ?></a><?php else: ?>-<?php endif; ?>
+                                    </td>
+                                <?php endfor;
+                                $tot = array_sum($perBulan); ?>
+                                <td style="text-align: right; font-weight: 700; color: <?= $warna($tot) ?>;">
+                                    <?php if ($tot != 0): ?><a href="<?= $linkAkun($kodeAk, "$tahun-01-01", "$tahun-12-31") ?>" style="color: inherit;"><?= $rp($tot) ?></a><?php else: ?>-<?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                        <?php if ($key === 'kotor' || $key === 'bersih'): ?>
+                            <tr style="font-size: 12px; color: var(--text-muted);">
+                                <td style="padding-left: 28px;">Margin <?= $key === 'kotor' ? 'kotor' : 'bersih' ?></td>
+                                <?php foreach ($hasilBulan as $h): ?>
+                                    <td style="text-align: right;"><?= $pct($h[$key], $h['jual']) ?></td>
+                                <?php endforeach; ?>
+                                <td style="text-align: right;"><?= $pct($hasilYtd[$key], $hasilYtd['jual']) ?></td>
+                            </tr>
+                        <?php endif; ?>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+        <div style="padding: 12px 20px; border-top: 1px solid var(--border); font-size: 12.5px; display: flex; gap: 18px; flex-wrap: wrap; align-items: center;">
+            <span style="font-weight: 700; color: <?= $cocok ? '#15803d' : '#b91c1c' ?>;">
+                <?= $cocok ? 'Cocok dengan COA' : 'Tidak cocok dengan COA' ?>
+            </span>
+            <span style="color: var(--text-muted);">
+                Laba bersih seluruh periode <?= $rp($hs['bersih']) ?> = saldo COA akun Pendapatan &minus; HPP &minus; Beban (<?= $rp($labaCoa) ?>)
+            </span>
+        </div>
     </div>
-</div>
-<?php endif; ?>
 
-<?php if ($activeTab === 'riwayat_sj' || $activeTab === 'semua'): ?>
-<!-- ========================================================================= -->
-<!-- RIWAYAT FINANSIAL SURAT JALAN PENGELUARAN BARANG                           -->
-<!-- ========================================================================= -->
-<div class="card" style="box-shadow: var(--shadow-sm);">
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-        <div>
-            <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="receipt" style="width: 20px; height: 20px; color: #10b981;"></i>
-                <span>Rekap Keuntungan dari Surat Jalan Pengeluaran Barang</span>
-            </h2>
-            <div class="card-description">
-                Laporan realisasi laba kotor dari transaksi pengeluaran barang yang telah diterbitkan surat jalannya
+    <?php if ($bulan > 0):
+        $prevTh = $bulan === 1 ? $tahun - 1 : $tahun;
+        $prevBl = $bulan === 1 ? 12 : $bulan - 1;
+        [$pd, $ps] = $rentang($prevTh, $prevBl);
+        $ini = $hasilBulan[$bulan];
+        $lalu = $hitung(JurnalService::labaRugiRentang($pd, $ps));
+        $banding = [['Penjualan', 'jual'], ['HPP', 'hpp'], ['Laba Kotor', 'kotor'], ['Biaya Operasional', 'biaya'], ['Laba Bersih', 'bersih']];
+    ?>
+    <div class="card" style="margin-bottom: 20px;">
+        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">
+            <?= $namaBulan[$bulan] ?> <?= $tahun ?> dibanding <?= $namaBulan[$prevBl] ?> <?= $prevTh ?>
+        </div>
+        <div class="table-responsive">
+            <table class="table-custom" data-no-tools>
+                <thead>
+                    <tr>
+                        <th>Keterangan</th>
+                        <th style="text-align: right;"><?= $namaBulan[$bulan] ?></th>
+                        <th style="text-align: right;"><?= $namaBulan[$prevBl] ?></th>
+                        <th style="text-align: right;">Selisih</th>
+                        <th style="text-align: right;">Perubahan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($banding as [$label, $key]):
+                        $sel = $ini[$key] - $lalu[$key];
+                        $tebal = in_array($key, ['kotor', 'bersih'], true); ?>
+                        <tr style="<?= $tebal ? 'font-weight: 800; background: var(--bg-muted);' : '' ?>">
+                            <td><?= $label ?></td>
+                            <td style="text-align: right;"><?= $rp($ini[$key]) ?></td>
+                            <td style="text-align: right;"><?= $rp($lalu[$key]) ?></td>
+                            <td style="text-align: right; color: <?= $warna($sel) ?>;"><?= $rp($sel) ?></td>
+                            <td style="text-align: right;"><?= $lalu[$key] != 0 ? number_format($sel / abs($lalu[$key]) * 100, 1, ',', '.') . '%' : '-' ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
+        <div class="card">
+            <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Penjualan dan HPP per mitra &middot; <?= $labelPeriode ?></div>
+            <div class="table-responsive">
+                <table class="table-custom" data-no-tools>
+                    <thead>
+                        <tr>
+                            <th>Mitra</th>
+                            <th style="text-align: right;">Penjualan</th>
+                            <th style="text-align: right;">HPP</th>
+                            <th style="text-align: right;">Laba Kotor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!$detailMitra): ?>
+                            <tr><td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">Belum ada penjualan pada periode ini</td></tr>
+                        <?php endif;
+                        $tj = $th = 0.0;
+                        foreach ($detailMitra as $nama => $v):
+                            $tj += $v['4000']; $th += $v['5000']; $lk = $v['4000'] - $v['5000']; ?>
+                            <tr>
+                                <td style="font-weight: 600;"><?= htmlspecialchars($nama) ?></td>
+                                <td style="text-align: right;"><?= $rp($v['4000']) ?></td>
+                                <td style="text-align: right;"><?= $rp($v['5000']) ?></td>
+                                <td style="text-align: right; color: <?= $warna($lk) ?>;"><?= $rp($lk) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if ($detailMitra): ?>
+                            <tr style="font-weight: 800; background: var(--bg-muted);">
+                                <td>Total</td>
+                                <td style="text-align: right;"><?= $rp($tj) ?></td>
+                                <td style="text-align: right;"><?= $rp($th) ?></td>
+                                <td style="text-align: right;"><?= $rp($tj - $th) ?></td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableHistoryFinancial', 'Laporan_Keuntungan_Surat_Jalan')">
-            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-            <span>Ekspor Excel (.xlsx)</span>
-        </button>
+
+        <div class="card">
+            <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Biaya operasional per vendor &middot; <?= $labelPeriode ?></div>
+            <div class="table-responsive">
+                <table class="table-custom" data-no-tools>
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th style="text-align: right;">Biaya</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!$detailVendor): ?>
+                            <tr><td colspan="2" style="text-align: center; padding: 24px; color: var(--text-muted);">Belum ada biaya operasional pada periode ini</td></tr>
+                        <?php endif; ?>
+                        <?php foreach ($detailVendor as $nama => $v): ?>
+                            <tr>
+                                <td style="font-weight: 600;"><?= htmlspecialchars($nama) ?></td>
+                                <td style="text-align: right;"><?= $rp($v) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if ($detailVendor): ?>
+                            <tr style="font-weight: 800; background: var(--bg-muted);">
+                                <td>Total</td>
+                                <td style="text-align: right;"><?= $rp(array_sum($detailVendor)) ?></td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table-custom" id="tableHistoryFinancial">
-            <thead>
-                <tr>
-                    <th style="width: 35px; text-align: center;">No</th>
-                    <th>No. Surat Jalan / DO</th>
-                    <th>Waktu Keluar</th>
-                    <th>Pemasok Asal</th>
-                    <th>Mitra Penerima</th>
-                    <th style="text-align: center;">Kemasan</th>
-                    <th style="text-align: right;">Total Netto</th>
-                    <th style="text-align: right;">Modal Beli</th>
-                    <th style="text-align: right;">Nilai Jual</th>
-                    <th style="text-align: right;">Keuntungan (Profit)</th>
-                    <th style="text-align: center; width: 140px;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($historyTransactions)): ?>
+    <?php else:
+        $rows = JurnalService::labaPerSuratJalan($dari, $sampai);
+        $tj = $th = 0.0;
+    ?>
+
+    <div class="card">
+        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Surat jalan keluar &middot; <?= $labelPeriode ?></div>
+        <div class="table-responsive">
+            <table class="table-custom" data-no-tools>
+                <thead>
                     <tr>
-                        <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 36px;">
-                            Belum ada riwayat transaksi pengeluaran tercatat.
-                        </td>
+                        <th>Tanggal</th>
+                        <th>No. Surat Jalan</th>
+                        <th>Mitra</th>
+                        <th style="text-align: right;">Penjualan</th>
+                        <th style="text-align: right;">HPP</th>
+                        <th style="text-align: right;">Laba</th>
+                        <th style="text-align: right;">Margin</th>
                     </tr>
-                <?php else: ?>
-                    <?php 
-                    $htNo = 1;
-                    foreach ($historyTransactions as $ht):
-                        $totBeli = (float)($ht['total_nilai_beli'] ?? 0);
-                        $totJual = (float)($ht['total_nilai_jual'] ?? 0);
-                        $profit  = (float)($ht['total_profit'] ?? ($totJual - $totBeli));
-                        $isPos   = $profit >= 0;
-                    ?>
-                    <tr>
-                        <td style="text-align: center; color: var(--text-muted); font-size: 11.5px;"><?= $htNo++ ?></td>
-                        <td>
-                            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--primary);">
-                                <?= htmlspecialchars($ht['no_surat_jalan_keluar']) ?>
-                            </strong>
-                            <div style="font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
-                                <?= htmlspecialchars($ht['no_transaksi']) ?>
-                            </div>
-                        </td>
-                        <td style="font-size: 11.5px; color: var(--text-muted);">
-                            <?= date('d/m/Y H:i', strtotime($ht['created_at'])) ?>
-                        </td>
-                        <td>
-                            <span class="badge badge-info" style="font-size: 11.5px; font-weight: 700;">
-                                [<?= htmlspecialchars($ht['kode_pemasok'] ?? 'PMS') ?>] <?= htmlspecialchars($ht['nama_pemasok'] ?? 'Pemasok') ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge badge-purple" style="font-size: 11.5px; font-weight: 700;">
-                                [<?= htmlspecialchars($ht['kode_mitra'] ?? 'MTR') ?>] <?= htmlspecialchars($ht['nama_mitra'] ?? 'Mitra') ?>
-                            </span>
-                        </td>
-                        <td style="text-align: center; font-weight: 700;">
-                            <?= number_format($ht['total_label']) ?> Pcs
-                        </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #10b981;">
-                            <?= Helper::formatKg($ht['total_kg']) ?>
-                        </td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #1e40af;">
-                            <?= Helper::formatRupiah($totBeli) ?>
-                        </td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #065f46;">
-                            <?= Helper::formatRupiah($totJual) ?>
-                        </td>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 900; color: <?= $isPos ? '#059669' : '#dc2626' ?>;">
-                            <?= ($profit > 0 ? '+' : '') . Helper::formatRupiah($profit) ?>
-                        </td>
-                        <td style="text-align: center;">
-                            <a href="index.php?page=surat_jalan_print&id=<?= $ht['id'] ?>" target="_blank" class="btn btn-outline btn-sm" style="font-size: 11.5px; padding: 4px 8px; color: #4f46e5; border-color: #c7d2fe;">
-                                🖨️ Cetak SJ
-                            </a>
-                        </td>
-                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!$rows): ?>
+                        <tr><td colspan="7" style="text-align: center; padding: 28px; color: var(--text-muted);">Belum ada surat jalan keluar pada periode ini</td></tr>
+                    <?php endif; ?>
+                    <?php foreach ($rows as $r):
+                        $batal = $r['jenis_transaksi'] === 'PENGELUARAN_BATAL';
+                        $j = (float)$r['penjualan']; $h = (float)$r['hpp'];
+                        if (!$batal) { $tj += $j; $th += $h; } ?>
+                        <tr style="<?= $batal ? 'color: var(--text-muted); text-decoration: line-through;' : '' ?>">
+                            <td><?= htmlspecialchars((string)$r['tanggal']) ?></td>
+                            <td style="font-weight: 600;"><?= htmlspecialchars((string)$r['no_transaksi']) ?><?= $batal ? ' <span style="text-decoration: none; display: inline-block;" class="badge">Dibatalkan</span>' : '' ?></td>
+                            <td><?= htmlspecialchars((string)$r['nama_mitra']) ?></td>
+                            <td style="text-align: right;"><?= $rp($j) ?></td>
+                            <td style="text-align: right;"><?= $rp($h) ?></td>
+                            <td style="text-align: right; color: <?= $batal ? 'inherit' : $warna($j - $h) ?>;"><?= $rp($j - $h) ?></td>
+                            <td style="text-align: right;"><?= $pct($j - $h, $j) ?></td>
+                        </tr>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    <?php if ($rows): ?>
+                        <tr style="font-weight: 800; background: var(--bg-muted);">
+                            <td colspan="3">Total (tanpa yang dibatalkan)</td>
+                            <td style="text-align: right;"><?= $rp($tj) ?></td>
+                            <td style="text-align: right;"><?= $rp($th) ?></td>
+                            <td style="text-align: right;"><?= $rp($tj - $th) ?></td>
+                            <td style="text-align: right;"><?= $pct($tj - $th, $tj) ?></td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
+
+    <?php endif; ?>
+
 </div>
-<?php endif; ?>
-
-<script>
-    // Simulator Keuntungan Real-Time
-    const pricesPemasokMap = JSON.parse('<?= MasterHargaPemasok::getAllPricesJson() ?>');
-    const pricesMitraMap   = JSON.parse('<?= MasterHarga::getAllPricesJson() ?>');
-
-    function formatRupiah(num) {
-        return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
-    }
-
-    function runSimulasiProfit() {
-        if (!document.getElementById('simPemasok')) return;
-        const pmsId = document.getElementById('simPemasok').value;
-        const mtrId = document.getElementById('simMitra').value;
-        const itemId = document.getElementById('simItem').value;
-        const berat = parseFloat(document.getElementById('simBerat').value) || 0;
-
-        const hrgBeli = pricesPemasokMap[pmsId + '_' + itemId] || 0;
-        const hrgJual = pricesMitraMap[mtrId + '_' + itemId] || 0;
-
-        const totBeli = berat * hrgBeli;
-        const totJual = berat * hrgJual;
-        const profit = totJual - totBeli;
-        const marginPct = totBeli > 0 ? ((profit / totBeli) * 100).toFixed(1) : 0;
-
-        const elHasil = document.getElementById('simHasilProfit');
-        const elDetail = document.getElementById('simHasilDetail');
-        const elBadge = document.getElementById('simMarginBadge');
-        const boxContainer = document.getElementById('boxSimHasil');
-
-        if (profit >= 0) {
-            elHasil.innerText = '+' + formatRupiah(profit);
-            elHasil.style.color = '#047857';
-            elBadge.className = 'badge badge-success';
-            elBadge.innerText = `Margin +${marginPct}%`;
-            boxContainer.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)';
-            boxContainer.style.borderColor = '#10b981';
-        } else {
-            elHasil.innerText = formatRupiah(profit);
-            elHasil.style.color = '#b91c1c';
-            elBadge.className = 'badge badge-danger';
-            elBadge.innerText = `Loss ${marginPct}%`;
-            boxContainer.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)';
-            boxContainer.style.borderColor = '#ef4444';
-        }
-
-        elDetail.innerText = `Beli: ${formatRupiah(totBeli)} (@${formatRupiah(hrgBeli)}) • Jual: ${formatRupiah(totJual)} (@${formatRupiah(hrgJual)})`;
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        runSimulasiProfit();
-    });
-</script>
 
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

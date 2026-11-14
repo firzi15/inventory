@@ -125,7 +125,11 @@ class Transaksi {
                 $itemId = (int)$label['item_id'];
 
                 // Dapatkan harga beli pemasok & harga jual ke mitra
-                $hargaPemasok = MasterHargaPemasok::getHargaByPemasokAndItem($pemasokId, $itemId);
+                // HPP memakai biaya beli yang dibekukan saat penerimaan; master harga hanya cadangan untuk label lama
+                $hargaPemasok = (float)($label['harga_beli_per_kg'] ?? 0);
+                if ($hargaPemasok <= 0) {
+                    $hargaPemasok = MasterHargaPemasok::getHargaByPemasokAndItem($pemasokId, $itemId);
+                }
                 $hargaMitra = MasterHarga::getHargaByMitraAndItem($mitraId, $itemId);
 
                 $subBeli = round($netto * $hargaPemasok, 2);
@@ -237,6 +241,8 @@ class Transaksi {
             // 5. Masukkan ke antrean sinkronisasi Accurate Online
             AccurateApiService::enqueuePengeluaran($transaksiId, $mitra, $verifiedLabels, $totalKg, $noReferensi);
 
+            \App\Services\JurnalService::postPengeluaran((int)$transaksiId);
+
             $db->commit();
 
             return [
@@ -256,58 +262,17 @@ class Transaksi {
                 'next_surat_jalan'  => self::generateNextSuratJalanKeluar($kodeRefAsal)
             ];
         } catch (Exception $e) {
-            $db->rollBack();
+            if ($db->inTransaction()) $db->rollBack();
             throw $e;
         }
     }
 
     /**
-     * Hitung ulang nilai jual, beli, dan profit transaksi pengeluaran berdasarkan Master Tarif terbaru
+     * Nilai pengeluaran dikunci saat surat jalan keluar terbit (harga jual dan HPP dibekukan).
+     * Perubahan Master Harga hanya berlaku untuk transaksi berikutnya, tidak menghitung ulang yang sudah terbit.
      */
     public static function recalculateOutboundNilai(int $transaksiId): bool {
-        $db = Database::getConnection();
-        $stmtTrx = $db->prepare("SELECT * FROM transaksi_stok WHERE id = ?");
-        $stmtTrx->execute([$transaksiId]);
-        $trx = $stmtTrx->fetch(PDO::FETCH_ASSOC);
-        if (!$trx || $trx['jenis_transaksi'] !== 'PENGELUARAN') return false;
-
-        $mitraId = (int)$trx['mitra_id'];
-        $stmtDetails = $db->prepare("
-            SELECT tsd.id, tsd.label_id, tsd.berat_netto, l.item_id, tsd.harga_pemasok, tsd.total_beli
-            FROM transaksi_stok_detail tsd
-            JOIN labels l ON tsd.label_id = l.id
-            WHERE tsd.transaksi_id = ?
-        ");
-        $stmtDetails->execute([$transaksiId]);
-        $details = $stmtDetails->fetchAll(PDO::FETCH_ASSOC);
-
-        $totBeli = 0.0;
-        $totJual = 0.0;
-        $totProfit = 0.0;
-
-        foreach ($details as $d) {
-            $itemId = (int)$d['item_id'];
-            $netto = (float)$d['berat_netto'];
-            $hrgMitra = MasterHarga::getHargaByMitraAndItem($mitraId, $itemId);
-            $subJual = round($netto * $hrgMitra, 2);
-            $subBeli = (float)$d['total_beli'];
-            $profit = round($subJual - $subBeli, 2);
-
-            $totBeli += $subBeli;
-            $totJual += $subJual;
-            $totProfit += $profit;
-
-            $db->prepare("UPDATE transaksi_stok_detail SET harga_mitra = ?, total_jual = ?, profit = ? WHERE id = ?")
-               ->execute([$hrgMitra, $subJual, $profit, $d['id']]);
-
-            $db->prepare("UPDATE labels SET harga_per_kg = ?, total_nilai = ? WHERE id = ?")
-               ->execute([$hrgMitra, $subJual, $d['label_id']]);
-        }
-
-        $db->prepare("UPDATE transaksi_stok SET total_nilai_jual = ?, total_profit = ? WHERE id = ?")
-           ->execute([$totJual, $totProfit, $transaksiId]);
-
-        return true;
+        return false;
     }
 
     /**
@@ -316,7 +281,7 @@ class Transaksi {
      */
     public static function getHistoryPengeluaran(array $filters = [], int $limit = 20, int $offset = 0): array {
         $db = Database::getConnection();
-        $where = ["t.jenis_transaksi = 'PENGELUARAN'"];
+        $where = ["t.jenis_transaksi IN ('PENGELUARAN','PENGELUARAN_BATAL')"];
         $params = [];
 
         if (!empty($filters['pemasok_id'])) {
@@ -386,7 +351,7 @@ class Transaksi {
      */
     public static function countHistoryPengeluaran(array $filters = []): int {
         $db = Database::getConnection();
-        $where = ["t.jenis_transaksi = 'PENGELUARAN'"];
+        $where = ["t.jenis_transaksi IN ('PENGELUARAN','PENGELUARAN_BATAL')"];
         $params = [];
 
         if (!empty($filters['pemasok_id'])) {

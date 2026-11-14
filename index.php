@@ -7,16 +7,6 @@
 
 session_start();
 
-// Inisialisasi User Login default jika session belum terisi
-if (!isset($_SESSION['user_login']) || strpos($_SESSION['user_login']['nama_lengkap'] ?? '', 'Rizky') !== false) {
-    $_SESSION['user_login'] = [
-        'id' => 3,
-        'username' => 'opr_timbang',
-        'nama_lengkap' => 'Arif Operator Penerimaan',
-        'role' => 'OPERATOR_INBOUND'
-    ];
-}
-
 // PSR-4 Autoloader Sederhana untuk namespace App\
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
@@ -36,16 +26,103 @@ spl_autoload_register(function ($class) {
 });
 
 use App\Core\Helper;
+use App\Models\User;
 use App\Models\Label;
 use App\Models\Mitra;
 use App\Models\Item;
 use App\Models\MasterHarga;
 use App\Models\MasterHargaPemasok;
+use App\Models\VendorNonPemasok;
+use App\Models\TipeBiaya;
 use App\Models\Transaksi;
 use App\Services\BarcodeService;
 use App\Services\AccurateApiService;
 
-// 1. PENANGANAN REQUEST AJAX / API ACTION
+// Pastikan tabel jurnal ada sebelum transaksi apa pun berjalan (DDL tidak boleh di tengah transaksi)
+try { \App\Core\Migrasi::jalankan(); \App\Services\JurnalService::ensureTables(); } catch (\Throwable $e) {}
+
+// 1. MANAJEMEN AUTENTIKASI & AKSI LOGIN / LOGOUT
+$action = $_GET['action'] ?? null;
+$reqPage = $_GET['page'] ?? null;
+
+// Aksi Login (POST form / AJAX)
+if ($action === 'login') {
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $user = User::authenticate($username, $password);
+    if ($user) {
+        $_SESSION['user_login'] = [
+            'id'           => (int)$user['id'],
+            'username'     => $user['username'],
+            'nama_lengkap' => $user['nama_lengkap'],
+            'role'         => $user['role']
+        ];
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            Helper::jsonResponse(['success' => true, 'message' => 'Login berhasil', 'redirect' => 'index.php?page=dashboard']);
+        } else {
+            header('Location: index.php?page=dashboard');
+            exit;
+        }
+    } else {
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            Helper::jsonResponse(['success' => false, 'message' => 'Username atau password salah!'], 401);
+        } else {
+            header('Location: index.php?page=login&error=' . urlencode('Username atau password tidak sesuai!'));
+            exit;
+        }
+    }
+}
+
+// Aksi Logout
+if ($action === 'logout') {
+    unset($_SESSION['user_login']);
+    session_destroy();
+    header('Location: index.php?page=login&msg=' . urlencode('Anda telah berhasil keluar dari sistem.'));
+    exit;
+}
+
+// Pemeriksaan status login — session lama yang di-set otomatis oleh kode sebelumnya WAJIB login ulang
+$validUsernames = ['nia', 'arif', 'operator'];
+$isLoggedIn = !empty($_SESSION['user_login'])
+    && !empty($_SESSION['user_login']['id'])
+    && !empty($_SESSION['user_login']['username'])
+    && in_array($_SESSION['user_login']['username'], $validUsernames, true);
+
+// Sinkronisasi data user aktif di session jika sudah login
+if ($isLoggedIn) {
+    $currentUserData = User::findById((int)$_SESSION['user_login']['id']);
+    if ($currentUserData) {
+        $_SESSION['user_login']['nama_lengkap'] = $currentUserData['nama_lengkap'];
+        $_SESSION['user_login']['username'] = $currentUserData['username'];
+        $_SESSION['user_login']['role'] = $currentUserData['role'];
+    }
+}
+
+// Jika belum login, batasi akses
+if (!$isLoggedIn) {
+    if ($action) {
+        // Panggilan API AJAX saat sesi habis
+        Helper::jsonResponse([
+            'success' => false,
+            'message' => 'Sesi login Anda tidak aktif. Silakan login kembali.'
+        ], 401);
+        exit;
+    }
+    
+    // Akses via browser: arahkan ke halaman login
+    if ($reqPage !== 'login') {
+        header('Location: index.php?page=login');
+        exit;
+    }
+} else {
+    // Jika sudah login dan membuka halaman login, lempar ke dashboard
+    if ($reqPage === 'login') {
+        header('Location: index.php?page=dashboard');
+        exit;
+    }
+}
+
+// 2. PENANGANAN REQUEST AJAX / API ACTION (USER TERAUTENTIKASI)
 $action = $_GET['action'] ?? null;
 
 if ($action) {
@@ -250,21 +327,6 @@ if ($action) {
                 Helper::jsonResponse($result);
                 break;
 
-            // E. Ganti User Login Simulasi
-            case 'switch_user':
-                $targetUserId = (int)($_GET['user_id'] ?? 3);
-                $usersMap = [
-                    1 => ['id' => 1, 'username' => 'admin', 'nama_lengkap' => 'Administrator Sistem', 'role' => 'ADMIN'],
-                    2 => ['id' => 2, 'username' => 'spv_gudang', 'nama_lengkap' => 'Bambang Supriyanto (SPV)', 'role' => 'SUPERVISOR'],
-                    3 => ['id' => 3, 'username' => 'opr_timbang', 'nama_lengkap' => 'Arif Operator Penerimaan', 'role' => 'OPERATOR_INBOUND'],
-                    4 => ['id' => 4, 'username' => 'opr_kirim', 'nama_lengkap' => 'Dani Operator Outbound & Kasir POS', 'role' => 'OPERATOR_OUTBOUND']
-                ];
-                if (isset($usersMap[$targetUserId])) {
-                    $_SESSION['user_login'] = $usersMap[$targetUserId];
-                }
-                header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'index.php?page=pengeluaran'));
-                exit;
-
             // F. Retry Antrean Sinkronisasi Accurate Online
             case 'retry_sync':
                 $queueId = (int)($_GET['queue_id'] ?? 0);
@@ -368,16 +430,140 @@ if ($action) {
                 header('Location: index.php?page=master&tab=pemasok&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
                 exit;
 
+            // G4. Simpan / Update Vendor Non-Pemasok (Operasional)
+            case 'save_vendor_non_pemasok':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                $id = (int)($_POST['id'] ?? 0);
+                if ($id > 0) {
+                    \App\Models\VendorNonPemasok::update($id, $_POST);
+                    $msg = "Data Vendor " . htmlspecialchars($_POST['nama_vendor']) . " berhasil diperbarui";
+                } else {
+                    \App\Models\VendorNonPemasok::create($_POST);
+                    $msg = "Vendor baru " . htmlspecialchars($_POST['nama_vendor']) . " berhasil ditambahkan";
+                }
+                header('Location: index.php?page=master&tab=vendor_non_pemasok&msg=' . urlencode($msg) . '&msg_type=success');
+                exit;
+
+            // G5. Toggle Status Aktif / Nonaktif Vendor Non-Pemasok
+            case 'toggle_vendor_non_pemasok_status':
+                $id = (int)($_REQUEST['id'] ?? 0);
+                if ($id <= 0) throw new Exception("ID Vendor tidak valid");
+                $vendor = \App\Models\VendorNonPemasok::findById($id);
+                if (!$vendor) throw new Exception("Data vendor tidak ditemukan");
+                $newStatus = \App\Models\VendorNonPemasok::toggleStatus($id);
+                $statusText = $newStatus == 1 ? 'diaktifkan (Aktif)' : 'dinonaktifkan (Nonaktif)';
+                $msg = "Status vendor [" . htmlspecialchars($vendor['kode_vendor']) . "] " . htmlspecialchars($vendor['nama_vendor']) . " berhasil " . $statusText;
+                header('Location: index.php?page=master&tab=vendor_non_pemasok&msg=' . urlencode($msg) . '&msg_type=success');
+                exit;
+
+            // G6. Hapus Vendor Non-Pemasok
+            case 'delete_vendor_non_pemasok':
+                $id = (int)($_GET['id'] ?? 0);
+                if ($id <= 0) throw new Exception("ID Vendor tidak valid");
+                $vendor = \App\Models\VendorNonPemasok::findById($id);
+                if (!$vendor) throw new Exception("Data vendor tidak ditemukan");
+                try {
+                    \App\Models\VendorNonPemasok::delete($id);
+                    $msg = "Vendor [" . htmlspecialchars($vendor['kode_vendor']) . "] " . htmlspecialchars($vendor['nama_vendor']) . " berhasil dihapus secara permanen.";
+                    $msgType = 'success';
+                } catch (\Exception $e) {
+                    $msg = $e->getMessage();
+                    $msgType = 'danger';
+                }
+                header('Location: index.php?page=master&tab=vendor_non_pemasok&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
+                exit;
+
+            // G6c. Master COA: simpan / aktif-nonaktif / hapus
+            case 'save_coa':
+            case 'toggle_coa':
+            case 'delete_coa':
+                try {
+                    if ($action === 'save_coa') {
+                        if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                        $msg = \App\Services\CoaService::simpan($_POST, empty($_POST['edit']));
+                    } elseif ($action === 'toggle_coa') {
+                        $msg = \App\Services\CoaService::ubahStatus((string)($_GET['kode'] ?? $_GET['id'] ?? ''));
+                    } else {
+                        $msg = \App\Services\CoaService::hapus((string)($_GET['kode'] ?? $_GET['id'] ?? ''));
+                    }
+                    $msgType = 'success';
+                } catch (\Exception $e) {
+                    $msg = $e->getMessage();
+                    $msgType = 'danger';
+                }
+                header('Location: index.php?page=master&tab=coa&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
+                exit;
+
+            // G7. Simpan / Update Tipe Biaya Operasional
+            case 'save_tipe_biaya':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                $id = (int)($_POST['id'] ?? 0);
+                if ($id > 0) {
+                    \App\Models\TipeBiaya::update($id, $_POST);
+                    $msg = "Tipe Biaya " . htmlspecialchars($_POST['nama_biaya']) . " berhasil diperbarui";
+                } else {
+                    \App\Models\TipeBiaya::create($_POST);
+                    $msg = "Tipe Biaya baru " . htmlspecialchars($_POST['nama_biaya']) . " berhasil ditambahkan";
+                }
+                header('Location: index.php?page=master&tab=tipe_biaya&msg=' . urlencode($msg) . '&msg_type=success');
+                exit;
+
+            // G8. Toggle Status Aktif / Nonaktif Tipe Biaya
+            case 'toggle_tipe_biaya_status':
+                $id = (int)($_REQUEST['id'] ?? 0);
+                if ($id <= 0) throw new Exception("ID Tipe Biaya tidak valid");
+                $biaya = \App\Models\TipeBiaya::findById($id);
+                if (!$biaya) throw new Exception("Data tipe biaya tidak ditemukan");
+                $newStatus = \App\Models\TipeBiaya::toggleStatus($id);
+                $statusText = $newStatus == 1 ? 'diaktifkan (Aktif)' : 'dinonaktifkan (Nonaktif)';
+                $msg = "Status tipe biaya [" . htmlspecialchars($biaya['kode_biaya']) . "] " . htmlspecialchars($biaya['nama_biaya']) . " berhasil " . $statusText;
+                header('Location: index.php?page=master&tab=tipe_biaya&msg=' . urlencode($msg) . '&msg_type=success');
+                exit;
+
+            // G9. Hapus Tipe Biaya
+            case 'delete_tipe_biaya':
+                $id = (int)($_GET['id'] ?? 0);
+                if ($id <= 0) throw new Exception("ID Tipe Biaya tidak valid");
+                $biaya = \App\Models\TipeBiaya::findById($id);
+                if (!$biaya) throw new Exception("Data tipe biaya tidak ditemukan");
+                try {
+                    \App\Models\TipeBiaya::delete($id);
+                    $msg = "Tipe Biaya [" . htmlspecialchars($biaya['kode_biaya']) . "] " . htmlspecialchars($biaya['nama_biaya']) . " berhasil dihapus secara permanen.";
+                    $msgType = 'success';
+                } catch (\Exception $e) {
+                    $msg = $e->getMessage();
+                    $msgType = 'danger';
+                }
+                header('Location: index.php?page=master&tab=tipe_biaya&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
+                exit;
+
+            // G10. API Data Vendor & Biaya untuk Dropdown JSON
+            case 'get_vendor_non_pemasok_json':
+                $vendors = \App\Models\VendorNonPemasok::getAllActive();
+                Helper::jsonResponse([
+                    'success' => true,
+                    'data' => $vendors
+                ]);
+                break;
+
+            case 'get_tipe_biaya_json':
+                $biayas = \App\Models\TipeBiaya::getAllActive();
+                Helper::jsonResponse([
+                    'success' => true,
+                    'data' => $biayas
+                ]);
+                break;
+
             // H. Simpan / Update Master Mitra
             case 'save_mitra':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
                 $id = (int)($_POST['id'] ?? 0);
                 if ($id > 0) {
                     Mitra::update($id, $_POST);
-                    $msg = "Data Mitra " . htmlspecialchars($_POST['kode_mitra']) . " berhasil diperbarui";
+                    $msg = "Data Mitra " . htmlspecialchars($_POST['nama_mitra'] ?? '') . " berhasil diperbarui";
                 } else {
-                    Mitra::create($_POST);
-                    $msg = "Mitra baru " . htmlspecialchars($_POST['kode_mitra']) . " berhasil ditambahkan";
+                    $newId = Mitra::create($_POST);
+                    $msg = "Mitra baru " . htmlspecialchars(Mitra::findById($newId)['kode_mitra'] ?? '') . " berhasil ditambahkan";
                 }
                 header('Location: index.php?page=master&tab=mitra&msg=' . urlencode($msg));
                 exit;
@@ -388,10 +574,10 @@ if ($action) {
                 $id = (int)($_POST['id'] ?? 0);
                 if ($id > 0) {
                     Item::update($id, $_POST);
-                    $msg = "Produk SKU " . htmlspecialchars($_POST['kode_item']) . " berhasil diperbarui";
+                    $msg = "Produk " . htmlspecialchars($_POST['nama_item'] ?? '') . " berhasil diperbarui";
                 } else {
-                    Item::create($_POST);
-                    $msg = "Produk SKU baru " . htmlspecialchars($_POST['kode_item']) . " berhasil ditambahkan";
+                    $newId = Item::create($_POST);
+                    $msg = "Produk baru " . htmlspecialchars(Item::findById($newId)['kode_item'] ?? '') . " berhasil ditambahkan";
                 }
                 header('Location: index.php?page=master&tab=produk&msg=' . urlencode($msg));
                 exit;
@@ -403,7 +589,7 @@ if ($action) {
                 $savedCount = 0;
                 foreach ($hargasPemasok as $pId => $itemPrices) {
                     foreach ($itemPrices as $itId => $val) {
-                        \App\Models\MasterHargaPemasok::saveHarga((int)$pId, (int)$itId, (float)$val);
+                        \App\Models\MasterHargaPemasok::saveHarga((int)$pId, (int)$itId, (float)$val, null, $_POST['alasan_perubahan'] ?? null);
                         $savedCount++;
                     }
                 }
@@ -419,7 +605,7 @@ if ($action) {
                 $savedCount = 0;
                 foreach ($hargas as $mId => $itemPrices) {
                     foreach ($itemPrices as $itId => $val) {
-                        MasterHarga::saveHarga((int)$mId, (int)$itId, (float)$val);
+                        MasterHarga::saveHarga((int)$mId, (int)$itId, (float)$val, null, $_POST['alasan_perubahan'] ?? null);
                         $savedCount++;
                     }
                 }
@@ -560,6 +746,9 @@ if ($action) {
 
                 \App\Models\Label::markSuratJalanTimbangSelesai($noSj);
 
+                // Auto-create / sync Purchase Invoice resmi (Akun 1200 Persediaan -> Akun 2000 Utang)
+                $invoiceId = \App\Models\PurchaseInvoice::createFromSuratJalan($noSj, $pemasokId);
+
                 $pmsKode = 'PMS-01';
                 if ($pemasokId > 0) {
                     $pmsObj = \App\Models\Pemasok::findById($pemasokId);
@@ -573,8 +762,160 @@ if ($action) {
                     'success'          => true,
                     'message'          => "Sesi Surat Jalan {$noSj} telah diselesaikan.",
                     'no_surat_jalan'   => $noSj,
+                    'invoice_id'       => $invoiceId,
                     'next_surat_jalan' => $nextNoSj,
                     'print_bast_url'   => "index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=" . urlencode($noSj)
+                ]);
+                exit;
+
+            // PI1. Buat Purchase Invoice Manual (Biaya Operasional / Non-Stok)
+            case 'create_purchase_invoice':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $userId = (int)($_SESSION['user_login']['id'] ?? 1);
+                
+                $data = $_POST;
+                $data['created_by'] = $userId;
+                
+                // Parse items jika dikirim dalam bentuk JSON atau array
+                if (!empty($_POST['items_json'])) {
+                    $parsed = json_decode($_POST['items_json'], true);
+                    if (is_array($parsed)) {
+                        $data['items'] = $parsed;
+                    }
+                }
+
+                $newInvoiceId = \App\Models\PurchaseInvoice::createManual($data);
+                $newInv = \App\Models\PurchaseInvoice::findById($newInvoiceId);
+
+                Helper::jsonResponse([
+                    'success'    => true,
+                    'message'    => "Purchase Invoice {$newInv['no_invoice']} ({$newInv['nama_vendor']}) berhasil dibukukan.",
+                    'invoice_id' => $newInvoiceId,
+                    'invoice'    => $newInv
+                ]);
+                exit;
+
+            // PI2. Detail Lengkap Purchase Invoice untuk Modal
+            case 'get_purchase_invoice_detail':
+                $invId = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
+                if ($invId <= 0) throw new Exception("ID Invoice tidak valid.");
+                $inv = \App\Models\PurchaseInvoice::findById($invId);
+                if (!$inv) throw new Exception("Purchase Invoice tidak ditemukan.");
+
+                Helper::jsonResponse([
+                    'success' => true,
+                    'invoice' => $inv
+                ]);
+                exit;
+
+            // PB1. Pembatalan dokumen (jurnal keuangan ikut dibalik). Hanya ADMIN / SUPERVISOR; faktur manual juga FINANCE.
+            case 'batal_pengeluaran':
+            case 'batal_penerimaan':
+            case 'batal_purchase_invoice':
+            case 'batal_bayar_ap':
+            case 'batal_setoran_ar':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $roleBatal = strtoupper($_SESSION['user_login']['role'] ?? '');
+                $boleh = ['ADMIN', 'SUPERVISOR'];
+                if (in_array($action, ['batal_purchase_invoice', 'batal_bayar_ap', 'batal_setoran_ar'], true)) $boleh[] = 'FINANCE';
+                if (!in_array($roleBatal, $boleh, true)) {
+                    throw new Exception("Akun Anda tidak memiliki izin untuk membatalkan dokumen ini.");
+                }
+                $uidBatal = (int)($_SESSION['user_login']['id'] ?? 0);
+                $alasanBatal = trim($_POST['alasan'] ?? '');
+                if ($action === 'batal_pengeluaran') {
+                    $hasilBatal = \App\Services\PembatalanService::batalPengeluaran((int)($_POST['id'] ?? 0), $alasanBatal, $uidBatal);
+                    $pesanBatal = "Surat jalan keluar {$hasilBatal['no_transaksi']} dibatalkan. Barang kembali ke stok gudang dan piutang mitra dikoreksi.";
+                } elseif ($action === 'batal_penerimaan') {
+                    $hasilBatal = \App\Services\PembatalanService::batalPenerimaan(trim($_POST['no_surat_jalan'] ?? ''), $alasanBatal, $uidBatal);
+                    $pesanBatal = "Penerimaan {$hasilBatal['no_surat_jalan']} dibatalkan ({$hasilBatal['jumlah_keranjang']} keranjang). Stok, faktur, dan utang dikoreksi.";
+                } elseif ($action === 'batal_bayar_ap') {
+                    $hasilBatal = \App\Services\PembatalanService::batalPembayaranAp((int)($_POST['id'] ?? 0), $alasanBatal, $uidBatal);
+                    $pesanBatal = "Pembayaran {$hasilBatal['no_bukti']} dibatalkan. Faktur kembali terutang dan kas dikoreksi.";
+                } elseif ($action === 'batal_setoran_ar') {
+                    $hasilBatal = \App\Services\PembatalanService::batalSetoranAr((int)($_POST['id'] ?? 0), $alasanBatal, $uidBatal);
+                    $pesanBatal = "Setoran {$hasilBatal['no_bukti']} dibatalkan. Nota kembali terutang dan kas dikoreksi.";
+                } else {
+                    $hasilBatal = \App\Services\PembatalanService::batalPurchaseInvoice((int)($_POST['id'] ?? 0), $alasanBatal, $uidBatal);
+                    $pesanBatal = "Faktur {$hasilBatal['no_invoice']} dibatalkan dan utang dikoreksi.";
+                }
+                Helper::jsonResponse(['success' => true, 'message' => $pesanBatal]);
+                exit;
+
+            // G2a. Hapus Master Mitra / Produk / Kategori (hanya jika tidak dipakai menu lain)
+            case 'delete_mitra':
+            case 'delete_item':
+            case 'delete_jenis':
+                $idDel = (int)($_GET['id'] ?? 0);
+                $tabDel = $action === 'delete_mitra' ? 'mitra' : 'produk';
+                try {
+                    if ($idDel <= 0) throw new Exception("ID tidak valid");
+                    if ($action === 'delete_mitra') {
+                        Mitra::delete($idDel);
+                        $msg = "Mitra berhasil dihapus.";
+                    } elseif ($action === 'delete_item') {
+                        Item::delete($idDel);
+                        $msg = "Produk berhasil dihapus.";
+                    } else {
+                        Item::deleteJenis($idDel);
+                        $msg = "Kategori berhasil dihapus.";
+                    }
+                    $msgType = 'success';
+                } catch (\Exception $e) {
+                    $msg = $e->getMessage();
+                    $msgType = 'danger';
+                }
+                header('Location: index.php?page=master&tab=' . $tabDel . '&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
+                exit;
+
+            // PI3. Hapus Purchase Invoice Manual (Hanya jika belum ada pembayaran)
+            case 'delete_purchase_invoice':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $invId = (int)($_POST['id'] ?? 0);
+                if ($invId <= 0) throw new Exception("ID Invoice tidak valid.");
+
+                $inv = \App\Models\PurchaseInvoice::findById($invId);
+                if (!$inv) throw new Exception("Invoice tidak ditemukan.");
+                if ($inv['tipe_invoice'] === 'STOK') {
+                    throw new Exception("Invoice stok barang tidak dapat dihapus manual, terikat dengan Surat Jalan {$inv['no_surat_jalan']}.");
+                }
+                if ((float)$inv['total_bayar'] > 0) {
+                    throw new Exception("Invoice sudah memiliki riwayat pembayaran kas keluar dan tidak dapat dihapus.");
+                }
+
+                $db = \App\Core\Database::getConnection();
+                \App\Services\JurnalService::reverse('PURCHASE_INV', $invId, 'Faktur ' . $inv['no_invoice'] . ' dihapus');
+                $db->prepare("DELETE FROM purchase_invoices WHERE id = ?")->execute([$invId]);
+
+                Helper::jsonResponse([
+                    'success' => true,
+                    'message' => "Purchase Invoice {$inv['no_invoice']} berhasil dihapus."
+                ]);
+                exit;
+
+            // O4. Hapus 1 Box Penerimaan yang Salah Input di Sesi Aktif
+            case 'delete_inbound_box':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                $labelId = (int)($_POST['label_id'] ?? 0);
+                $barcode = trim($_POST['barcode'] ?? '');
+                $noSj = trim($_POST['no_surat_jalan'] ?? '');
+
+                $db = \App\Core\Database::getConnection();
+                if ($labelId > 0) {
+                    $stmt = $db->prepare("DELETE FROM labels WHERE id = ?");
+                    $stmt->execute([$labelId]);
+                } elseif (!empty($barcode)) {
+                    $stmt = $db->prepare("DELETE FROM labels WHERE id_label = ?");
+                    $stmt->execute([$barcode]);
+                } else {
+                    throw new Exception("ID Label / Barcode wajib ditentukan");
+                }
+
+                $summary = !empty($noSj) ? \App\Models\Label::getInboundSessionSummary($noSj) : null;
+                Helper::jsonResponse([
+                    'success' => true,
+                    'message' => "Box barcode {$barcode} berhasil dihapus dari sesi.",
+                    'session_summary' => $summary
                 ]);
                 exit;
 
@@ -600,10 +941,11 @@ if ($action) {
                 $type = trim($_GET['type'] ?? ($_POST['type'] ?? ''));
                 $labels = [];
 
-                if ($type === 'single_duplicate_10') {
+                if ($type === 'single_duplicate_10' || $type === 'single_duplicate') {
                     $barcode = trim($_GET['barcode'] ?? ($_POST['barcode'] ?? ''));
+                    $qty = (int)($_GET['qty'] ?? ($_POST['qty'] ?? ($type === 'single_duplicate_10' ? 10 : 1)));
                     if (empty($barcode)) throw new Exception("Barcode wajib diisi");
-                    $labels = \App\Models\Label::getSingleDuplicate10($barcode);
+                    $labels = \App\Models\Label::getSingleDuplicate($barcode, $qty);
                 } elseif ($type === 'group_sj') {
                     $noSj = trim($_GET['no_surat_jalan'] ?? ($_POST['no_surat_jalan'] ?? ''));
                     $status = trim($_GET['status'] ?? ($_POST['status'] ?? 'auto_unweighed'));
@@ -755,63 +1097,76 @@ if ($action) {
                 ]);
                 exit;
 
-            // Z. Upload Bukti Rekonsiliasi Setoran (Screenshot M-Banking / Slip Struk Setor Tunai CDM)
-            case 'upload_bukti_rekonsiliasi':
-                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                    throw new Exception("Metode request harus POST");
-                }
-                $userId = (int)($_SESSION['user_login']['id'] ?? 1);
-                $arId   = (int)($_POST['ar_id'] ?? 0);
-                $ket    = trim($_POST['catatan'] ?? '');
+            // Rincian per box untuk satu Surat Jalan dan artikel (laporan Barang Datang)
+            case 'rincian_box_penerimaan':
+                $sjBox = trim($_GET['sj'] ?? '');
+                $itemBox = (int)($_GET['item'] ?? 0);
+                if ($sjBox === '' || $itemBox <= 0) throw new Exception("Surat Jalan atau artikel tidak valid.");
+                Helper::jsonResponse(['success' => true, 'box' => \App\Services\BukuService::rincianBox($sjBox, $itemBox)]);
+                exit;
 
-                if ($arId <= 0) {
-                    throw new Exception("ID setoran tidak valid.");
-                }
-
-                if (empty($_FILES['file_bukti']['name']) || $_FILES['file_bukti']['error'] !== UPLOAD_ERR_OK) {
-                    throw new Exception("File gambar bukti setoran / screenshot wajib diunggah.");
-                }
-
-                $uploadDir = __DIR__ . '/assets/uploads/bukti_setoran/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
-
-                $ext = strtolower(pathinfo($_FILES['file_bukti']['name'], PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'pdf'])) {
-                    throw new Exception("Format bukti harus berupa gambar (JPG, PNG, WEBP) atau PDF.");
-                }
-
-                $fileName = 'BUKTI_SETOR_' . $arId . '_' . date('YmdHis') . '_' . substr(md5(uniqid()), 0, 6) . '.' . $ext;
-                $destPath = $uploadDir . $fileName;
-
-                if (!move_uploaded_file($_FILES['file_bukti']['tmp_name'], $destPath)) {
-                    throw new Exception("Gagal menyimpan file bukti ke server.");
-                }
-
-                $filePath = 'assets/uploads/bukti_setoran/' . $fileName;
-                \App\Models\RekonsiliasiBank::attachBukti($arId, $filePath, $ket, $userId);
-
+            // Z0. Detail rekonsiliasi satu hari (rincian setoran + rekonsiliasi bila sudah ada)
+            case 'detail_rekonsiliasi_harian':
+                $tglDet = trim($_GET['tanggal'] ?? '');
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tglDet)) throw new Exception("Tanggal tidak valid.");
                 Helper::jsonResponse([
-                    'success'   => true,
-                    'message'   => "Bukti setoran berhasil dilampirkan. Status dinyatakan MATCHED.",
-                    'file_path' => $filePath
+                    'success' => true,
+                    'setoran' => \App\Models\RekonsiliasiBank::setoranTanggal($tglDet),
+                    'rekon'   => \App\Models\RekonsiliasiBank::ambil($tglDet)
                 ]);
                 exit;
 
-            // AA. Hapus Bukti Rekonsiliasi (Kembalikan ke PENDING)
-            case 'remove_bukti_rekonsiliasi':
-                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                    throw new Exception("Metode request harus POST");
+            // Z. Rekonsiliasi Bank Harian: total setoran satu hari dicocokkan dengan uang masuk di bank + lampiran screenshot
+            case 'simpan_rekonsiliasi_harian':
+            case 'buka_rekonsiliasi_harian':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $roleRek = strtoupper($_SESSION['user_login']['role'] ?? '');
+                if (!in_array($roleRek, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)) {
+                    Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin, Supervisor, atau Finance yang dapat melakukan rekonsiliasi.'], 403);
+                    exit;
                 }
-                $arId = (int)($_POST['ar_id'] ?? 0);
-                if ($arId <= 0) {
-                    throw new Exception("ID setoran tidak valid.");
+                $userId = (int)($_SESSION['user_login']['id'] ?? 1);
+                $tglRek = trim($_POST['tanggal'] ?? '');
+
+                if ($action === 'buka_rekonsiliasi_harian') {
+                    \App\Models\RekonsiliasiBank::bukaKembali($tglRek, (string)($_POST['alasan'] ?? ''), $userId);
+                    Helper::jsonResponse(['success' => true, 'message' => "Rekonsiliasi tanggal {$tglRek} dibuka kembali. Setoran pada tanggal itu kembali bisa diubah."]);
+                    exit;
                 }
-                \App\Models\RekonsiliasiBank::removeBukti($arId);
+
+                $files = [];
+                $berkas = $_FILES['bukti'] ?? null;
+                if ($berkas && is_array($berkas['name'])) {
+                    foreach ($berkas['name'] as $i => $nm) {
+                        if ($nm === '' || $berkas['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
+                        if ($berkas['error'][$i] !== UPLOAD_ERR_OK) throw new Exception("Gagal mengunggah file {$nm}.");
+                        $ext = strtolower(pathinfo($nm, PATHINFO_EXTENSION));
+                        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'pdf'], true)) throw new Exception("File {$nm}: format harus JPG, PNG, WEBP, atau PDF.");
+                        if ($berkas['size'][$i] > 8 * 1024 * 1024) throw new Exception("File {$nm} lebih dari 8 MB.");
+                        $files[] = [$berkas['tmp_name'][$i], $nm, $ext];
+                    }
+                }
+                if (!$files) throw new Exception("Lampirkan minimal satu screenshot / slip bank.");
+
+                $uploadDir = __DIR__ . '/assets/uploads/bukti_setoran/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                $tersimpan = [];
+                foreach ($files as $n => [$tmp, $asli, $ext]) {
+                    $fileName = 'REKON_' . str_replace('-', '', $tglRek) . '_' . date('YmdHis') . '_' . $n . '_' . substr(md5(uniqid('', true)), 0, 6) . '.' . $ext;
+                    if (!move_uploaded_file($tmp, $uploadDir . $fileName)) throw new Exception("Gagal menyimpan file {$asli} ke server.");
+                    $tersimpan[] = ['assets/uploads/bukti_setoran/' . $fileName, $asli];
+                }
+                try {
+                    $hasilRek = \App\Models\RekonsiliasiBank::simpan($tglRek, (float)($_POST['total_bank'] ?? 0), (string)($_POST['catatan'] ?? ''), $tersimpan, $userId);
+                } catch (Throwable $e) {
+                    foreach ($tersimpan as [$path]) @unlink(__DIR__ . '/' . $path);
+                    throw $e;
+                }
                 Helper::jsonResponse([
                     'success' => true,
-                    'message' => "Bukti setoran dihapus. Status kembali menjadi PENDING."
+                    'message' => $hasilRek['status'] === 'SESUAI'
+                        ? "Rekonsiliasi tanggal {$tglRek} sesuai."
+                        : "Rekonsiliasi tanggal {$tglRek} disimpan dengan selisih " . Helper::formatRupiah($hasilRek['selisih']) . "."
                 ]);
                 exit;
 
@@ -854,6 +1209,7 @@ if ($page === 'mutasi') {
 }
 
 $allowedPages = [
+    'login'                        => __DIR__ . '/views/login.php',
     'dashboard'                    => __DIR__ . '/views/dashboard.php',
     'master'                       => __DIR__ . '/views/master.php',
     'timbang_cetak'                => __DIR__ . '/views/timbang_cetak.php',
@@ -867,6 +1223,10 @@ $allowedPages = [
     'ap_aging'                     => __DIR__ . '/views/ap_aging.php',
     'rekonsiliasi_bank'            => __DIR__ . '/views/rekonsiliasi_bank.php',
     'profit_loss'                  => __DIR__ . '/views/profit_loss.php',
+    'coa'                          => __DIR__ . '/views/coa.php',
+    'purchase_book'                => __DIR__ . '/views/book.php',
+    'barang_datang'                => __DIR__ . '/views/barang_datang.php',
+    'sales_book'                   => __DIR__ . '/views/book.php',
     'stok_mitra'                   => __DIR__ . '/views/stok_mitra.php',
     'stok_opname'                  => __DIR__ . '/views/stok_opname.php',
     'accurate_sync'                => __DIR__ . '/views/accurate_sync.php',

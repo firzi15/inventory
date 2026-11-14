@@ -8,23 +8,48 @@ use App\Core\Database;
 
 $currentPage = $_GET['page'] ?? 'dashboard';
 
-// User login simulasi dari session
+// User login dari session
 $currentUser = $_SESSION['user_login'] ?? [
-    'id' => 3,
-    'username' => 'opr_timbang',
-    'nama_lengkap' => 'Arif Operator Penerimaan',
-    'role' => 'OPERATOR_INBOUND'
+    'id' => 1,
+    'username' => 'nia',
+    'nama_lengkap' => 'Nia',
+    'role' => 'ADMIN'
 ];
+
+$userDisplayName = $currentUser['nama_lengkap'] ?? 'User';
+$roleUpper = strtoupper($currentUser['role'] ?? '');
+$nameLower = strtolower($userDisplayName);
+
+if (str_contains($nameLower, 'nia') || $roleUpper === 'ADMIN') {
+    $userInitials = 'NI';
+    $userRoleBadge = 'Admin';
+    $userBadgeClass = 'badge-admin';
+    $userAvatarClass = 'avatar-nia';
+} elseif (str_contains($nameLower, 'arif') || $roleUpper === 'ARIF' || $roleUpper === 'SUPERVISOR' || str_contains($roleUpper, 'INBOUND')) {
+    $userInitials = 'AR';
+    $userRoleBadge = 'Founder';
+    $userBadgeClass = 'badge-arif';
+    $userAvatarClass = 'avatar-arif';
+} else {
+    $userInitials = 'OP';
+    $userRoleBadge = 'Operator';
+    $userBadgeClass = 'badge-operator';
+    $userAvatarClass = 'avatar-operator';
+}
 
 // Mapping info halaman agar sangat ramah bagi orang awam
 $pageInfoMap = [
     'dashboard'            => ['title' => 'Dashboard Ringkasan', 'desc' => 'Pantauan cepat stok dan aktivitas gudang'],
     'timbang_cetak'        => ['title' => 'Penerimaan Barang', 'desc' => 'Buat barcode keranjang dan timbang barang masuk dari pemasok'],
     'pengeluaran'          => ['title' => 'Pengeluaran Barang ke Mitra', 'desc' => 'Keluarkan stok fisik pemasok dari gudang ke mitra bisnis'],
-    'ar_aging'             => ['title' => 'AR Aging (Piutang Mitra)', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
-    'ap_aging'             => ['title' => 'AP Aging (Utang Pemasok)', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
-    'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Setoran Mitra', 'desc' => 'Pencocokan data setoran AR dengan hitungan fisik cash dan bukti transfer aktual'],
-    'profit_loss'          => ['title' => 'Profit and Loss', 'desc' => 'Analisa margin harga beli pemasok vs harga jual mitra dan rekap laba'],
+    'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
+    'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
+    'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
+    'barang_datang'        => ['title' => 'Barang Datang', 'desc' => 'Barang yang diterima gudang dari pemasok dan total nilai pembelian'],
+    'purchase_book'        => ['title' => 'Purchase Book', 'desc' => 'Riwayat harga beli per artikel dari pemasok'],
+    'sales_book'           => ['title' => 'Sales Book', 'desc' => 'Riwayat harga jual per artikel ke mitra'],
+    'coa'                  => ['title' => 'COA', 'desc' => 'Daftar akun dan saldo dari data sumber'],
+    'profit_loss'          => ['title' => 'Laba Rugi', 'desc' => 'Penjualan, HPP, dan biaya dari jurnal'],
     'stok_mitra'           => ['title' => 'Saldo Stok Mitra', 'desc' => 'Rekap stok per mitra dan estimasi nilai persediaan'],
     'stok_opname'          => ['title' => 'Stock Opname Fisik', 'desc' => 'Pencocokan stok fisik di gudang dengan data sistem'],
     'master'               => ['title' => 'Master Data', 'desc' => 'Kelola pemasok, harga pemasok, harga mitra, produk, dan API'],
@@ -34,7 +59,7 @@ $pageInfoMap = [
     'master_harga_mitra'   => ['title' => 'Master Harga Mitra', 'desc' => 'Kelola tarif harga jual pokok ke mitra bisnis'],
     'master_harga'         => ['title' => 'Master Harga Mitra', 'desc' => 'Kelola tarif harga jual pokok ke mitra bisnis'],
     'accurate_sync'        => ['title' => 'Integrasi Accurate Online', 'desc' => 'Sinkronisasi otomatis dengan API Accurate Online'],
-    'prd_viewer'           => ['title' => 'Panduan & Bantuan Alur', 'desc' => 'Petunjuk operasional praktis untuk operator gudang']
+    'prd_viewer'           => ['title' => 'Panduan Cara Pakai', 'desc' => 'Cara memakai sistem dari penerimaan barang sampai laporan keuangan']
 ];
 $currentPageInfo = $pageInfoMap[$currentPage] ?? [
     'title' => 'Sistem Barcode Gudang',
@@ -43,11 +68,11 @@ $currentPageInfo = $pageInfoMap[$currentPage] ?? [
 
 // Menyesuaikan judul topbar khusus sub-menu Penerimaan
 if ($currentPage === 'timbang_cetak') {
-    $currentSubTab = $_GET['tab'] ?? 'massal';
-    if ($currentSubTab === 'scantimbang') {
+    $currentSubTab = $_GET['tab'] ?? 'timbang_cetak';
+    if ($currentSubTab === 'riwayat_penerimaan') {
         $currentPageInfo = [
-            'title' => 'Timbang Berat Barang Masuk',
-            'desc'  => 'Scan stiker barcode di keranjang dan rekam bobot riil timbangan'
+            'title' => 'Riwayat Penerimaan',
+            'desc'  => 'Arsip data surat jalan dan penimbangan barang masuk'
         ];
     } elseif ($currentSubTab === 'stok_gudang') {
         $currentPageInfo = [
@@ -56,8 +81,8 @@ if ($currentPage === 'timbang_cetak') {
         ];
     } else {
         $currentPageInfo = [
-            'title' => 'Buat & Cetak Barcode',
-            'desc'  => 'Buat stiker barcode massal untuk ditempelkan pada keranjang barang masuk'
+            'title' => 'Penerimaan & Timbang Barang',
+            'desc'  => 'Input penimbangan keranjang masuk dan cetak barcode per surat jalan'
         ];
     }
 } elseif (($currentPage === 'master' && isset($_GET['tab']) && $_GET['tab'] === 'accurate') || $currentPage === 'accurate_sync') {
@@ -245,11 +270,8 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             <!-- Header Sidebar: Logo & Tombol Close Mobile -->
             <div class="sidebar-header">
                 <a href="index.php?page=dashboard" class="sidebar-brand" title="Ke Halaman Beranda">
-                    <div class="brand-icon" style="padding: 0; background: transparent; box-shadow: none;">
-                        <img src="assets/img/favicon.svg" alt="Logo Gudang Mitra" style="width: 38px; height: 38px; border-radius: 10px; display: block; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);">
-                    </div>
                     <div class="brand-info">
-                        <span class="brand-title">GUDANG MITRA</span>
+                        <span class="brand-title">AR_BAROKAH</span>
                         <span class="brand-subtitle">BARCODE & TIMBANG</span>
                     </div>
                 </a>
@@ -262,13 +284,17 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
 
             <?php
             $currentTab = $_GET['tab'] ?? '';
-            $isPenerimaanActive = ($currentPage === 'timbang_cetak' && $currentTab !== 'stok_gudang');
+            $isPenerimaanActive = (($currentPage === 'timbang_cetak' && $currentTab !== 'stok_gudang') || $currentPage === 'barang_datang');
             $isOutboundActive = ($currentPage === 'pengeluaran');
             $isStokGudangActive = (($currentPage === 'timbang_cetak' && $currentTab === 'stok_gudang') || $currentPage === 'stok_opname');
-            $isArAgingActive = ($currentPage === 'ar_aging');
-            $isApAgingActive = ($currentPage === 'ap_aging');
+            $isArAgingActive = ($currentPage === 'ar_aging' && $currentTab !== 'nota');
+            $isSalesInvActive = ($currentPage === 'ar_aging' && $currentTab === 'nota');
+            $isApAgingActive = ($currentPage === 'ap_aging' && $currentTab !== 'invoices');
+            $isPurchInvActive = ($currentPage === 'ap_aging' && $currentTab === 'invoices');
             $isRekonActive   = ($currentPage === 'rekonsiliasi_bank');
-            $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit']);
+            $isPurchGroupActive = ($isPurchInvActive || $currentPage === 'purchase_book');
+            $isSalesGroupActive = ($isSalesInvActive || $currentPage === 'sales_book');
+            $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit', 'coa']);
             $isStokMitraActive = ($currentPage === 'stok_mitra');
             $isMasterActive = in_array($currentPage, ['master', 'master_mitra', 'master_produk', 'master_harga', 'master_harga_pemasok', 'master_harga_mitra', 'accurate_sync']);
             ?>
@@ -319,6 +345,12 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                                 <a href="index.php?page=timbang_cetak&tab=riwayat_penerimaan" id="sidebarSubRiwayatPenerimaan" class="nav-sub-item <?= ($currentPage === 'timbang_cetak' && isset($_GET['tab']) && $_GET['tab'] === 'riwayat_penerimaan') ? 'active' : '' ?>" title="Daftar lengkap seluruh barcode dan timbangan penerimaan">
                                     <i data-lucide="clipboard-list" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
                                     <span>Riwayat Penerimaan</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=barang_datang" class="nav-sub-item <?= ($currentPage === 'barang_datang') ? 'active' : '' ?>" title="Barang yang diterima gudang dan total nilai pembelian">
+                                    <i data-lucide="package-check" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <span>Barang Datang</span>
                                 </a>
                             </li>
                         </ul>
@@ -389,42 +421,6 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     <span>KEUANGAN & STOK</span>
                 </div>
                 <ul class="nav-list">
-                    <!-- 1. AR AGING (PIUTANG USAHA) (SUBMENU) -->
-                    <li class="nav-has-submenu <?= $isArAgingActive ? 'is-open' : '' ?>" id="menuArAging" data-active-page="<?= $isArAgingActive ? '1' : '' ?>">
-                        <a href="javascript:void(0)" class="nav-item <?= $isArAgingActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuArAging', event)" role="button" aria-expanded="<?= $isArAgingActive ? 'true' : 'false' ?>" title="Pelacakan umur piutang dan cicilan setoran mitra">
-                            <div class="nav-item-icon icon-blue" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
-                                <i data-lucide="hand-coins" style="width: 17px; height: 17px;"></i>
-                            </div>
-                            <div class="nav-item-text">
-                                <span class="nav-item-title" style="font-weight: 700;">AR Aging (Piutang)</span>
-                                <span class="nav-item-desc">Umur piutang & cicilan setoran</span>
-                            </div>
-                            <div class="nav-item-chevron">
-                                <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
-                            </div>
-                        </a>
-                        <ul class="nav-sub-list">
-                            <li>
-                                <a href="index.php?page=ar_aging&tab=matriks" class="nav-sub-item <?= ($isArAgingActive && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
-                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: #2563eb;"></i>
-                                    <span>Matriks Umur Piutang</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="index.php?page=ar_aging&tab=nota" class="nav-sub-item <?= ($isArAgingActive && $currentTab === 'nota') ? 'active' : '' ?>">
-                                    <i data-lucide="file-text" style="width: 14px; height: 14px; color: #059669;"></i>
-                                    <span>Pelacakan Nota Piutang</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="index.php?page=ar_aging&tab=riwayat_setoran" class="nav-sub-item <?= ($isArAgingActive && $currentTab === 'riwayat_setoran') ? 'active' : '' ?>">
-                                    <i data-lucide="wallet" style="width: 14px; height: 14px; color: #f59e0b;"></i>
-                                    <span>Buku Kas Setoran Masuk</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-
                     <!-- 2. AP AGING (UTANG USAHA) (SUBMENU) -->
                     <li class="nav-has-submenu <?= $isApAgingActive ? 'is-open' : '' ?>" id="menuApAging" data-active-page="<?= $isApAgingActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isApAgingActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuApAging', event)" role="button" aria-expanded="<?= $isApAgingActive ? 'true' : 'false' ?>" title="Pelacakan umur utang dan pembayaran cicilan ke pemasok">
@@ -432,7 +428,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                                 <i data-lucide="receipt" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
-                                <span class="nav-item-title" style="font-weight: 700;">AP Aging (Utang)</span>
+                                <span class="nav-item-title" style="font-weight: 700;">AP Aging</span>
                                 <span class="nav-item-desc">Umur utang & bayar pemasok</span>
                             </div>
                             <div class="nav-item-chevron">
@@ -443,46 +439,27 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             <li>
                                 <a href="index.php?page=ap_aging&tab=matriks" class="nav-sub-item <?= ($isApAgingActive && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
                                     <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
-                                    <span>Matriks Umur Utang</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="index.php?page=ap_aging&tab=sj_masuk" class="nav-sub-item <?= ($isApAgingActive && $currentTab === 'sj_masuk') ? 'active' : '' ?>">
-                                    <i data-lucide="truck" style="width: 14px; height: 14px; color: #0284c7;"></i>
-                                    <span>Pelacakan Surat Jalan Masuk</span>
+                                    <span>Ringkasan per Pemasok</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="index.php?page=ap_aging&tab=riwayat_bayar" class="nav-sub-item <?= ($isApAgingActive && $currentTab === 'riwayat_bayar') ? 'active' : '' ?>">
                                     <i data-lucide="credit-card" style="width: 14px; height: 14px; color: #ea580c;"></i>
-                                    <span>Buku Kas Keluar Pemasok</span>
+                                    <span>Riwayat Pembayaran</span>
                                 </a>
                             </li>
                         </ul>
                     </li>
 
-                    <!-- 3. REKONSILIASI SETORAN (AR VS AKTUAL) -->
-                    <li>
-                        <a href="index.php?page=rekonsiliasi_bank" class="nav-item <?= $isRekonActive ? 'active' : '' ?>" title="Pencocokan data setoran AR dengan fisik cash & bukti transfer aktual">
-                            <div class="nav-item-icon icon-teal" style="background: rgba(14, 165, 233, 0.12); color: #0284c7;">
-                                <i data-lucide="scale" style="width: 17px; height: 17px;"></i>
+                    <!-- 1. AR AGING (PIUTANG USAHA) (SUBMENU) -->
+                    <li class="nav-has-submenu <?= $isArAgingActive ? 'is-open' : '' ?>" id="menuArAging" data-active-page="<?= $isArAgingActive ? '1' : '' ?>">
+                        <a href="javascript:void(0)" class="nav-item <?= $isArAgingActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuArAging', event)" role="button" aria-expanded="<?= $isArAgingActive ? 'true' : 'false' ?>" title="Pelacakan umur piutang dan cicilan setoran mitra">
+                            <div class="nav-item-icon icon-blue" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                                <i data-lucide="hand-coins" style="width: 17px; height: 17px;"></i>
                             </div>
                             <div class="nav-item-text">
-                                <span class="nav-item-title" style="font-weight: 700;">Rekonsiliasi Setoran</span>
-                                <span class="nav-item-desc">AR vs Fisik & Bukti Transfer</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <!-- 4. PROFIT AND LOSS (SUBMENU) -->
-                    <li class="nav-has-submenu <?= $isProfitActive ? 'is-open' : '' ?>" id="menuProfit" data-active-page="<?= $isProfitActive ? '1' : '' ?>">
-                        <a href="javascript:void(0)" class="nav-item <?= $isProfitActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuProfit', event)" role="button" aria-expanded="<?= $isProfitActive ? 'true' : 'false' ?>" title="Klik untuk menampilkan / menyembunyikan tabel Profit and Loss">
-                            <div class="nav-item-icon icon-green" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
-                                <i data-lucide="trending-up" style="width: 17px; height: 17px;"></i>
-                            </div>
-                            <div class="nav-item-text">
-                                <span class="nav-item-title" style="font-weight: 700;">Profit and Loss</span>
-                                <span class="nav-item-desc">Margin beli vs jual & laba</span>
+                                <span class="nav-item-title" style="font-weight: 700;">AR Aging</span>
+                                <span class="nav-item-desc">Umur piutang & cicilan setoran</span>
                             </div>
                             <div class="nav-item-chevron">
                                 <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
@@ -490,18 +467,125 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         </a>
                         <ul class="nav-sub-list">
                             <li>
-                                <a href="index.php?page=profit_loss&tab=komparasi" class="nav-sub-item <?= ($isProfitActive && ($currentTab === 'komparasi' || empty($currentTab))) ? 'active' : '' ?>">
-                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
-                                    <span>Komparasi Harga & Margin</span>
+                                <a href="index.php?page=ar_aging&tab=matriks" class="nav-sub-item <?= ($isArAgingActive && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
+                                    <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: #2563eb;"></i>
+                                    <span>Ringkasan per Mitra</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="index.php?page=profit_loss&tab=riwayat_sj" class="nav-sub-item <?= ($isProfitActive && $currentTab === 'riwayat_sj') ? 'active' : '' ?>">
-                                    <i data-lucide="receipt" style="width: 14px; height: 14px; color: #10b981;"></i>
-                                    <span>Laba Surat Jalan Keluar</span>
+                                <a href="index.php?page=ar_aging&tab=riwayat_setoran" class="nav-sub-item <?= ($isArAgingActive && $currentTab === 'riwayat_setoran') ? 'active' : '' ?>">
+                                    <i data-lucide="wallet" style="width: 14px; height: 14px; color: #f59e0b;"></i>
+                                    <span>Riwayat Setoran</span>
                                 </a>
                             </li>
                         </ul>
+                    </li>
+
+                    <li class="nav-has-submenu <?= $isPurchGroupActive ? 'is-open' : '' ?>" id="menuPurchase" data-active-page="<?= $isPurchGroupActive ? '1' : '' ?>">
+                        <a href="javascript:void(0)" class="nav-item <?= $isPurchGroupActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuPurchase', event)" role="button" aria-expanded="<?= $isPurchGroupActive ? 'true' : 'false' ?>">
+                            <div class="nav-item-icon" style="background: #10b98122; color: #10b981;">
+                                <i data-lucide="file-input" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title" style="font-weight: 700;">Purchase Invoice</span>
+                                <span class="nav-item-desc">Faktur dan riwayat harga beli</span>
+                            </div>
+                            <div class="nav-item-chevron">
+                                <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
+                            </div>
+                        </a>
+                        <ul class="nav-sub-list">
+                            <li>
+                                <a href="index.php?page=ap_aging&tab=invoices" class="nav-sub-item <?= $isPurchInvActive ? 'active' : '' ?>">
+                                    <i data-lucide="file-input" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <span>Daftar Faktur</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=purchase_book" class="nav-sub-item <?= ($currentPage === 'purchase_book') ? 'active' : '' ?>">
+                                    <i data-lucide="book-marked" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <span>Purchase Book</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-has-submenu <?= $isSalesGroupActive ? 'is-open' : '' ?>" id="menuSales" data-active-page="<?= $isSalesGroupActive ? '1' : '' ?>">
+                        <a href="javascript:void(0)" class="nav-item <?= $isSalesGroupActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuSales', event)" role="button" aria-expanded="<?= $isSalesGroupActive ? 'true' : 'false' ?>">
+                            <div class="nav-item-icon" style="background: #2563eb22; color: #2563eb;">
+                                <i data-lucide="file-output" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title" style="font-weight: 700;">Sales Invoice</span>
+                                <span class="nav-item-desc">Nota dan riwayat harga jual</span>
+                            </div>
+                            <div class="nav-item-chevron">
+                                <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
+                            </div>
+                        </a>
+                        <ul class="nav-sub-list">
+                            <li>
+                                <a href="index.php?page=ar_aging&tab=nota" class="nav-sub-item <?= $isSalesInvActive ? 'active' : '' ?>">
+                                    <i data-lucide="file-output" style="width: 14px; height: 14px; color: #2563eb;"></i>
+                                    <span>Daftar Nota</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=sales_book" class="nav-sub-item <?= ($currentPage === 'sales_book') ? 'active' : '' ?>">
+                                    <i data-lucide="book-marked" style="width: 14px; height: 14px; color: #2563eb;"></i>
+                                    <span>Sales Book</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- LABA RUGI (SUBMENU) -->
+                    <li class="nav-has-submenu <?= $isProfitActive ? 'is-open' : '' ?>" id="menuProfit" data-active-page="<?= $isProfitActive ? '1' : '' ?>">
+                        <a href="javascript:void(0)" class="nav-item <?= $isProfitActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuProfit', event)" role="button" aria-expanded="<?= $isProfitActive ? 'true' : 'false' ?>" title="Klik untuk menampilkan / menyembunyikan menu Laba Rugi">
+                            <div class="nav-item-icon icon-green" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                                <i data-lucide="trending-up" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title" style="font-weight: 700;">Laba Rugi</span>
+                                <span class="nav-item-desc">Penjualan, HPP & biaya dari jurnal</span>
+                            </div>
+                            <div class="nav-item-chevron">
+                                <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
+                            </div>
+                        </a>
+                        <ul class="nav-sub-list">
+                            <li>
+                                <a href="index.php?page=coa" class="nav-sub-item <?= ($currentPage === 'coa') ? 'active' : '' ?>">
+                                    <i data-lucide="book-open" style="width: 14px; height: 14px; color: #4f46e5;"></i>
+                                    <span>COA</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=profit_loss" class="nav-sub-item <?= ($currentPage === 'profit_loss' && $currentTab !== 'laba_sj' && $currentTab !== 'riwayat_sj') ? 'active' : '' ?>">
+                                    <i data-lucide="scale" style="width: 14px; height: 14px; color: #8b5cf6;"></i>
+                                    <span>Laba Rugi</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=profit_loss&tab=laba_sj" class="nav-sub-item <?= ($currentPage === 'profit_loss' && ($currentTab === 'laba_sj' || $currentTab === 'riwayat_sj')) ? 'active' : '' ?>">
+                                    <i data-lucide="receipt" style="width: 14px; height: 14px; color: #10b981;"></i>
+                                    <span>Laba per Surat Jalan</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- REKONSILIASI BANK (HARIAN) -->
+                    <li>
+                        <a href="index.php?page=rekonsiliasi_bank" class="nav-item <?= $isRekonActive ? 'active' : '' ?>" title="Audit harian total setoran mitra dengan uang masuk di bank">
+                            <div class="nav-item-icon icon-teal" style="background: rgba(14, 165, 233, 0.12); color: #0284c7;">
+                                <i data-lucide="scale" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title" style="font-weight: 700;">Rekonsiliasi Bank</span>
+                                <span class="nav-item-desc">Audit harian setoran vs bank</span>
+                            </div>
+                        </a>
                     </li>
 
                     <!-- 2. SALDO STOK GUDANG (SUBMENU) -->
@@ -553,19 +637,33 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             </div>
                         </a>
                         <!-- Sub Menu Master & Pengaturan -->
+                        <?php
+                        $masterTabAktif = $_GET['tab'] ?? 'pemasok';
+                        if ($masterTabAktif === 'harga') $masterTabAktif = 'harga_mitra';
+                        if ($currentPage === 'accurate_sync') $masterTabAktif = 'accurate';
+                        $masterMenu = [
+                            ['pemasok',            'Pemasok Nelayan',       'truck',            '#f59e0b'],
+                            ['vendor_non_pemasok', 'Vendor Non-Pemasok',    'store',            '#3b82f6'],
+                            ['tipe_biaya',         'Tipe Biaya Operasional', 'receipt',         '#8b5cf6'],
+                            ['harga_pemasok',      'Harga Pemasok',         'tag',              '#f59e0b'],
+                            ['harga_mitra',        'Harga Mitra',           'badge-dollar-sign', '#10b981'],
+                            ['mitra',              'Mitra Bisnis',          'building-2',       '#3b82f6'],
+                            ['produk',             'Master Produk',         'boxes',            '#8b5cf6'],
+                            ['coa',                'Akun COA',              'book-open',        '#4f46e5'],
+                            ['log_harga',          'Log Harga',             'history',          '#ef4444'],
+                            ['accurate',           'Settingan API Accurate', 'key',             '#0284c7'],
+                        ];
+                        ?>
                         <ul class="nav-sub-list">
+                            <?php foreach ($masterMenu as [$mTab, $mLabel, $mIkon, $mWarna]):
+                                $mAktif = ($currentPage === 'master' || $currentPage === 'accurate_sync') && $masterTabAktif === $mTab; ?>
                             <li>
-                                <a href="index.php?page=master" class="nav-sub-item <?= ($currentPage === 'master' && (!isset($_GET['tab']) || in_array($_GET['tab'], ['pemasok', 'mitra', 'produk', 'harga']))) ? 'active' : '' ?>">
-                                    <i data-lucide="database" style="width: 14px; height: 14px;"></i>
-                                    <span>Data Master</span>
+                                <a href="index.php?page=master&tab=<?= $mTab ?>" class="nav-sub-item <?= $mAktif ? 'active' : '' ?>">
+                                    <i data-lucide="<?= $mIkon ?>" style="width: 14px; height: 14px; color: <?= $mWarna ?>;"></i>
+                                    <span><?= $mLabel ?></span>
                                 </a>
                             </li>
-                            <li>
-                                <a href="index.php?page=master&tab=accurate" class="nav-sub-item <?= (($currentPage === 'master' && isset($_GET['tab']) && $_GET['tab'] === 'accurate') || $currentPage === 'accurate_sync') ? 'active' : '' ?>">
-                                    <i data-lucide="key" style="width: 14px; height: 14px;"></i>
-                                    <span>Settingan API Accurate</span>
-                                </a>
-                            </li>
+                            <?php endforeach; ?>
                         </ul>
                     </li>
                     <li>
@@ -605,28 +703,31 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         <span class="btn-hamburger-text">MENU</span>
                     </button>
 
-                    <!-- Judul Halaman Aktif di Topbar (Sejajar dengan Brand Header Sidebar) -->
-                    <div class="topbar-page-info">
-                        <div class="topbar-title-wrapper">
-                            <h1 class="topbar-title"><?= htmlspecialchars($currentPageInfo['title']) ?></h1>
-                        </div>
-                        <?php if (!empty($currentPageInfo['desc'])): ?>
-                            <span class="topbar-desc"><?= htmlspecialchars($currentPageInfo['desc']) ?></span>
-                        <?php endif; ?>
-                    </div>
                 </div>
 
                 <div class="topbar-right">
-                    <!-- Tombol Bantuan Cepat -->
-                    <a href="index.php?page=prd_viewer" class="topbar-quick-action" title="Buka Panduan Penggunaan">
-                        <i data-lucide="help-circle" style="width: 15px; height: 15px; color: #f59e0b;"></i>
-                        <span class="quick-action-text">Panduan</span>
-                    </a>
+                    <!-- User Profile & Role Switcher Dropdown -->
+                    <div class="topbar-user-dropdown-wrapper" id="userMenuWrapper">
+                        <button type="button" class="topbar-user-btn" id="btnUserMenu" onclick="toggleUserDropdown(event)" title="Akun: <?= htmlspecialchars($userDisplayName) ?>">
+                            <div class="topbar-user-avatar <?= $userAvatarClass ?>"><?= $userInitials ?></div>
+                            <div class="topbar-user-info-text">
+                                <span class="topbar-user-name"><?= htmlspecialchars(explode(' ', $userDisplayName)[0]) ?></span>
+                                <span class="topbar-role-badge <?= $userBadgeClass ?>"><?= $userRoleBadge ?></span>
+                            </div>
+                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--text-muted); margin-left: 2px;"></i>
+                        </button>
 
-                    <!-- User Tag Kanan -->
-                    <div class="topbar-user-badge" title="Login: <?= htmlspecialchars($currentUser['nama_lengkap']) ?>">
-                        <div class="topbar-user-avatar">AR</div>
-                        <span class="topbar-user-name"><?= htmlspecialchars(explode(' ', $currentUser['nama_lengkap'])[0]) ?></span>
+                        <div class="user-dropdown-menu" id="userDropdownMenu">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-name"><?= htmlspecialchars($userDisplayName) ?></div>
+                                <div class="user-dropdown-role">Role: <span class="topbar-role-badge <?= $userBadgeClass ?>"><?= $userRoleBadge ?></span></div>
+                            </div>
+                            <div class="user-dropdown-divider"></div>
+                            <a href="index.php?action=logout" class="user-dropdown-item dropdown-logout-btn">
+                                <i data-lucide="log-out" style="width: 15px; height: 15px; color: #ef4444;"></i>
+                                <span style="color: #ef4444; font-weight: 700;">Keluar / Logout</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </header>

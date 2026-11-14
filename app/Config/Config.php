@@ -9,9 +9,9 @@ class Config {
     // Info Aplikasi
     public const APP_NAME = 'Barcode Inventory Multi-Mitra';
     public const APP_VERSION = '1.1.0';
-    public const APP_ORGANIZATION = 'Logistik Bersama Multi-Mitra';
+    public const APP_ORGANIZATION = 'AR_BAROKAH';
 
-    // Konfigurasi Database (Default XAMPP: root tanpa password)
+    // Konfigurasi Database (Default XAMPP: root tanpa password, atau via Environment Variables / Docker)
     public const DB_DRIVER   = 'mysql'; // 'mysql' atau 'sqlite'
     public const DB_HOST     = '127.0.0.1';
     public const DB_PORT     = '3306';
@@ -19,6 +19,32 @@ class Config {
     public const DB_USER     = 'root';
     public const DB_PASS     = '';
     public const DB_SQLITE_PATH = __DIR__ . '/../../database/inventory.sqlite';
+
+    public static function getDbHost(): string {
+        $env = getenv('DB_HOST');
+        return ($env !== false && $env !== '') ? $env : (isset($_ENV['DB_HOST']) && $_ENV['DB_HOST'] !== '' ? $_ENV['DB_HOST'] : self::DB_HOST);
+    }
+
+    public static function getDbPort(): string {
+        $env = getenv('DB_PORT');
+        return ($env !== false && $env !== '') ? $env : (isset($_ENV['DB_PORT']) && $_ENV['DB_PORT'] !== '' ? $_ENV['DB_PORT'] : self::DB_PORT);
+    }
+
+    public static function getDbName(): string {
+        $env = getenv('DB_NAME');
+        return ($env !== false && $env !== '') ? $env : (isset($_ENV['DB_NAME']) && $_ENV['DB_NAME'] !== '' ? $_ENV['DB_NAME'] : self::DB_NAME);
+    }
+
+    public static function getDbUser(): string {
+        $env = getenv('DB_USER');
+        return ($env !== false && $env !== '') ? $env : (isset($_ENV['DB_USER']) && $_ENV['DB_USER'] !== '' ? $_ENV['DB_USER'] : self::DB_USER);
+    }
+
+    public static function getDbPass(): string {
+        $env = getenv('DB_PASS');
+        if ($env !== false) return $env;
+        return isset($_ENV['DB_PASS']) ? $_ENV['DB_PASS'] : self::DB_PASS;
+    }
 
     // Konfigurasi Accurate Online REST API (Developer App Key & Signature Secret)
     public const ACCURATE_APP_KEY          = 'f33bdc72-f56f-4393-83f7-2b5ef042dc13';
@@ -64,7 +90,7 @@ class Config {
     }
 
     // Pengaturan Stasiun Timbang & Printer Barcode
-    public const THERMAL_LABEL_WIDTH_MM  = 100;
+    public const THERMAL_LABEL_WIDTH_MM  = 70;
     public const THERMAL_LABEL_HEIGHT_MM = 50;
     public const SCALE_DEFAULT_BAUDRATE  = 9600; // RS-232 baud rate standar timbangan
     public const SCALE_DEFAULT_PARITY    = 'none';

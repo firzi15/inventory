@@ -33,7 +33,7 @@ class Piutang {
         $stmtSetor = $pdo->query("
             SELECT 
                 COALESCE(SUM(jumlah_bayar), 0) as total_setoran_masuk,
-                COUNT(id) as total_transaksi_setor
+                COUNT(CASE WHEN status = 'AKTIF' THEN 1 END) as total_transaksi_setor
             FROM ar_pembayaran
         ");
         $resSetor = $stmtSetor->fetch(PDO::FETCH_ASSOC);
@@ -357,6 +357,19 @@ class Piutang {
             $metodeBayar = 'TUNAI';
         }
 
+        // Aturan bisnis: setoran tidak boleh melebihi total sisa piutang mitra (belum ada uang muka)
+        $totalSisaMitra = 0.0;
+        foreach (self::getUnpaidNotasByMitra($mitraId) as $notaCek) {
+            $totalSisaMitra += (float)$notaCek['sisa_piutang'];
+        }
+        $totalSisaMitra = round($totalSisaMitra, 2);
+        if ($jumlahBayar > $totalSisaMitra + 0.01) {
+            if ($totalSisaMitra <= 0.01) {
+                throw new Exception("Mitra ini tidak punya piutang terbuka, setoran tidak dapat dicatat.");
+            }
+            throw new Exception("Setoran (Rp " . number_format($jumlahBayar, 0, ',', '.') . ") melebihi total sisa piutang mitra (Rp " . number_format($totalSisaMitra, 0, ',', '.') . ").");
+        }
+
         // Generate No Bukti Bayar Unik: CR-YYYYMMDD-XXXX
         $dateCode = date('Ymd', strtotime($tglBayar));
         $countToday = $pdo->query("SELECT COUNT(id) FROM ar_pembayaran WHERE tanggal_bayar = '{$tglBayar}'")->fetchColumn();
@@ -478,6 +491,8 @@ class Piutang {
                 }
             }
 
+            \App\Services\JurnalService::postArPayment((int)$pembayaranId);
+
             $pdo->commit();
 
             return [
@@ -529,6 +544,10 @@ class Piutang {
             SELECT 
                 ap.id as alokasi_id,
                 ap.nominal_alokasi,
+                ap.nominal_asal,
+                p.status AS status_pembayaran,
+                p.alasan_batal,
+                p.jumlah_asal,
                 ap.sisa_piutang_setelah,
                 ap.created_at as tgl_alokasi,
                 p.id as pembayaran_id,
@@ -591,6 +610,9 @@ class Piutang {
                 p.metode_bayar,
                 p.bank_tujuan,
                 p.jumlah_bayar,
+                p.status,
+                p.jumlah_asal,
+                p.alasan_batal,
                 p.keterangan,
                 p.created_at,
                 m.kode_mitra,

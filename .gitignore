@@ -9,3 +9,8 @@ scratch/
 Thumbs.db
 .vscode/
 .idea/
+
+# Secrets & prototypes
+.env
+demo/
+demo_ui_*.html

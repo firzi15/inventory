@@ -1,0 +1,8 @@
+.git
+.gitignore
+scratch
+*.docx
+*.pdf
+start_ngrok.bat
+.user_uploaded
+

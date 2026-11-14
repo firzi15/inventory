@@ -17,7 +17,8 @@ $pemasokList = Pemasok::getAll();
 $filterPemasok    = isset($_GET['filter_pemasok']) && $_GET['filter_pemasok'] !== '' ? (int)$_GET['filter_pemasok'] : null;
 $filterSuratJalan = trim($_GET['filter_sj'] ?? '');
 $search           = trim($_GET['search'] ?? '');
-$filterBulan      = trim($_GET['filter_bulan'] ?? ''); // Format: YYYY-MM e.g. 2026-10
+// Default bulan ini saat user mengakses halaman jika parameter belum ditentukan di URL
+$filterBulan      = isset($_GET['filter_bulan']) ? trim($_GET['filter_bulan']) : date('Y-m'); // Format: YYYY-MM e.g. 2026-11
 
 $startDate = null;
 $endDate   = null;
@@ -82,22 +83,8 @@ require_once __DIR__ . '/layout/header.php';
 
 <div class="page-header no-print">
     <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span class="badge badge-purple">Audit Fisik Gudang Utama</span>
-            <span class="badge badge-info">Catch-Weight Precision</span>
-            <span class="badge badge-success">Stok Belum Dimutasi ke Mitra</span>
-            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                <i data-lucide="database" style="width: 12px; height: 12px;"></i> Sinkronisasi Database Riil
-            </span>
-        </div>
         <h1 class="page-title">Stok Opname Persediaan Gudang Utama</h1>
         <p class="page-subtitle">Pencocokan stok fisik riil di gudang utama yang belum dimutasi ke mitra vs sistem database menggunakan scanner genggam</p>
-    </div>
-    <div style="display: flex; gap: 8px; align-items: center;">
-        <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableOpname', 'Laporan_Hasil_Stok_Opname_Gudang')">
-            <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-            <span>Ekspor Excel (.xlsx)</span>
-        </button>
     </div>
 </div>
 
@@ -105,32 +92,37 @@ require_once __DIR__ . '/layout/header.php';
 
 <!-- STATS SUMMARY COUNTER WIDGETS -->
 <div class="grid grid-cols-4 no-print" style="margin-bottom: 24px; gap: 16px;">
-    <!-- Card 1: Total Penerimaan Bulan Ini -->
-    <div class="card" style="padding: 18px; border-left: 4px solid var(--primary);">
-        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Masuk Periode Ini</div>
-        <div style="font-size: 26px; font-weight: 900; color: var(--primary); margin: 4px 0;" id="statTotalCount"><?= number_format($totalFisikCount, 0, ',', '.') ?> <span style="font-size: 14px; font-weight: 600;">Kemasan</span></div>
-        <div style="font-size: 12.5px; color: var(--text-muted); font-weight: 700;">Total Bobot: <span style="color: var(--primary);"><?= Helper::formatKg($totalFisikKg) ?></span></div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Total Masuk Periode Ini</div>
+            <div class="kpi-value" id="statTotalCount"><?= number_format($totalFisikCount, 0, ',', '.') ?><span class="kpi-unit">Kemasan</span></div>
+            <div class="kpi-sub">Total bobot: <?= Helper::formatKg($totalFisikKg) ?></div>
+        </div>
+        <div class="kpi-icon-pod"><i data-lucide="package" style="width: 18px; height: 18px;"></i></div>
     </div>
-
-    <!-- Card 2: Sisa Fisik di Gudang Utama (Wajib Opname) -->
-    <div class="card" style="padding: 18px; border-left: 4px solid #0891b2;">
-        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Sisa Fisik Gudang Utama</div>
-        <div style="font-size: 26px; font-weight: 900; color: #0891b2; margin: 4px 0;" id="statGudangCount"><?= number_format($countGudangUtama, 0, ',', '.') ?> <span style="font-size: 14px; font-weight: 600;">Kemasan</span></div>
-        <div style="font-size: 12.5px; color: #0891b2; font-weight: 700;">Bobot: <?= Helper::formatKg($kgGudangUtama) ?> (Belum Mutasi)</div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Sisa Fisik Gudang Utama</div>
+            <div class="kpi-value" id="statGudangCount"><?= number_format($countGudangUtama, 0, ',', '.') ?><span class="kpi-unit">Kemasan</span></div>
+            <div class="kpi-sub">Bobot: <?= Helper::formatKg($kgGudangUtama) ?></div>
+        </div>
+        <div class="kpi-icon-pod"><i data-lucide="warehouse" style="width: 18px; height: 18px;"></i></div>
     </div>
-
-    <!-- Card 3: Sudah Pindah / Mutasi ke Mitra -->
-    <div class="card" style="padding: 18px; border-left: 4px solid #8b5cf6;">
-        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Sudah Mutasi ke Mitra</div>
-        <div style="font-size: 26px; font-weight: 900; color: #8b5cf6; margin: 4px 0;" id="statMutasiCount"><?= number_format($countMutasiMitra, 0, ',', '.') ?> <span style="font-size: 14px; font-weight: 600;">Kemasan</span></div>
-        <div style="font-size: 12.5px; color: #8b5cf6; font-weight: 700;">Bobot: <?= Helper::formatKg($kgMutasiMitra) ?> (Pindah Lokasi)</div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Sudah Mutasi ke Mitra</div>
+            <div class="kpi-value" id="statMutasiCount"><?= number_format($countMutasiMitra, 0, ',', '.') ?><span class="kpi-unit">Kemasan</span></div>
+            <div class="kpi-sub">Bobot: <?= Helper::formatKg($kgMutasiMitra) ?></div>
+        </div>
+        <div class="kpi-icon-pod"><i data-lucide="truck" style="width: 18px; height: 18px;"></i></div>
     </div>
-
-    <!-- Card 4: Progress Scan Fisik Gudang -->
-    <div class="card" style="padding: 18px; border-left: 4px solid #10b981;">
-        <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Hasil Scan Fisik (Database)</div>
-        <div style="font-size: 26px; font-weight: 900; color: #10b981; margin: 4px 0;" id="statMatchedCount"><?= number_format($countOpnameMatched, 0, ',', '.') ?> <span style="font-size: 14px; font-weight: 600;">Kemasan</span></div>
-        <div style="font-size: 12.5px; color: #10b981; font-weight: 700;" id="statMatchedPct"><?= $pctOpnameMatched ?>% Terverifikasi Fisik (<?= $countOpnameMatched ?>/<?= $countGudangUtama ?>)</div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Hasil Scan Fisik</div>
+            <div class="kpi-value" id="statMatchedCount"><?= number_format($countOpnameMatched, 0, ',', '.') ?><span class="kpi-unit">Kemasan</span></div>
+            <div class="kpi-sub" id="statMatchedPct"><?= $pctOpnameMatched ?>% terverifikasi (<?= $countOpnameMatched ?>/<?= $countGudangUtama ?>)</div>
+        </div>
+        <div class="kpi-icon-pod"><i data-lucide="scan-line" style="width: 18px; height: 18px;"></i></div>
     </div>
 </div>
 
@@ -147,57 +139,11 @@ require_once __DIR__ . '/layout/header.php';
             </div>
         </div>
 
-        <!-- Filter Form Cepat di Kolom Kiri -->
-        <form method="GET" action="index.php" style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg-muted);">
-            <input type="hidden" name="page" value="stok_opname">
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label" style="font-size: 12px; font-weight: 700; color: var(--text-main);">
-                    📅 Periode Cek Perbulan:
-                </label>
-                <input type="month" name="filter_bulan" class="form-control" value="<?= htmlspecialchars($filterBulan) ?>" onchange="this.form.submit()" style="font-size: 12.5px; height: 38px;">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label" style="font-size: 12px; font-weight: 700; color: var(--text-main);">
-                    🏢 Pemasok Asal:
-                </label>
-                <select name="filter_pemasok" class="form-control" onchange="this.form.submit()">
-                    <option value="">-- Semua Pemasok --</option>
-                    <?php foreach ($pemasokList as $p): ?>
-                        <option value="<?= $p['id'] ?>" <?= $filterPemasok === (int)$p['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($p['kode_pemasok']) ?> - <?= htmlspecialchars($p['nama_pemasok']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="form-label" style="font-size: 12px; font-weight: 700; color: var(--text-main);">
-                    📄 No. Surat Jalan:
-                </label>
-                <input type="text" name="filter_sj" list="sideSuratJalanList" class="form-control" placeholder="Pilih/ketik No. SJ..." value="<?= htmlspecialchars($filterSuratJalan) ?>" style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
-                <datalist id="sideSuratJalanList">
-                    <?php foreach ($activeSjList as $sj): ?>
-                        <option value="<?= htmlspecialchars($sj) ?>">
-                    <?php endforeach; ?>
-                </datalist>
-            </div>
-
-            <div style="display: flex; gap: 6px;">
-                <input type="text" name="search" class="form-control" placeholder="Cari barcode/SJ..." value="<?= htmlspecialchars($search) ?>" style="height: 36px; font-size: 12.5px;">
-                <button type="submit" class="btn btn-primary btn-sm" style="height: 36px; padding: 0 12px;">Cari</button>
-                <?php if ($filterPemasok || $filterSuratJalan || $search || $filterBulan): ?>
-                    <a href="index.php?page=stok_opname" class="btn btn-outline btn-sm" style="height: 36px; padding: 0 10px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);" title="Reset Filter">Reset</a>
-                <?php endif; ?>
-            </div>
-        </form>
-
         <!-- Input Scanner Laser Genggam -->
         <div style="padding: 20px;">
             <div class="form-group">
                 <label class="form-label" for="opname_scan_input" style="font-size: 13px; font-weight: 800; color: var(--primary);">
-                    🎯 Input Scan Barcode Kemasan Fisik
+                    Input Scan Barcode Kemasan Fisik
                 </label>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="opname_scan_input" class="form-control form-control-lg" placeholder="Scan barcode & Enter..." autofocus style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700;">
@@ -206,7 +152,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <div style="background: var(--bg-muted); border-radius: 8px; padding: 12px; border: 1px dashed var(--border); font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                💡 <strong>Petunjuk:</strong> Arahkan scanner laser ke label kemasan. Barcode yang discan akan otomatis diverifikasi, row tabel ditandai hijau, dan counter bertambah. Jika barcode ternyata sudah dimutasi ke mitra, sistem akan langsung memberi info nama mitra penerimanya.
+                <strong>Petunjuk:</strong> Arahkan scanner laser ke label kemasan. Barcode yang discan akan otomatis diverifikasi, row tabel ditandai hijau, dan counter bertambah. Jika barcode ternyata sudah dimutasi ke mitra, sistem akan langsung memberi info nama mitra penerimanya.
             </div>
         </div>
     </div>
@@ -217,15 +163,12 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <h2 class="card-title">
                     <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: #10b981;"></i>
-                    <span>Daftar Fisik Gudang Utama (Belum Mutasi ke Mitra)</span>
+                    <span>Daftar Fisik Gudang Utama</span>
                 </h2>
                 <div class="card-description">Seluruh kemasan berstatus aktif yang masih tersimpan di gudang utama transit</div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableOpname', 'Laporan_Hasil_Stok_Opname_Gudang')">
-                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
+                <?php $eksporTabel = 'tableOpname'; $eksporNama = 'Laporan_Hasil_Stok_Opname_Gudang'; include __DIR__ . '/layout/ekspor.php'; ?>
             </div>
         </div>
 
@@ -237,7 +180,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Filter Bulan / Periode Cek Bulanan -->
                 <div style="flex: 1.1; min-width: 160px;">
                     <label class="form-label" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px; display: block; color: var(--text-main);">
-                        📅 Cek Perbulan:
+                        Cek Perbulan:
                     </label>
                     <input type="month" name="filter_bulan" class="form-control" 
                            value="<?= htmlspecialchars($filterBulan) ?>" 
@@ -247,7 +190,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Filter Pemasok -->
                 <div style="flex: 1.2; min-width: 170px;">
                     <label class="form-label" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px; display: block; color: var(--text-main);">
-                        🏢 Pemasok Asal:
+                        Pemasok Asal:
                     </label>
                     <select name="filter_pemasok" class="form-control" style="font-size: 12.5px; height: 38px;">
                         <option value="">-- Semua Pemasok --</option>
@@ -262,7 +205,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Filter No. Surat Jalan -->
                 <div style="flex: 1.2; min-width: 180px;">
                     <label class="form-label" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px; display: block; color: var(--text-main);">
-                        📄 No. Surat Jalan:
+                        No. Surat Jalan:
                     </label>
                     <input type="text" name="filter_sj" list="mainSuratJalanList" class="form-control" 
                            placeholder="Ketik / pilih no surat jalan..." 
@@ -278,7 +221,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Input Pencarian Bebas -->
                 <div style="flex: 1; min-width: 140px;">
                     <label class="form-label" style="font-size: 11.5px; font-weight: 700; margin-bottom: 4px; display: block; color: var(--text-main);">
-                        🔍 Cari Bebas:
+                        Cari Bebas:
                     </label>
                     <input type="text" name="search" class="form-control" 
                            placeholder="Barcode / produk..." 
@@ -292,8 +235,8 @@ require_once __DIR__ . '/layout/header.php';
                         <i data-lucide="filter" style="width: 15px; height: 15px;"></i>
                         <span>Filter</span>
                     </button>
-                    <?php if ($filterPemasok || $filterSuratJalan || $search || $filterBulan): ?>
-                        <a href="index.php?page=stok_opname" class="btn btn-outline" style="height: 38px; padding: 0 12px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3); font-weight: 600;" title="Hapus Semua Filter">
+                    <?php if ($filterPemasok || $filterSuratJalan || $search || ($filterBulan !== date('Y-m'))): ?>
+                        <a href="index.php?page=stok_opname" class="btn btn-outline" style="height: 38px; padding: 0 12px; color: var(--danger); border-color: rgba(239, 68, 68, 0.3); font-weight: 600;" title="Kembali ke Default Bulan Ini">
                             <i data-lucide="x" style="width: 15px; height: 15px;"></i>
                             <span>Reset</span>
                         </a>
@@ -336,7 +279,7 @@ require_once __DIR__ . '/layout/header.php';
                         <th>Nama Produk / Item</th>
                         <th style="text-align: right;">Netto (Kg)</th>
                         <th>No. Surat Jalan</th>
-                        <th style="text-align: center;">Status Verifikasi Fisik (Scan)</th>
+                        <th style="text-align: center;">Status Verifikasi Fisik</th>
                     </tr>
                 </thead>
                 <tbody id="opnameTableBody">
@@ -392,7 +335,7 @@ require_once __DIR__ . '/layout/header.php';
                                     </div>
                                 <?php else: ?>
                                     <span class="badge" style="background: rgba(6, 182, 212, 0.12); color: #0891b2; font-weight: 700; font-size: 11px;">
-                                        🏛️ Gudang Utama (Transit)
+                                        Gudang Utama
                                     </span>
                                 <?php endif; ?>
                             </td>
@@ -405,25 +348,25 @@ require_once __DIR__ . '/layout/header.php';
                                 <strong><?= htmlspecialchars($g['nama_item']) ?></strong>
                                 <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($g['nama_jenis']) ?></div>
                             </td>
-                            <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: <?= $berat > 0 ? '#10b981' : '#f59e0b' ?>;">
-                                <?= $berat > 0 ? Helper::formatKg($berat) : 'Belum Ditimbang' ?>
+                            <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: #10b981;">
+                                <?= Helper::formatKg($berat) ?>
                             </td>
                             <td><code style="font-size: 11px;"><?= htmlspecialchars($sj) ?></code></td>
                             <td id="status-<?= $barcode ?>" style="text-align: center;">
                                 <?php if ($isMutasi): ?>
                                     <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #475569; font-weight: 700; font-size: 11px;" title="Barang ini sudah dipindahkan ke gudang mitra sehingga tidak lagi berada di fisik gudang utama">
-                                        📦 Sudah di <?= htmlspecialchars($namaMitraTujuan) ?>
+                                        Sudah di <?= htmlspecialchars($namaMitraTujuan) ?>
                                     </span>
                                 <?php elseif ($isOpnameVerified): ?>
                                     <span class="badge badge-success" style="background: #10b981; color: #fff; font-weight: 800;">
-                                        ✓ COCOK FISIK
+                                        COCOK FISIK
                                     </span>
                                     <div style="font-size: 10px; color: #059669; margin-top: 3px; font-weight: 600;">
                                         <?= $tglOpname ?>
                                     </div>
                                 <?php else: ?>
                                     <span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-weight: 700;">
-                                        ⏳ Menunggu Scan Barcode
+                                        Menunggu Scan Barcode
                                     </span>
                                 <?php endif; ?>
                             </td>
@@ -469,10 +412,10 @@ require_once __DIR__ . '/layout/header.php';
         const elCount = document.getElementById('statMatchedCount');
         const elPct = document.getElementById('statMatchedPct');
         if (elCount) {
-            elCount.innerHTML = `${matchedInView} <span style="font-size: 14px; font-weight: 600;">Kemasan</span>`;
+            elCount.innerHTML = `${matchedInView}<span class="kpi-unit">Kemasan</span>`;
         }
         if (elPct) {
-            elPct.innerText = `${pct}% Terverifikasi Fisik (${matchedInView}/${target})`;
+            elPct.innerText = `${pct}% terverifikasi (${matchedInView}/${target})`;
         }
     }
 
@@ -493,8 +436,17 @@ require_once __DIR__ . '/layout/header.php';
             const data = await res.json();
 
             if (data.success) {
-                const row = document.getElementById('row-' + barcode);
-                const statusCell = document.getElementById('status-' + barcode);
+                const actualId = data.id_label || data.barcode || barcode;
+                let row = document.getElementById('row-' + actualId) || document.getElementById('row-' + barcode);
+                if (!row) {
+                    row = document.querySelector(`tr[data-barcode="${actualId}"]`) ||
+                          document.querySelector(`tr[data-barcode$="${barcode}"]`) ||
+                          document.querySelector(`tr[id$="${barcode}"]`);
+                }
+                let statusCell = document.getElementById('status-' + actualId) || document.getElementById('status-' + barcode);
+                if (!statusCell && row) {
+                    statusCell = row.querySelector('[id^="status-"]') || row.querySelector('td:last-child');
+                }
 
                 if (row && statusCell) {
                     row.dataset.verified = '1';

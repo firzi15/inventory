@@ -56,7 +56,11 @@ class Pemasok {
      */
     public static function create(array $data): int {
         $db = Database::getConnection();
+        // Kode pemasok diisi manual (dipakai sebagai awalan barcode label); otomatis hanya jika dikosongkan
         $kode = !empty($data['kode_pemasok']) ? strtoupper(trim($data['kode_pemasok'])) : self::generateNextKode();
+        if (self::findByKode($kode)) {
+            throw new Exception("Kode pemasok '{$kode}' sudah dipakai pemasok lain.");
+        }
         $nama = trim($data['nama_pemasok'] ?? '');
         if (empty($nama)) {
             throw new Exception("Nama pemasok wajib diisi.");
@@ -90,6 +94,12 @@ class Pemasok {
         }
 
         $kode = !empty($data['kode_pemasok']) ? strtoupper(trim($data['kode_pemasok'])) : null;
+        if ($kode) {
+            $dipakai = self::findByKode($kode);
+            if ($dipakai && (int)$dipakai['id'] !== $id) {
+                throw new Exception("Kode pemasok '{$kode}' sudah dipakai pemasok lain.");
+            }
+        }
 
         $fields = [
             "nama_pemasok = ?",
@@ -173,12 +183,7 @@ class Pemasok {
             throw new Exception("Data pemasok tidak ditemukan.");
         }
 
-        $countLabels = self::countIncomingGoods($id);
-        $countTrx = self::countTransactions($id);
-
-        if ($countLabels > 0 || $countTrx > 0) {
-            throw new Exception("Pemasok [{$pemasok['kode_pemasok']}] {$pemasok['nama_pemasok']} tidak dapat dihapus karena sudah memiliki riwayat penerimaan barang masuk ({$countLabels} kemasan produk & {$countTrx} transaksi). Silakan gunakan tombol Status untuk menonaktifkan pemasok ini.");
-        }
+        \App\Services\MasterGuard::pastikanTidakDipakai('pemasok', $id, "Pemasok [{$pemasok['kode_pemasok']}] {$pemasok['nama_pemasok']}");
 
         // Hapus referensi harga pemasok jika ada
         $stmtDelMhp = $db->prepare("DELETE FROM master_harga_pemasok WHERE pemasok_id = ?");
@@ -198,15 +203,6 @@ class Pemasok {
      * Generate kode pemasok berikutnya otomatis: PMS-01, PMS-02, dst
      */
     public static function generateNextKode(): string {
-        $db = Database::getConnection();
-        $stmt = $db->query("SELECT kode_pemasok FROM pemasok WHERE kode_pemasok LIKE 'PMS-%' ORDER BY id DESC LIMIT 1");
-        $row = $stmt->fetch();
-        $next = 1;
-        if ($row && !empty($row['kode_pemasok'])) {
-            $parts = explode('-', $row['kode_pemasok']);
-            $last = (int)end($parts);
-            $next = $last + 1;
-        }
-        return sprintf('PMS-%02d', $next);
+        return \App\Core\KodeGenerator::next('pemasok', 'kode_pemasok', 'PMS', 2, '-');
     }
 }

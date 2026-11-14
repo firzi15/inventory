@@ -8,6 +8,8 @@ use App\Core\Helper;
 use App\Config\Config;
 use App\Services\AccurateApiService;
 use App\Models\Pemasok;
+use App\Models\VendorNonPemasok;
+use App\Models\TipeBiaya;
 use App\Models\Mitra;
 use App\Models\Item;
 use App\Models\MasterHarga;
@@ -25,6 +27,11 @@ if ($activeTab === 'profit_loss') {
 }
 
 $pemasokList = Pemasok::getAll();
+$vendorNonPemasokList = VendorNonPemasok::getAll();
+$tipeBiayaList = TipeBiaya::getAll();
+$coaList = TipeBiaya::getCoaAccounts();
+$coaMaster = \App\Services\CoaService::accounts();
+$coaSaldo = \App\Services\CoaService::balances();
 $mitraList = Mitra::getAll();
 $itemList = Item::getAll();
 $jenisList = Item::getAllJenis();
@@ -52,22 +59,13 @@ require_once __DIR__ . '/layout/header.php';
 <div class="page-header no-print">
     <?php if ($activeTab === 'accurate'): ?>
         <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <span class="badge badge-purple">Integrasi Sistem</span>
-                <span class="badge badge-info">Accurate Online REST API</span>
-                <?php if (!empty($cfg['is_connected']) && !empty($cfg['session_id'])): ?>
-                    <span class="badge badge-success">✓ Live Terhubung: <?= htmlspecialchars($cfg['db_alias'] ?: ('ID ' . $cfg['db_id'])) ?></span>
-                <?php else: ?>
-                    <span class="badge badge-warning">⏳ Belum Terhubung</span>
-                <?php endif; ?>
-            </div>
             <h1 class="page-title">Settingan API Accurate Online</h1>
             <p class="page-subtitle">Konfigurasi API token resmi, otentikasi database, dan pemantauan antrean transaksi otomatis</p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <a href="Manual_Book_Sistem_Barcode_Inventory_Multi_Mitra.docx" class="btn btn-outline" download style="display: flex; align-items: center; gap: 6px;">
                 <i data-lucide="file-text" style="width: 16px; height: 16px; color: #2563eb;"></i>
-                <span>Manual Book (.docx)</span>
+                <span>Manual Book</span>
             </a>
             <button type="button" class="btn btn-outline" onclick="openGuideModal()">
                 <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i>
@@ -80,66 +78,201 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     <?php else: ?>
         <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <span class="badge badge-purple">Master Data</span>
-                <span class="badge badge-warning"><?= count($pemasokList) ?> Pemasok</span>
-                <span class="badge badge-info">7 Mitra Bisnis</span>
-                <span class="badge badge-success">Katalog Produk</span>
-            </div>
-            <h1 class="page-title">Master Data Gudang</h1>
-            <p class="page-subtitle">Kelola data pemasok barang, master harga pemasok, master harga mitra, dan analisa profit/loss</p>
+            <h1 class="page-title">Master Data Gudang & Operasional</h1>
+            <p class="page-subtitle">Pemasok ikan nelayan, rekanan vendor non-pemasok, tipe biaya, dan katalog produk</p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
             <?php if ($activeTab === 'pemasok'): ?>
-                <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableMasterPemasok', 'Master_Pemasok')">
-                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
-                <button type="button" class="btn btn-primary" onclick="openModalPemasok()">
-                    <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
-                    <span>Tambah Pemasok Baru</span>
-                </button>
+                <?php $eksporTabel = 'tableMasterPemasok'; $eksporNama = 'Master_Pemasok'; include __DIR__ . '/layout/ekspor.php'; ?>
+            <?php elseif ($activeTab === 'vendor_non_pemasok'): ?>
+                <?php $eksporTabel = 'tableMasterVendorNonPemasok'; $eksporNama = 'Master_Vendor_Non_Pemasok'; include __DIR__ . '/layout/ekspor.php'; ?>
+            <?php elseif ($activeTab === 'log_harga'):
+    $lhJenis = in_array($_GET['jenis'] ?? '', ['PEMASOK', 'MITRA'], true) ? $_GET['jenis'] : '';
+    $lhPihak = $_GET['pihak'] ?? '';
+    $lhItem  = (int)($_GET['item'] ?? 0);
+    $lhDari  = preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['dari'] ?? '') ? $_GET['dari'] : '';
+    $lhSampai = preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['sampai'] ?? '') ? $_GET['sampai'] : '';
+    $lhAwal = !empty($_GET['awal']);
+    $lhFilter = ['dari' => $lhDari, 'sampai' => $lhSampai, 'item_id' => $lhItem, 'dengan_awal' => $lhAwal];
+    if (preg_match('/^(PEMASOK|MITRA):(\d+)$/', $lhPihak, $mm)) { $lhFilter['jenis'] = $mm[1]; $lhFilter['pihak_id'] = (int)$mm[2]; }
+    elseif ($lhJenis) { $lhFilter['jenis'] = $lhJenis; }
+    $logHarga = \App\Services\LogHargaService::daftar($lhFilter);
+?>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">
+                <i data-lucide="history" style="width: 20px; height: 20px; color: #ef4444;"></i>
+                <span>Log Perubahan Harga</span>
+            </h2>
+            <div class="card-description">Setiap perubahan harga beli pemasok dan harga jual mitra: harga lama, harga baru, siapa, kapan, dan alasannya. Harga yang tidak berubah tidak dicatat.</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <?php $eksporTabel = 'tableLogHarga'; $eksporNama = 'Log_Perubahan_Harga'; include __DIR__ . '/layout/ekspor.php'; ?>
+        </div>
+    </div>
+
+    <form method="GET" style="padding: 14px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; border-bottom: 1px solid var(--border);">
+        <input type="hidden" name="page" value="master">
+        <input type="hidden" name="tab" value="log_harga">
+        <div style="min-width: 170px;">
+            <label class="form-label">Jenis Harga</label>
+            <select name="jenis" class="form-control">
+                <option value="">Semua</option>
+                <option value="PEMASOK" <?= $lhJenis === 'PEMASOK' ? 'selected' : '' ?>>Harga Beli (Pemasok)</option>
+                <option value="MITRA" <?= $lhJenis === 'MITRA' ? 'selected' : '' ?>>Harga Jual (Mitra)</option>
+            </select>
+        </div>
+        <div style="min-width: 220px;">
+            <label class="form-label">Pemasok / Mitra</label>
+            <select name="pihak" class="form-control">
+                <option value="">Semua</option>
+                <optgroup label="Pemasok">
+                    <?php foreach ($pemasokList as $p): ?><option value="PEMASOK:<?= $p['id'] ?>" <?= $lhPihak === 'PEMASOK:' . $p['id'] ? 'selected' : '' ?>><?= htmlspecialchars($p['nama_pemasok']) ?></option><?php endforeach; ?>
+                </optgroup>
+                <optgroup label="Mitra">
+                    <?php foreach ($mitraList as $m): ?><option value="MITRA:<?= $m['id'] ?>" <?= $lhPihak === 'MITRA:' . $m['id'] ? 'selected' : '' ?>><?= htmlspecialchars($m['nama_mitra']) ?></option><?php endforeach; ?>
+                </optgroup>
+            </select>
+        </div>
+        <div style="min-width: 240px;">
+            <label class="form-label">Artikel</label>
+            <select name="item" class="form-control">
+                <option value="0">Semua artikel</option>
+                <?php foreach ($itemList as $it): ?><option value="<?= $it['id'] ?>" <?= $lhItem === (int)$it['id'] ? 'selected' : '' ?>><?= htmlspecialchars($it['kode_item'] . ' - ' . $it['nama_item']) ?></option><?php endforeach; ?>
+            </select>
+        </div>
+        <div><label class="form-label">Dari</label><input type="date" name="dari" value="<?= $lhDari ?>" class="form-control"></div>
+        <div><label class="form-label">Sampai</label><input type="date" name="sampai" value="<?= $lhSampai ?>" class="form-control"></div>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding-bottom: 10px;"><input type="checkbox" name="awal" value="1" <?= $lhAwal ? 'checked' : '' ?>> Tampilkan harga awal</label>
+        <button type="submit" class="btn btn-primary">Tampilkan</button>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table-custom" id="tableLogHarga" data-no-tools>
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Jenis</th>
+                    <th>Pemasok / Mitra</th>
+                    <th>Artikel</th>
+                    <th style="text-align: right;">Harga Lama</th>
+                    <th style="text-align: right;">Harga Baru</th>
+                    <th style="text-align: right;">Selisih</th>
+                    <th>Diubah Oleh</th>
+                    <th>Alasan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!$logHarga): ?>
+                    <tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">Belum ada perubahan harga pada filter ini</td></tr>
+                <?php endif; ?>
+                <?php foreach ($logHarga as $lg): ?>
+                    <tr>
+                        <td><?= date('d/m/Y H:i', strtotime($lg['waktu'])) ?></td>
+                        <td><?= $lg['jenis'] === 'PEMASOK' ? 'Harga beli' : 'Harga jual' ?></td>
+                        <td style="font-weight: 600;"><?= htmlspecialchars((string)$lg['pihak']) ?></td>
+                        <td><?= htmlspecialchars($lg['nama_item']) ?></td>
+                        <td style="text-align: right;"><?= $lg['harga_lama'] === null ? '-' : Helper::formatRupiah($lg['harga_lama']) ?></td>
+                        <td style="text-align: right; font-weight: 700;"><?= Helper::formatRupiah($lg['harga_baru']) ?></td>
+                        <td style="text-align: right; color: <?= $lg['selisih'] === null ? 'inherit' : ($lg['selisih'] > 0 ? '#b91c1c' : '#15803d') ?>;">
+                            <?php if ($lg['selisih'] === null): ?>harga awal
+                            <?php else: ?><?= ($lg['selisih'] > 0 ? 'naik ' : 'turun ') . Helper::formatRupiah(abs($lg['selisih'])) ?><?= $lg['persen'] !== null ? ' (' . ($lg['selisih'] > 0 ? '+' : '-') . number_format(abs($lg['persen']), 1, ',', '.') . '%)' : '' ?>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= htmlspecialchars((string)($lg['oleh'] ?? '-')) ?></td>
+                        <td style="font-size: 12.5px; color: var(--text-muted);"><?= htmlspecialchars((string)($lg['alasan'] ?? '')) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<?php elseif ($activeTab === 'coa'): ?>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">
+                <i data-lucide="book-open" style="width: 20px; height: 20px; color: #4f46e5;"></i>
+                <span>Master Akun COA</span>
+            </h2>
+            <div class="card-description">Daftar akun buku besar. Akun inti dipakai posting otomatis dokumen; sub-akun bisa ditambah dan dipilih di Purchase Invoice.</div>
+        </div>
+        <?php $eksporTabel = 'tableMasterCoa'; $eksporNama = 'Master_COA'; include __DIR__ . '/layout/ekspor.php'; ?>
+        <button type="button" class="btn btn-primary" onclick="openModalCoa('')">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+            <span>Tambah Akun</span>
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table-custom" id="tableMasterCoa" data-no-tools>
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Kode</th>
+                    <th>Nama Akun</th>
+                    <th>Kelompok</th>
+                    <th>Saldo Normal</th>
+                    <th>Keterangan</th>
+                    <th style="text-align: right;">Saldo</th>
+                    <th>Status</th>
+                    <th style="text-align: center; width: 190px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($coaMaster as $kodeC => $c): ?>
+                <tr style="<?= $c[7] ? '' : 'opacity: 0.55;' ?>">
+                    <td><span class="badge" style="background: rgba(79, 70, 229, 0.12); color: #4f46e5; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= $kodeC ?></span></td>
+                    <td style="padding-left: <?= 12 + $c[9] * 22 ?>px; font-weight: <?= $c[9] === 0 ? '800' : '600' ?>;">
+                        <?= $c[9] > 0 ? '<span style="color: var(--text-muted);">&#8627;</span> ' : '' ?><?= htmlspecialchars($c[0]) ?>
+                        <?php if ($c[3]): ?><span class="badge badge-info" style="margin-left: 6px; font-size: 10.5px;">Akun inti</span><?php endif; ?>
+                    </td>
+                    <td><?= htmlspecialchars($c[4]) ?></td>
+                    <td><?= $c[2] ?></td>
+                    <td style="font-size: 12.5px; color: var(--text-muted); max-width: 260px;"><?= htmlspecialchars($c[8] ?: '-') ?></td>
+                    <td style="text-align: right; font-weight: 700;"><?= Helper::formatRupiah($coaSaldo[$kodeC] ?? 0) ?></td>
+                    <td>
+                        <?php if ($c[3]): ?>
+                            <span class="badge badge-success">Aktif</span>
+                        <?php else: ?>
+                            <a href="index.php?action=toggle_coa&kode=<?= $kodeC ?>" class="badge <?= $c[7] ? 'badge-success' : '' ?>" style="text-decoration: none; cursor: pointer;" title="Klik untuk <?= $c[7] ? 'nonaktifkan' : 'aktifkan' ?>"><?= $c[7] ? 'Aktif' : 'Nonaktif' ?></a>
+                        <?php endif; ?>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; justify-content: center; gap: 6px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="openModalCoa('<?= $kodeC ?>')" title="Tambah sub-akun di bawah akun ini">
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick='editCoa(<?= json_encode(['kode' => $kodeC, 'nama' => $c[0], 'keterangan' => $c[8]]) ?>)' title="Edit nama dan keterangan">
+                                <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                            </button>
+                            <?php if (!$c[3]): ?>
+                            <a href="javascript:void(0)" onclick="hapusMaster('delete_coa', '<?= $kodeC ?>', 'akun <?= $kodeC ?> <?= htmlspecialchars($c[0], ENT_QUOTES) ?>')" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus akun">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<?php elseif ($activeTab === 'tipe_biaya'): ?>
+                <?php $eksporTabel = 'tableMasterTipeBiaya'; $eksporNama = 'Master_Tipe_Biaya'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'harga_pemasok'): ?>
-                <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableMasterHargaPemasok', 'Master_Harga_Pemasok')">
-                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
-                <button type="button" class="btn btn-primary" style="background: #f59e0b; border-color: #f59e0b; color: #fff;" onclick="document.getElementById('formBulkHargaPemasok').submit()">
-                    <i data-lucide="save" style="width: 16px; height: 16px;"></i>
-                    <span>Simpan Harga Pemasok</span>
-                </button>
+                <?php $eksporTabel = 'tableMasterHargaPemasok'; $eksporNama = 'Master_Harga_Pemasok'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'harga_mitra'): ?>
-                <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableMasterHargaMitra', 'Master_Harga_Mitra')">
-                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
-                <button type="button" class="btn btn-success" onclick="document.getElementById('formBulkHargaMitra').submit()">
-                    <i data-lucide="save" style="width: 16px; height: 16px;"></i>
-                    <span>Simpan Harga Mitra</span>
-                </button>
+                <?php $eksporTabel = 'tableMasterHargaMitra'; $eksporNama = 'Master_Harga_Mitra'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'profit_loss'): ?>
-                <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableProfitLoss', 'Analisa_Profit_Loss')">
-                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
+                <?php $eksporTabel = 'tableProfitLoss'; $eksporNama = 'Analisa_Profit_Loss'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'mitra'): ?>
-                <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableMasterMitra', 'Master_Mitra_Bisnis')">
-                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
-                <button type="button" class="btn btn-primary" onclick="openModalMitra()">
-                    <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
-                    <span>Tambah Mitra Baru</span>
-                </button>
+                <?php $eksporTabel = 'tableMasterMitra'; $eksporNama = 'Master_Mitra_Bisnis'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'produk'): ?>
-                <button type="button" class="btn btn-outline" onclick="exportTableToExcel('tableMasterProduk', 'Master_Produk')">
-                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: #10b981;"></i>
-                    <span>Ekspor Excel (.xlsx)</span>
-                </button>
-                <button type="button" class="btn btn-primary" onclick="openModalItem()">
-                    <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
-                    <span>Tambah Produk</span>
-                </button>
+                <?php $eksporTabel = 'tableMasterProduk'; $eksporNama = 'Master_Produk'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php endif; ?>
         </div>
     <?php endif; ?>
@@ -152,38 +285,6 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Tab Navigasi Master Data & Pengaturan -->
-<div style="display: flex; gap: 8px; margin-bottom: 22px; border-bottom: 2px solid var(--border); padding-bottom: 8px; flex-wrap: wrap;">
-    <a href="index.php?page=master&tab=pemasok" class="btn <?= $activeTab === 'pemasok' ? 'btn-primary' : 'btn-outline' ?>" style="border-radius: 10px; font-weight: 700;">
-        <i data-lucide="truck" style="width: 16px; height: 16px; color: #f59e0b;"></i>
-        <span>🚚 Master Pemasok</span>
-    </a>
-    <a href="index.php?page=master&tab=harga_pemasok" class="btn <?= $activeTab === 'harga_pemasok' ? 'btn-primary' : 'btn-outline' ?>" style="border-radius: 10px; font-weight: 700;">
-        <i data-lucide="tag" style="width: 16px; height: 16px; color: #f59e0b;"></i>
-        <span>🏷️ Master Harga Pemasok (per Produk)</span>
-    </a>
-    <a href="index.php?page=master&tab=harga_mitra" class="btn <?= $activeTab === 'harga_mitra' ? 'btn-primary' : 'btn-outline' ?>" style="border-radius: 10px; font-weight: 700;">
-        <i data-lucide="badge-dollar-sign" style="width: 16px; height: 16px; color: #10b981;"></i>
-        <span>💰 Master Harga Mitra</span>
-    </a>
-    <a href="index.php?page=master&tab=mitra" class="btn <?= $activeTab === 'mitra' ? 'btn-primary' : 'btn-outline' ?>" style="border-radius: 10px; font-weight: 700;">
-        <i data-lucide="building-2" style="width: 16px; height: 16px; color: #3b82f6;"></i>
-        <span>🏢 Master Mitra Bisnis</span>
-    </a>
-    <a href="index.php?page=master&tab=produk" class="btn <?= $activeTab === 'produk' ? 'btn-primary' : 'btn-outline' ?>" style="border-radius: 10px; font-weight: 700;">
-        <i data-lucide="boxes" style="width: 16px; height: 16px; color: #8b5cf6;"></i>
-        <span>📦 Master Produk</span>
-    </a>
-    <a href="index.php?page=master&tab=accurate" class="btn <?= $activeTab === 'accurate' ? 'btn-primary' : 'btn-outline' ?>" style="border-radius: 10px; font-weight: 700;">
-        <i data-lucide="key" style="width: 16px; height: 16px; color: #0284c7;"></i>
-        <span>⚙️ Settingan API Accurate</span>
-    </a>
-    <a href="index.php?page=profit_loss" class="btn btn-outline" style="border-radius: 10px; font-weight: 800; color: #059669; border-color: #86efac; background: #f0fdf4; margin-left: auto;">
-        <i data-lucide="trending-up" style="width: 16px; height: 16px; color: #059669;"></i>
-        <span>📈 Buka Menu: Profit and Loss ➔</span>
-    </a>
-</div>
-
 <!-- ========================================================================= -->
 <!-- TAB PEMASOK: MASTER PEMASOK (SUPPLIER BARANG MASUK)                       -->
 <!-- ========================================================================= -->
@@ -193,7 +294,7 @@ require_once __DIR__ . '/layout/header.php';
         <div>
             <h2 class="card-title">
                 <i data-lucide="truck" style="width: 20px; height: 20px; color: #f59e0b;"></i>
-                <span>Daftar Pemasok (Supplier Barang Masuk)</span>
+                <span>Daftar Pemasok</span>
             </h2>
             <div class="card-description">Kelola data nelayan, tambak, atau supplier pengirim barang pada proses Penerimaan Barang Masuk</div>
         </div>
@@ -239,7 +340,7 @@ require_once __DIR__ . '/layout/header.php';
                         <td>
                             <?php if (!empty($p['telepon'])): ?>
                                 <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $p['telepon']) ?>" target="_blank" style="color: #10b981; font-weight: 600; text-decoration: none;">
-                                    📞 <?= htmlspecialchars($p['telepon']) ?>
+                                    <?= htmlspecialchars($p['telepon']) ?>
                                 </a>
                             <?php else: ?>
                                 <span style="color: var(--text-muted);">-</span>
@@ -293,6 +394,252 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 
 <!-- ========================================================================= -->
+<!-- TAB VENDOR NON-PEMASOK: REKANAN VENDOR OPERASIONAL & PIHAK KETIGA         -->
+<!-- ========================================================================= -->
+<?php elseif ($activeTab === 'vendor_non_pemasok'): ?>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">
+                <i data-lucide="store" style="width: 20px; height: 20px; color: #3b82f6;"></i>
+                <span>Vendor Non-Pemasok</span>
+            </h2>
+            <div class="card-description">Vendor penyedia barang operasional, packaging/kemasan, media pendingin, BBM genset, dan jasa perawatan</div>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openModalVendorNonPemasok()">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+            <span>Tambah Vendor</span>
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table-custom" id="tableMasterVendorNonPemasok">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Kode</th>
+                    <th>Nama Rekanan / Vendor</th>
+                    <th>Kategori Vendor</th>
+                    <th>Kontak / PIC</th>
+                    <th>Alamat & Lokasi</th>
+                    <th>Bank & Rekening</th>
+                    <th>Keterangan</th>
+                    <th>Status</th>
+                    <th style="text-align: center; width: 140px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($vendorNonPemasokList)): ?>
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        Belum ada data vendor non-pemasok. Klik "Tambah Vendor" untuk menambahkan.
+                    </td>
+                </tr>
+                <?php else: ?>
+                    <?php foreach ($vendorNonPemasokList as $v): ?>
+                    <tr>
+                        <td>
+                            <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: #2563eb; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
+                                <?= htmlspecialchars($v['kode_vendor']) ?>
+                            </span>
+                        </td>
+                        <td>
+                            <strong style="color: var(--text-main); font-size: 14px;"><?= htmlspecialchars($v['nama_vendor']) ?></strong>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 700; font-size: 11.5px;">
+                                <?= htmlspecialchars($v['kategori_vendor'] ?: 'Operasional') ?>
+                            </span>
+                        </td>
+                        <td>
+                            <div><?= htmlspecialchars($v['pic_nama'] ?: '-') ?></div>
+                            <?php if (!empty($v['telepon'])): ?>
+                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $v['telepon']) ?>" target="_blank" style="color: #10b981; font-weight: 600; font-size: 12px; text-decoration: none;">
+                                    <?= htmlspecialchars($v['telepon']) ?>
+                                </a>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size: 12.5px; color: var(--text-muted); max-width: 180px;">
+                            <?= htmlspecialchars($v['alamat'] ?: '-') ?>
+                        </td>
+                        <td style="font-size: 12px;">
+                            <?php if (!empty($v['bank']) || !empty($v['no_rekening'])): ?>
+                                <strong style="color: #1e293b;"><?= htmlspecialchars($v['bank'] ?: 'Bank') ?></strong>: <?= htmlspecialchars($v['no_rekening'] ?: '-') ?>
+                                <?php if (!empty($v['nama_rekening'])): ?>
+                                    <div style="color: var(--text-muted); font-size: 11px;">a.n <?= htmlspecialchars($v['nama_rekening']) ?></div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span style="color: var(--text-muted);">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size: 12.5px;"><?= htmlspecialchars($v['keterangan'] ?: '-') ?></td>
+                        <td>
+                            <a href="javascript:void(0)" 
+                               onclick="confirmToggleVendorNonPemasok(<?= $v['id'] ?>, '<?= htmlspecialchars($v['nama_vendor'], ENT_QUOTES) ?>', <?= $v['is_active'] ? 'true' : 'false' ?>)"
+                               class="btn btn-sm" 
+                               style="<?= $v['is_active'] 
+                                   ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' 
+                                   : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' 
+                               ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s;"
+                               title="<?= $v['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>">
+                                <?php if ($v['is_active']): ?>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
+                                    <span>Aktif</span>
+                                    <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
+                                <?php else: ?>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                                    <span>Nonaktif</span>
+                                    <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
+                                <?php endif; ?>
+                            </a>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; justify-content: center; gap: 6px;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick='editVendorNonPemasok(<?= json_encode($v) ?>)' title="Edit Profil Vendor">
+                                    <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <a href="javascript:void(0)" 
+                                   onclick="confirmDeleteVendorNonPemasok(<?= $v['id'] ?>, '<?= htmlspecialchars($v['nama_vendor'], ENT_QUOTES) ?>')" 
+                                   class="btn btn-outline btn-sm" 
+                                   style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" 
+                                   title="Hapus Vendor Permanen">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- TAB TIPE BIAYA: KATALOG JENIS BIAYA OPERASIONAL & AKUN COA               -->
+<!-- ========================================================================= -->
+<?php elseif ($activeTab === 'tipe_biaya'): ?>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">
+                <i data-lucide="receipt" style="width: 20px; height: 20px; color: #8b5cf6;"></i>
+                <span>Master Tipe Biaya Operasional</span>
+            </h2>
+            <div class="card-description">Klasifikasi pengeluaran operasional dan pemetaan akun buku besar</div>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openModalTipeBiaya()">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+            <span>Tambah Tipe Biaya</span>
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table-custom" id="tableMasterTipeBiaya">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Kode</th>
+                    <th>Nama Tipe Biaya</th>
+                    <th>Kategori Beban</th>
+                    <th>Akun Buku Besar</th>
+                    <th>Satuan Default</th>
+                    <th style="text-align: right;">Estimasi Tarif</th>
+                    <th>Keterangan</th>
+                    <th>Status</th>
+                    <th style="text-align: center; width: 140px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($tipeBiayaList)): ?>
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        Belum ada data tipe biaya. Klik "Tambah Tipe Biaya" untuk menambahkan.
+                    </td>
+                </tr>
+                <?php else: ?>
+                    <?php foreach ($tipeBiayaList as $b): ?>
+                    <tr>
+                        <td>
+                            <span class="badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;">
+                                <?= htmlspecialchars($b['kode_biaya']) ?>
+                            </span>
+                        </td>
+                        <td>
+                            <strong style="color: var(--text-main); font-size: 14px;"><?= htmlspecialchars($b['nama_biaya']) ?></strong>
+                        </td>
+                        <td>
+                            <?php
+                            $badgeKategori = 'badge-purple';
+                            if ($b['kategori_beban'] === 'ASET') $badgeKategori = 'badge-info';
+                            elseif ($b['kategori_beban'] === 'HPP') $badgeKategori = 'badge-warning';
+                            ?>
+                            <span class="badge <?= $badgeKategori ?>" style="font-weight: 700; font-size: 11px;">
+                                <?= htmlspecialchars($b['kategori_beban']) ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0284c7; font-size: 12px;">
+                                [<?= htmlspecialchars($b['kode_akun']) ?>]
+                            </span>
+                            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-main);">
+                                <?= htmlspecialchars($b['nama_akun']) ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600;">
+                                <?= htmlspecialchars($b['satuan_default'] ?: 'Pcs') ?>
+                            </span>
+                        </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #059669; font-size: 13px;">
+                            Rp <?= number_format((float)$b['estimasi_harga'], 0, ',', '.') ?>
+                        </td>
+                        <td style="font-size: 12.5px; color: var(--text-muted); max-width: 200px;">
+                            <?= htmlspecialchars($b['keterangan'] ?: '-') ?>
+                        </td>
+                        <td>
+                            <a href="javascript:void(0)" 
+                               onclick="confirmToggleTipeBiaya(<?= $b['id'] ?>, '<?= htmlspecialchars($b['nama_biaya'], ENT_QUOTES) ?>', <?= $b['is_active'] ? 'true' : 'false' ?>)"
+                               class="btn btn-sm" 
+                               style="<?= $b['is_active'] 
+                                   ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' 
+                                   : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' 
+                               ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s;"
+                               title="<?= $b['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>">
+                                <?php if ($b['is_active']): ?>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);"></span>
+                                    <span>Aktif</span>
+                                    <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
+                                <?php else: ?>
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                                    <span>Nonaktif</span>
+                                    <i data-lucide="power" style="width: 12px; height: 12px; opacity: 0.7;"></i>
+                                <?php endif; ?>
+                            </a>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; justify-content: center; gap: 6px;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick='editTipeBiaya(<?= json_encode($b) ?>)' title="Edit Tipe Biaya">
+                                    <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                                    <span>Edit</span>
+                                </button>
+                                <a href="javascript:void(0)" 
+                                   onclick="confirmDeleteTipeBiaya(<?= $b['id'] ?>, '<?= htmlspecialchars($b['nama_biaya'], ENT_QUOTES) ?>')" 
+                                   class="btn btn-outline btn-sm" 
+                                   style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" 
+                                   title="Hapus Tipe Biaya Permanen">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
 <!-- TAB: MASTER HARGA PEMASOK (HARGA BELI PER JENIS BARANG)                   -->
 <!-- ========================================================================= -->
 <?php elseif ($activeTab === 'harga_pemasok'): ?>
@@ -301,10 +648,10 @@ require_once __DIR__ . '/layout/header.php';
         <div>
             <h2 class="card-title">
                 <i data-lucide="tag" style="width: 20px; height: 20px; color: #f59e0b;"></i>
-                <span>Master Harga Pemasok (Harga Beli per Jenis Barang)</span>
+                <span>Master Harga Pemasok</span>
             </h2>
             <div class="card-description">
-                Tarif harga beli persediaan per Kg untuk setiap jenis barang dari masing-masing pemasok (supplier). Harga ini menjadi dasar penghitungan HPP dan profit saat barang dikeluarkan ke mitra.
+                Tarif harga beli persediaan per Kg untuk setiap jenis barang dari masing-masing pemasok. Harga ini menjadi dasar penghitungan HPP dan profit saat barang dikeluarkan ke mitra.
             </div>
         </div>
         <div style="display: flex; gap: 8px;">
@@ -319,7 +666,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="alert alert-info" style="margin: 0 20px 20px 20px;">
         <i data-lucide="info" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
         <div style="font-size: 13px; line-height: 1.5;">
-            <strong>💡 Kontrak Harga Beli per Produk SKU:</strong> Setiap pemasok memiliki kontrak harga beli untuk setiap produk SKU (Udang, Cumi, Ikan, Teri Jengki, Rebon, HRKK, dll). Tarif ini digunakan untuk menghitung modal pembelian dan dianalisa pada menu <strong>Profit and Loss</strong>.
+            <strong>Kontrak Harga Beli per Produk SKU:</strong> Setiap pemasok memiliki kontrak harga beli untuk setiap produk SKU. Tarif ini digunakan untuk menghitung modal pembelian dan dianalisa pada menu <strong>Laba Rugi</strong>.
         </div>
     </div>
 
@@ -392,8 +739,9 @@ require_once __DIR__ . '/layout/header.php';
 
         <div style="padding: 16px 20px; background: var(--bg-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border);">
             <div style="font-size: 12.5px; color: var(--text-muted);">
-                Perubahan tarif beli pemasok ini otomatis terhubung ke perhitungan modal beli dan menu Profit and Loss.
+                Perubahan tarif beli pemasok ini otomatis terhubung ke perhitungan modal beli dan menu Laba Rugi.
             </div>
+            <input type="text" name="alasan_perubahan" class="form-control" placeholder="Alasan perubahan harga (opsional, masuk ke log)" style="max-width: 340px; margin-left: auto; margin-right: 12px;">
             <button type="submit" class="btn btn-primary btn-lg" style="background: #f59e0b; border-color: #f59e0b; color: #fff;">
                 <i data-lucide="check" style="width: 18px; height: 18px;"></i>
                 <span>Simpan Perubahan Harga Pemasok</span>
@@ -411,7 +759,7 @@ require_once __DIR__ . '/layout/header.php';
         <div>
             <h2 class="card-title">
                 <i data-lucide="badge-dollar-sign" style="width: 20px; height: 20px; color: #10b981;"></i>
-                <span>Master Harga Mitra (Harga Jual ke 7 Mitra)</span>
+                <span>Master Harga Mitra</span>
             </h2>
             <div class="card-description">
                 Tarif harga jual kontrak per Kg untuk masing-masing 7 mitra bisnis. Nilai ini menjadi dasar pendapatan saat barang dikeluarkan dari gudang.
@@ -429,7 +777,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="alert alert-info" style="margin: 0 20px 20px 20px;">
         <i data-lucide="info" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
         <div style="font-size: 13px; line-height: 1.5;">
-            <strong>💡 Integrasi Harga Jual Mitra:</strong> Setiap dari 7 mitra bisnis memiliki kontrak tarif harga jual berbeda-beda. Saat melakukan <em>Pengeluaran Barang</em> dari stok pemasok ke mitra tujuan, harga di bawah ini otomatis diterapkan untuk menghasilkan nilai total invoice dan laba bersih.
+            <strong>Integrasi Harga Jual Mitra:</strong> Setiap dari 7 mitra bisnis memiliki kontrak tarif harga jual berbeda-beda. Saat melakukan <em>Pengeluaran Barang</em> dari stok pemasok ke mitra tujuan, harga di bawah ini otomatis diterapkan untuk menghasilkan nilai total invoice dan laba bersih.
         </div>
     </div>
 
@@ -496,6 +844,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="font-size: 12.5px; color: var(--text-muted);">
                 Semua input harga jual mitra otomatis tersimpan ke master dan terhubung ke Stasiun Pengeluaran Barang.
             </div>
+            <input type="text" name="alasan_perubahan" class="form-control" placeholder="Alasan perubahan harga (opsional, masuk ke log)" style="max-width: 340px; margin-left: auto; margin-right: 12px;">
             <button type="submit" class="btn btn-success btn-lg">
                 <i data-lucide="check" style="width: 18px; height: 18px;"></i>
                 <span>Simpan Perubahan Harga Mitra</span>
@@ -568,10 +917,13 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endif; ?>
                     </td>
                     <td style="text-align: center;">
+                        <div style="display: flex; justify-content: center; gap: 6px;">
                         <button type="button" class="btn btn-outline btn-sm" onclick='editMitra(<?= json_encode($m) ?>)'>
                             <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
                             <span>Edit</span>
                         </button>
+                        <button type="button" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_mitra', <?= (int)$m['id'] ?>, '<?= htmlspecialchars($m['nama_mitra'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -610,7 +962,7 @@ require_once __DIR__ . '/layout/header.php';
                 <tr>
                     <th style="width: 160px;">Kode SKU</th>
                     <th>Nama Barang / Produk</th>
-                    <th>Kategori / Jenis Master</th>
+                    <th>Kategori</th>
                     <th style="text-align: center; width: 140px;">Aksi</th>
                 </tr>
             </thead>
@@ -626,14 +978,9 @@ require_once __DIR__ . '/layout/header.php';
                         <strong style="color: var(--text-main); font-size: 15px;"><?= htmlspecialchars($it['nama_item']) ?></strong>
                     </td>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span class="badge badge-purple" style="font-size: 12px; font-weight: 700;">
-                                <?= htmlspecialchars($it['nama_jenis']) ?>
-                            </span>
-                            <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10px;" onclick="editKategoriById(<?= $it['jenis_id'] ?>, '<?= htmlspecialchars($it['nama_jenis'], ENT_QUOTES) ?>', '<?= htmlspecialchars($it['kode_jenis'], ENT_QUOTES) ?>')" title="Edit Kategori Ini">
-                                ✏️
-                            </button>
-                        </div>
+                        <span class="badge badge-purple" style="font-size: 12px; font-weight: 700;">
+                            <?= htmlspecialchars($it['nama_jenis']) ?>
+                        </span>
                     </td>
                     <td style="text-align: center;">
                         <div style="display: flex; justify-content: center; gap: 6px;">
@@ -641,6 +988,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
                                 <span>Edit</span>
                             </button>
+                            <button type="button" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_item', <?= (int)$it['id'] ?>, '<?= htmlspecialchars($it['nama_item'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -669,17 +1017,17 @@ require_once __DIR__ . '/layout/header.php';
             <?php if (!empty($cfg['is_connected']) && !empty($cfg['session_id'])): ?>
                 <span class="badge badge-success" style="padding: 6px 12px; font-size: 12px;">
                     <i data-lucide="check-circle-2" style="width: 14px; height: 14px; margin-right: 4px;"></i>
-                    ✓ Live API Terhubung: <strong><?= htmlspecialchars($cfg['db_alias'] ?: ('ID ' . $cfg['db_id'])) ?></strong>
+                    Live API Terhubung: <strong><?= htmlspecialchars($cfg['db_alias'] ?: ('ID ' . $cfg['db_id'])) ?></strong>
                 </span>
             <?php elseif (!empty($cfg['api_token'])): ?>
                 <span class="badge badge-warning" style="padding: 6px 12px; font-size: 12px;">
                     <i data-lucide="clock" style="width: 14px; height: 14px; margin-right: 4px;"></i>
-                    ⏳ Token Tersimpan (Silakan Pilih Database)
+                    Token Tersimpan
                 </span>
             <?php else: ?>
                 <span class="badge badge-purple" style="padding: 6px 12px; font-size: 12px;">
                     <i data-lucide="shield-alert" style="width: 14px; height: 14px; margin-right: 4px;"></i>
-                    ⚙ Mode Simulasi / Menunggu API Token
+                    Mode Simulasi / Menunggu API Token
                 </span>
             <?php endif; ?>
         </div>
@@ -691,7 +1039,7 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label class="form-label" style="font-weight: 700; font-size: 12.5px;">
-                        App Key (Developer ID):
+                        App Key:
                     </label>
                     <div style="display: flex; gap: 6px;">
                         <input type="text" id="cfgAppKey" class="form-control" value="<?= htmlspecialchars($cfg['app_key']) ?>" readonly style="background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;">
@@ -723,7 +1071,7 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label class="form-label" style="font-weight: 700; font-size: 12.5px; display: flex; justify-content: space-between;">
-                        <span>API Token (Dihasilkan dari Accurate Store):</span>
+                        <span>API Token:</span>
                         <a href="javascript:void(0)" onclick="openGuideModal()" style="font-size: 11px; color: var(--primary); font-weight: 600; text-decoration: underline;">Cara dapatkan token?</a>
                     </label>
                     <textarea id="inputApiToken" name="api_token" class="form-control" rows="2" placeholder="Tempelkan (Paste) API Token panjang dari Accurate Online di sini..." style="font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: vertical;"><?= htmlspecialchars($cfg['api_token']) ?></textarea>
@@ -775,10 +1123,7 @@ require_once __DIR__ . '/layout/header.php';
             <div class="card-description">Daftar dokumen transaksi pengeluaran dan mutasi yang siap tersinkron ke Accurate Online</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableAccurateSync', 'Log_Antrean_Accurate_Online')">
-                <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                <span>Ekspor Excel (.xlsx)</span>
-            </button>
+            <?php $eksporTabel = 'tableAccurateSync'; $eksporNama = 'Log_Antrean_Accurate_Online'; include __DIR__ . '/layout/ekspor.php'; ?>
             <span class="badge badge-purple"><?= count($queueList) ?> Dokumen</span>
         </div>
     </div>
@@ -819,21 +1164,21 @@ require_once __DIR__ . '/layout/header.php';
                         <td><strong><?= $q['attempt_count'] ?></strong> / <?= $q['max_attempts'] ?></td>
                         <td>
                             <?php if ($q['status'] === 'SUCCESS'): ?>
-                                <span class="badge badge-success">✓ Terkirim</span>
+                                <span class="badge badge-success">Terkirim</span>
                             <?php elseif ($q['status'] === 'PENDING'): ?>
-                                <span class="badge badge-warning">⏳ Pending</span>
+                                <span class="badge badge-warning">Pending</span>
                             <?php else: ?>
-                                <span class="badge badge-destructive">⚠ Gagal</span>
+                                <span class="badge badge-destructive">Gagal</span>
                             <?php endif; ?>
                         </td>
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 6px; justify-content: center;">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="showPayload(<?= htmlspecialchars(json_encode($q['payload_json'])) ?>)">
-                                    🔍 JSON
+                                    JSON
                                 </button>
                                 <?php if ($q['status'] !== 'SUCCESS'): ?>
                                     <button type="button" class="btn btn-primary btn-sm" onclick="syncQueue(<?= $q['id'] ?>)">
-                                        ⚡ Kirim
+                                        Kirim
                                     </button>
                                 <?php endif; ?>
                             </div>
@@ -860,8 +1205,8 @@ require_once __DIR__ . '/layout/header.php';
         <form action="index.php?action=save_mitra" method="POST" style="padding: 20px;">
             <input type="hidden" name="id" id="mitra_id_input" value="">
             <div class="form-group">
-                <label class="form-label">Kode Mitra (M01 - M07) <span style="color:red;">*</span></label>
-                <input type="text" name="kode_mitra" id="input_kode_mitra" class="form-control" required placeholder="Contoh: M08">
+                <label class="form-label">Kode Mitra</label>
+                <input type="text" name="kode_mitra" id="input_kode_mitra" class="form-control" readonly tabindex="-1" placeholder="Otomatis" style="background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-weight: 700; cursor: not-allowed;">
             </div>
             <div class="form-group">
                 <label class="form-label">Nama Mitra Bisnis <span style="color:red;">*</span></label>
@@ -908,8 +1253,8 @@ require_once __DIR__ . '/layout/header.php';
             <input type="hidden" name="id" id="item_id_input" value="">
             <input type="hidden" name="satuan_accurate" id="input_satuan" value="KG">
             <div class="form-group">
-                <label class="form-label">Kode SKU / Item Accurate <span style="color:red;">*</span></label>
-                <input type="text" name="kode_item" id="input_kode_item" class="form-control" required placeholder="Contoh: SKU-UDANG-001">
+                <label class="form-label">Kode Produk</label>
+                <input type="text" name="kode_item" id="input_kode_item" class="form-control" readonly tabindex="-1" placeholder="Otomatis" style="background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-weight: 700; cursor: not-allowed;">
             </div>
             <div class="form-group">
                 <label class="form-label">Nama Barang / Produk <span style="color:red;">*</span></label>
@@ -917,12 +1262,12 @@ require_once __DIR__ . '/layout/header.php';
             </div>
             <div class="form-group">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <label class="form-label" style="margin: 0;">Kategori / Jenis Master <span style="color:red;">*</span></label>
+                    <label class="form-label" style="margin: 0;">Kategori <span style="color:red;">*</span></label>
                     <button type="button" class="btn btn-outline btn-sm" onclick="openModalKategori()" style="font-size: 11px; padding: 2px 7px;">
-                        + Kelola Kategori
+                        Kelola Kategori
                     </button>
                 </div>
-                <select name="jenis_id" id="input_jenis_id" class="form-control" required>
+                <select name="jenis_id" id="input_jenis_id" class="form-control" required onchange="if (!document.getElementById('item_id_input').value) onJenisItemChange()">
                     <?php foreach ($jenisList as $j): ?>
                         <option value="<?= $j['id'] ?>"><?= htmlspecialchars($j['nama_jenis']) ?> (<?= htmlspecialchars($j['kode_jenis']) ?>)</option>
                     <?php endforeach; ?>
@@ -944,7 +1289,7 @@ require_once __DIR__ . '/layout/header.php';
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
             <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 6px;">
                 <i data-lucide="tag" style="width: 18px; height: 18px; color: #8b5cf6;"></i>
-                <span>Kelola Kategori / Jenis Master</span>
+                <span>Kelola Kategori</span>
             </h3>
             <button type="button" class="btn btn-outline btn-sm" onclick="closeModalKategori()">✕</button>
         </div>
@@ -970,8 +1315,9 @@ require_once __DIR__ . '/layout/header.php';
                             <td><strong><?= htmlspecialchars($cat['nama_jenis']) ?></strong></td>
                             <td style="text-align: center;">
                                 <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 11px;" onclick="editKategori(<?= json_encode($cat) ?>)">
-                                    ✏️ Edit
+                                    Edit
                                 </button>
+                                <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 11px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Hapus" onclick="hapusMaster('delete_jenis', <?= (int)$cat['id'] ?>, '<?= htmlspecialchars($cat['nama_jenis'], ENT_QUOTES) ?>')"><i data-lucide="trash-2" style="width: 12px; height: 12px;"></i></button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -988,7 +1334,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div style="display: grid; grid-template-columns: 100px 1fr auto; gap: 8px; align-items: end;">
                     <div>
                         <label class="form-label" style="font-size: 11px;">Kode</label>
-                        <input type="text" name="kode_jenis" id="input_kode_jenis" class="form-control" required placeholder="JB05" style="height: 38px; text-transform: uppercase;">
+                        <input type="text" name="kode_jenis" id="input_kode_jenis" class="form-control" readonly tabindex="-1" placeholder="Otomatis" style="height: 38px; background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-weight: 700; cursor: not-allowed;">
                     </div>
                     <div>
                         <label class="form-label" style="font-size: 11px;">Nama Kategori / Jenis</label>
@@ -1017,7 +1363,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: grid; grid-template-columns: 130px 1fr; gap: 12px;">
                 <div class="form-group">
                     <label class="form-label">Kode Pemasok <span style="color:red;">*</span></label>
-                    <input type="text" name="kode_pemasok" id="input_kode_pemasok" class="form-control" required placeholder="PMS-01" style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+                    <input type="text" name="kode_pemasok" id="input_kode_pemasok" class="form-control" required placeholder="Contoh: BH-01" style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Nama Pemasok / Nelayan <span style="color:red;">*</span></label>
@@ -1052,6 +1398,210 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
                 <button type="button" class="btn btn-outline" onclick="closeModalPemasok()">Batal</button>
                 <button type="submit" class="btn btn-primary">Simpan Pemasok</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL TAMBAH / EDIT VENDOR NON-PEMASOK                                    -->
+<!-- ========================================================================= -->
+<div id="modalVendorNonPemasok" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); width: 100%; max-width: 580px; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="modalVendorNonPemasokTitle" style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0;">Tambah Vendor Non-Pemasok</h3>
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeModalVendorNonPemasok()">✕</button>
+        </div>
+        <form action="index.php?action=save_vendor_non_pemasok" method="POST" style="padding: 20px;">
+            <input type="hidden" name="id" id="vendor_id_input" value="">
+            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Kode Vendor</label>
+                    <input type="text" name="kode_vendor" id="input_kode_vendor" class="form-control" readonly tabindex="-1" placeholder="Otomatis" style="background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-weight: 700; cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Vendor / Toko Rekanan <span style="color:red;">*</span></label>
+                    <input type="text" name="nama_vendor" id="input_nama_vendor" class="form-control" required placeholder="Contoh: Toko Es Balok Muara">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Kategori Vendor</label>
+                    <select name="kategori_vendor" id="input_kategori_vendor" class="form-control">
+                        <option value="Es Balok & Media Pendingin">Es Balok & Media Pendingin</option>
+                        <option value="Kemasan & Packaging">Kemasan & Packaging</option>
+                        <option value="Bahan Bakar & Energi">Bahan Bakar & Energi</option>
+                        <option value="Logistik & Ekspedisi">Logistik & Ekspedisi</option>
+                        <option value="Perawatan Mesin & Gudang">Perawatan Mesin & Gudang</option>
+                        <option value="Peralatan & Aset">Peralatan & Aset Timbangan</option>
+                        <option value="OPERASIONAL" selected>Operasional Umum / Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Kontak / PIC</label>
+                    <input type="text" name="pic_nama" id="input_vendor_pic" class="form-control" placeholder="Nama sales / pengelola">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">No. Telepon / WA</label>
+                    <input type="text" name="telepon" id="input_vendor_telepon" class="form-control" placeholder="0812-xxxx-xxxx">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Bank</label>
+                    <input type="text" name="bank" id="input_vendor_bank" class="form-control" placeholder="BCA / Mandiri / BRI">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Nomor Rekening</label>
+                    <input type="text" name="no_rekening" id="input_vendor_norek" class="form-control" placeholder="Contoh: 8820192837">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Atas Nama Rekening</label>
+                    <input type="text" name="nama_rekening" id="input_vendor_namarek" class="form-control" placeholder="Nama pemilik rekening">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Alamat Kantor / Toko</label>
+                <textarea name="alamat" id="input_vendor_alamat" class="form-control" rows="2" placeholder="Alamat lengkap vendor..."></textarea>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 140px; gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Keterangan / Catatan</label>
+                    <input type="text" name="keterangan" id="input_vendor_keterangan" class="form-control" placeholder="Contoh: Suplai es balok harian">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Status</label>
+                    <select name="is_active" id="input_vendor_active" class="form-control">
+                        <option value="1">Aktif</option>
+                        <option value="0">Nonaktif</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalVendorNonPemasok()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Vendor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL TAMBAH / EDIT AKUN COA                                              -->
+<!-- ========================================================================= -->
+<div id="modalCoa" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); width: 100%; max-width: 500px; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="modalCoaTitle" style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0;">Tambah Akun</h3>
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('modalCoa').style.display='none'">&#10005;</button>
+        </div>
+        <form action="index.php?action=save_coa" method="POST" style="padding: 20px;">
+            <input type="hidden" name="edit" id="coa_edit" value="">
+            <div class="form-group" id="coaIndukWrap">
+                <label class="form-label">Akun Induk <span style="color:red;">*</span></label>
+                <select name="induk" id="coa_induk" class="form-control" onchange="onCoaIndukChange(this.value)">
+                    <?php foreach ($coaMaster as $kodeC => $c): ?>
+                        <option value="<?= $kodeC ?>"><?= str_repeat('&nbsp;&nbsp;', $c[9]) ?><?= $kodeC ?> - <?= htmlspecialchars($c[0]) ?> (<?= $c[4] ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 130px 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Kode <span style="color:red;">*</span></label>
+                    <input type="text" name="kode" id="coa_kode" class="form-control" required maxlength="4" pattern="\d{4}" style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Akun <span style="color:red;">*</span></label>
+                    <input type="text" name="nama" id="coa_nama" class="form-control" required placeholder="Contoh: Biaya Sewa Gudang">
+                </div>
+            </div>
+            <div class="form-group" id="coaNormalWrap">
+                <label class="form-label">Saldo Normal</label>
+                <select name="saldo_normal" id="coa_normal" class="form-control">
+                    <option value="Debit">Debit</option>
+                    <option value="Credit">Kredit</option>
+                </select>
+                <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px;">Otomatis mengikuti kelompok. Ubah hanya untuk akun pengurang (kontra), misalnya akumulasi penyusutan.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Keterangan</label>
+                <input type="text" name="keterangan" id="coa_ket" class="form-control" placeholder="Opsional">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('modalCoa').style.display='none'">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Akun</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL TAMBAH / EDIT TIPE BIAYA OPERASIONAL                                -->
+<!-- ========================================================================= -->
+<div id="modalTipeBiaya" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); width: 100%; max-width: 540px; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="modalTipeBiayaTitle" style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0;">Tambah Tipe Biaya</h3>
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeModalTipeBiaya()">✕</button>
+        </div>
+        <form action="index.php?action=save_tipe_biaya" method="POST" style="padding: 20px;">
+            <input type="hidden" name="id" id="biaya_id_input" value="">
+            <div style="display: grid; grid-template-columns: 130px 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Kode Biaya</label>
+                    <input type="text" name="kode_biaya" id="input_kode_biaya" class="form-control" readonly tabindex="-1" placeholder="Otomatis" style="background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-weight: 700; cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Tipe Biaya <span style="color:red;">*</span></label>
+                    <input type="text" name="nama_biaya" id="input_nama_biaya" class="form-control" required placeholder="Contoh: Es Balok Pendingin">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Kategori Beban</label>
+                    <select name="kategori_beban" id="input_kategori_beban" class="form-control" onchange="onKategoriBebanChange(this.value)">
+                        <option value="OPERASIONAL" selected>Operasional Rutin</option>
+                        <option value="ASET">Aset / Inventaris</option>
+                        <option value="HPP">HPP Pembelian</option>
+                        <option value="LAINNYA">Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Akun COA <span style="color:red;">*</span></label>
+                    <select name="kode_akun" id="input_kode_akun" class="form-control" required>
+                        <?php foreach ($coaList as $coa): ?>
+                            <option value="<?= htmlspecialchars($coa['kode']) ?>">
+                                [<?= htmlspecialchars($coa['kode']) ?>] <?= htmlspecialchars($coa['nama']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label class="form-label">Satuan Default</label>
+                    <input type="text" name="satuan_default" id="input_satuan_default" class="form-control" placeholder="Pcs / Balok / Box / Liter / Trip">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estimasi Tarif / Harga Satuan (Rp)</label>
+                    <input type="number" step="any" name="estimasi_harga" id="input_estimasi_harga" class="form-control" placeholder="0" style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Keterangan / Penggunaan</label>
+                <textarea name="keterangan" id="input_biaya_keterangan" class="form-control" rows="2" placeholder="Penjelasan singkat alokasi tipe biaya ini..."></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Status</label>
+                <select name="is_active" id="input_biaya_active" class="form-control">
+                    <option value="1">Aktif</option>
+                    <option value="0">Nonaktif</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalTipeBiaya()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Tipe Biaya</button>
             </div>
         </form>
     </div>
@@ -1137,7 +1687,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: flex; gap: 12px; background: var(--bg-muted); padding: 12px 16px; border-radius: 8px;">
                 <div style="background: #10b981; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">5</div>
                 <div>
-                    <strong>Tempel (Paste) Token ke Sistem Gudang</strong>
+                    <strong>Tempel Token ke Sistem Gudang</strong>
                     <div style="color: var(--text-muted); font-size: 12.5px;">Tempel token tersebut ke kolom <strong>API Token</strong> di atas, lalu klik <strong>Tes & Pilih DB</strong> untuk menyimpan database. Selesai!</div>
                 </div>
             </div>
@@ -1197,13 +1747,132 @@ require_once __DIR__ . '/layout/header.php';
         document.getElementById('modalPemasok').style.display = 'none';
     }
 
+    // Vendor Non-Pemasok Modal Handling
+    function openModalVendorNonPemasok() {
+        document.getElementById('modalVendorNonPemasokTitle').innerText = 'Tambah Vendor Non-Pemasok';
+        document.getElementById('vendor_id_input').value = '';
+        document.getElementById('input_kode_vendor').value = '<?= \App\Models\VendorNonPemasok::generateNextKode() ?>';
+        document.getElementById('input_nama_vendor').value = '';
+        document.getElementById('input_kategori_vendor').value = 'OPERASIONAL';
+        document.getElementById('input_vendor_pic').value = '';
+        document.getElementById('input_vendor_telepon').value = '';
+        document.getElementById('input_vendor_bank').value = '';
+        document.getElementById('input_vendor_norek').value = '';
+        document.getElementById('input_vendor_namarek').value = '';
+        document.getElementById('input_vendor_alamat').value = '';
+        document.getElementById('input_vendor_keterangan').value = '';
+        document.getElementById('input_vendor_active').value = '1';
+        document.getElementById('modalVendorNonPemasok').style.display = 'flex';
+    }
+
+    function editVendorNonPemasok(v) {
+        document.getElementById('modalVendorNonPemasokTitle').innerText = 'Edit Vendor: ' + v.nama_vendor;
+        document.getElementById('vendor_id_input').value = v.id;
+        document.getElementById('input_kode_vendor').value = v.kode_vendor;
+        document.getElementById('input_nama_vendor').value = v.nama_vendor;
+        document.getElementById('input_kategori_vendor').value = v.kategori_vendor || 'OPERASIONAL';
+        document.getElementById('input_vendor_pic').value = v.pic_nama || '';
+        document.getElementById('input_vendor_telepon').value = v.telepon || '';
+        document.getElementById('input_vendor_bank').value = v.bank || '';
+        document.getElementById('input_vendor_norek').value = v.no_rekening || '';
+        document.getElementById('input_vendor_namarek').value = v.nama_rekening || '';
+        document.getElementById('input_vendor_alamat').value = v.alamat || '';
+        document.getElementById('input_vendor_keterangan').value = v.keterangan || '';
+        document.getElementById('input_vendor_active').value = v.is_active;
+        document.getElementById('modalVendorNonPemasok').style.display = 'flex';
+    }
+
+    function closeModalVendorNonPemasok() {
+        document.getElementById('modalVendorNonPemasok').style.display = 'none';
+    }
+
+    // Master COA
+    const COA_SARAN = <?= json_encode((function () use ($coaMaster) { $o = []; foreach ($coaMaster as $k => $c) { $o[$k] = [\App\Services\CoaService::sarankanKode((string)$k), $c[2]]; } return $o; })()) ?>;
+    function onCoaIndukChange(induk) {
+        const s = COA_SARAN[induk];
+        if (!s) return;
+        document.getElementById('coa_kode').value = s[0];
+        document.getElementById('coa_normal').value = s[1];
+    }
+    function openModalCoa(induk) {
+        document.getElementById('modalCoaTitle').innerText = induk ? 'Tambah Sub-akun' : 'Tambah Akun';
+        document.getElementById('coa_edit').value = '';
+        document.getElementById('coaIndukWrap').style.display = '';
+        document.getElementById('coaNormalWrap').style.display = '';
+        const kode = document.getElementById('coa_kode');
+        kode.readOnly = false; kode.style.background = '';
+        const sel = document.getElementById('coa_induk');
+        sel.disabled = false;
+        if (induk) sel.value = induk;
+        document.getElementById('coa_nama').value = '';
+        document.getElementById('coa_ket').value = '';
+        onCoaIndukChange(sel.value);
+        document.getElementById('modalCoa').style.display = 'flex';
+    }
+    function editCoa(c) {
+        document.getElementById('modalCoaTitle').innerText = 'Edit Akun ' + c.kode;
+        document.getElementById('coa_edit').value = '1';
+        document.getElementById('coaIndukWrap').style.display = 'none';
+        document.getElementById('coaNormalWrap').style.display = 'none';
+        document.getElementById('coa_induk').disabled = true;
+        const kode = document.getElementById('coa_kode');
+        kode.value = c.kode; kode.readOnly = true; kode.style.background = 'var(--bg-muted)';
+        document.getElementById('coa_nama').value = c.nama;
+        document.getElementById('coa_ket').value = c.keterangan || '';
+        document.getElementById('modalCoa').style.display = 'flex';
+    }
+
+    // Tipe Biaya Modal Handling
+    function openModalTipeBiaya() {
+        document.getElementById('modalTipeBiayaTitle').innerText = 'Tambah Tipe Biaya';
+        document.getElementById('biaya_id_input').value = '';
+        document.getElementById('input_kode_biaya').value = '<?= \App\Models\TipeBiaya::generateNextKode() ?>';
+        document.getElementById('input_nama_biaya').value = '';
+        document.getElementById('input_kategori_beban').value = 'OPERASIONAL';
+        document.getElementById('input_kode_akun').value = '6000';
+        document.getElementById('input_satuan_default').value = 'Pcs';
+        document.getElementById('input_estimasi_harga').value = '0';
+        document.getElementById('input_biaya_keterangan').value = '';
+        document.getElementById('input_biaya_active').value = '1';
+        document.getElementById('modalTipeBiaya').style.display = 'flex';
+    }
+
+    function editTipeBiaya(b) {
+        document.getElementById('modalTipeBiayaTitle').innerText = 'Edit Tipe Biaya: ' + b.nama_biaya;
+        document.getElementById('biaya_id_input').value = b.id;
+        document.getElementById('input_kode_biaya').value = b.kode_biaya;
+        document.getElementById('input_nama_biaya').value = b.nama_biaya;
+        document.getElementById('input_kategori_beban').value = b.kategori_beban || 'OPERASIONAL';
+        document.getElementById('input_kode_akun').value = b.kode_akun || '6000';
+        document.getElementById('input_satuan_default').value = b.satuan_default || 'Pcs';
+        document.getElementById('input_estimasi_harga').value = b.estimasi_harga || '0';
+        document.getElementById('input_biaya_keterangan').value = b.keterangan || '';
+        document.getElementById('input_biaya_active').value = b.is_active;
+        document.getElementById('modalTipeBiaya').style.display = 'flex';
+    }
+
+    function closeModalTipeBiaya() {
+        document.getElementById('modalTipeBiaya').style.display = 'none';
+    }
+
+    function onKategoriBebanChange(cat) {
+        const coaSelect = document.getElementById('input_kode_akun');
+        if (!coaSelect) return;
+        if (cat === 'ASET') {
+            coaSelect.value = '1100';
+        } else if (cat === 'HPP') {
+            coaSelect.value = '5000';
+        } else if (cat === 'OPERASIONAL') {
+            coaSelect.value = '6000';
+        }
+    }
+
 
     // Mitra Modal Handling
     function openModalMitra() {
         document.getElementById('modalMitraTitle').innerText = 'Tambah Mitra Bisnis Baru';
         document.getElementById('mitra_id_input').value = '';
-        document.getElementById('input_kode_mitra').value = '';
-        document.getElementById('input_kode_mitra').readOnly = false;
+        document.getElementById('input_kode_mitra').value = '<?= \App\Models\Mitra::generateNextKode() ?>';
         document.getElementById('input_nama_mitra').value = '';
         document.getElementById('input_pic_nama').value = '';
         document.getElementById('input_pic_telepon').value = '';
@@ -1216,7 +1885,6 @@ require_once __DIR__ . '/layout/header.php';
         document.getElementById('modalMitraTitle').innerText = 'Edit Mitra: ' + m.kode_mitra;
         document.getElementById('mitra_id_input').value = m.id;
         document.getElementById('input_kode_mitra').value = m.kode_mitra;
-        document.getElementById('input_kode_mitra').readOnly = true;
         document.getElementById('input_nama_mitra').value = m.nama_mitra;
         document.getElementById('input_pic_nama').value = m.pic_nama || '';
         document.getElementById('input_pic_telepon').value = m.pic_telepon || '';
@@ -1230,11 +1898,17 @@ require_once __DIR__ . '/layout/header.php';
     }
 
     // Item Modal Handling
+    const NEXT_KODE_ITEM = <?= json_encode(array_combine(array_map(fn($j) => (string)$j['id'], $jenisList), array_map(fn($j) => \App\Models\Item::generateNextKode((int)$j['id']), $jenisList)), JSON_UNESCAPED_UNICODE) ?>;
+
+    function onJenisItemChange() {
+        const sel = document.getElementById('input_jenis_id');
+        document.getElementById('input_kode_item').value = NEXT_KODE_ITEM[sel.value] || '';
+    }
+
     function openModalItem() {
         document.getElementById('modalItemTitle').innerText = 'Tambah Produk';
         document.getElementById('item_id_input').value = '';
-        document.getElementById('input_kode_item').value = '';
-        document.getElementById('input_kode_item').readOnly = false;
+        onJenisItemChange();
         document.getElementById('input_nama_item').value = '';
         document.getElementById('input_satuan').value = 'KG';
         document.getElementById('modalItem').style.display = 'flex';
@@ -1244,7 +1918,6 @@ require_once __DIR__ . '/layout/header.php';
         document.getElementById('modalItemTitle').innerText = 'Edit Produk: ' + it.nama_item;
         document.getElementById('item_id_input').value = it.id;
         document.getElementById('input_kode_item').value = it.kode_item;
-        document.getElementById('input_kode_item').readOnly = true;
         document.getElementById('input_nama_item').value = it.nama_item;
         document.getElementById('input_jenis_id').value = it.jenis_id;
         document.getElementById('input_satuan').value = it.satuan_accurate || 'KG';
@@ -1258,7 +1931,7 @@ require_once __DIR__ . '/layout/header.php';
     // Kategori Modal Handling
     function openModalKategori() {
         document.getElementById('kategori_id_input').value = '';
-        document.getElementById('input_kode_jenis').value = '';
+        document.getElementById('input_kode_jenis').value = '<?= \App\Models\Item::generateNextKodeJenis() ?>';
         document.getElementById('input_nama_jenis').value = '';
         document.getElementById('formKategoriTitle').innerText = 'Tambah Kategori Baru:';
         document.getElementById('modalKategori').style.display = 'flex';
@@ -1346,6 +2019,76 @@ require_once __DIR__ . '/layout/header.php';
         });
         if (res.isConfirmed) {
             window.location.href = `index.php?action=delete_pemasok&id=${id}`;
+        }
+    }
+
+    // SweetAlert Konfirmasi Toggle & Hapus Vendor Non-Pemasok
+    async function confirmToggleVendorNonPemasok(id, nama, isActive) {
+        const aksi = isActive ? 'menonaktifkan' : 'mengaktifkan';
+        const res = await window.showAppConfirm({
+            title: `Konfirmasi ${isActive ? 'Nonaktifkan' : 'Aktifkan'} Vendor`,
+            html: `Apakah Anda yakin ingin <strong>${aksi}</strong> vendor <strong>"${nama}"</strong>?`,
+            icon: isActive ? 'warning' : 'question',
+            confirmButtonText: `Ya, ${isActive ? 'Nonaktifkan' : 'Aktifkan'}`,
+            cancelButtonText: 'Batal'
+        });
+        if (res.isConfirmed) {
+            window.location.href = `index.php?action=toggle_vendor_non_pemasok_status&id=${id}`;
+        }
+    }
+
+    async function confirmDeleteVendorNonPemasok(id, nama) {
+        const res = await window.showAppConfirm({
+            title: 'Hapus Vendor Permanen?',
+            html: `
+                <div style="text-align: left; font-size: 13.5px;">
+                    <p>Apakah Anda yakin ingin menghapus vendor <strong>"${nama}"</strong> secara permanen?</p>
+                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
+                        ⚠️ <em>Vendor tidak dapat dihapus jika sudah memiliki riwayat faktur pembelian operasional.</em>
+                    </div>
+                </div>
+            `,
+            icon: 'warning',
+            confirmButtonText: 'Ya, Hapus Permanen',
+            cancelButtonText: 'Batal'
+        });
+        if (res.isConfirmed) {
+            window.location.href = `index.php?action=delete_vendor_non_pemasok&id=${id}`;
+        }
+    }
+
+    // SweetAlert Konfirmasi Toggle & Hapus Tipe Biaya
+    async function confirmToggleTipeBiaya(id, nama, isActive) {
+        const aksi = isActive ? 'menonaktifkan' : 'mengaktifkan';
+        const res = await window.showAppConfirm({
+            title: `Konfirmasi ${isActive ? 'Nonaktifkan' : 'Aktifkan'} Tipe Biaya`,
+            html: `Apakah Anda yakin ingin <strong>${aksi}</strong> tipe biaya <strong>"${nama}"</strong>?`,
+            icon: isActive ? 'warning' : 'question',
+            confirmButtonText: `Ya, ${isActive ? 'Nonaktifkan' : 'Aktifkan'}`,
+            cancelButtonText: 'Batal'
+        });
+        if (res.isConfirmed) {
+            window.location.href = `index.php?action=toggle_tipe_biaya_status&id=${id}`;
+        }
+    }
+
+    async function confirmDeleteTipeBiaya(id, nama) {
+        const res = await window.showAppConfirm({
+            title: 'Hapus Tipe Biaya Permanen?',
+            html: `
+                <div style="text-align: left; font-size: 13.5px;">
+                    <p>Apakah Anda yakin ingin menghapus tipe biaya <strong>"${nama}"</strong> secara permanen?</p>
+                    <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 12.5px;">
+                        ⚠️ <em>Tipe biaya tidak dapat dihapus jika sudah digunakan pada rincian faktur pembelian.</em>
+                    </div>
+                </div>
+            `,
+            icon: 'warning',
+            confirmButtonText: 'Ya, Hapus Permanen',
+            cancelButtonText: 'Batal'
+        });
+        if (res.isConfirmed) {
+            window.location.href = `index.php?action=delete_tipe_biaya&id=${id}`;
         }
     }
 

@@ -5,15 +5,13 @@
 
 USE `db_barcode_inventory`;
 
--- 1. SEED PENGGUNA AWAL (Password default: 'admin123' / 'operator123')
--- Hash bcrypt untuk 'admin123': $2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S
-INSERT INTO `users` (`username`, `password_hash`, `nama_lengkap`, `role`) VALUES
-('admin', '$2y$10$k1a4j.49z3PZ2L78D0b5kO0pIe1B3d8a7kLmN0pQrStUvWxYzAbCd', 'Administrator Sistem', 'ADMIN'),
-('spv_gudang', '$2y$10$k1a4j.49z3PZ2L78D0b5kO0pIe1B3d8a7kLmN0pQrStUvWxYzAbCd', 'Bambang Supriyanto (SPV)', 'SUPERVISOR'),
-('opr_timbang', '$2y$10$k1a4j.49z3PZ2L78D0b5kO0pIe1B3d8a7kLmN0pQrStUvWxYzAbCd', 'Rizky Operator Penerimaan', 'OPERATOR_INBOUND'),
-('opr_kirim', '$2y$10$k1a4j.49z3PZ2L78D0b5kO0pIe1B3d8a7kLmN0pQrStUvWxYzAbCd', 'Dani Operator Pengeluaran', 'OPERATOR_OUTBOUND'),
-('finance_acc', '$2y$10$k1a4j.49z3PZ2L78D0b5kO0pIe1B3d8a7kLmN0pQrStUvWxYzAbCd', 'Siti Rahma (Finance)', 'FINANCE')
-ON DUPLICATE KEY UPDATE `nama_lengkap`=VALUES(`nama_lengkap`);
+-- 1. SEED PENGGUNA AWAL (Password default: '123456')
+-- Hash bcrypt untuk '123456': $2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S
+INSERT INTO `users` (`id`, `username`, `password_hash`, `nama_lengkap`, `role`) VALUES
+(1, 'nia', '$2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S', 'Nia', 'ADMIN'),
+(2, 'arif', '$2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S', 'Arif', 'ARIF'),
+(3, 'operator', '$2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S', 'Operator Gudang', 'OPERATOR')
+ON DUPLICATE KEY UPDATE `username`=VALUES(`username`), `nama_lengkap`=VALUES(`nama_lengkap`), `role`=VALUES(`role`);
 
 -- 2. SEED 7 MITRA BISNIS (M01 - M07)
 INSERT INTO `mitra` (`kode_mitra`, `nama_mitra`, `pic_nama`, `pic_telepon`, `kode_gudang_accurate`, `warna_identitas`) VALUES

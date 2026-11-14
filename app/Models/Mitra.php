@@ -51,18 +51,25 @@ class Mitra {
         return $db->query($sql)->fetchAll();
     }
 
+    /** Kode mitra otomatis: M01, M02, ... */
+    public static function generateNextKode(): string {
+        return \App\Core\KodeGenerator::next('mitra', 'kode_mitra', 'M', 2, '');
+    }
+
     public static function create(array $data): int {
         $db = Database::getConnection();
+        $kode = self::generateNextKode();
+        $namaBersih = preg_replace('/[^A-Z0-9]/', '', strtoupper(trim($data['nama_mitra'])));
         $stmt = $db->prepare("
             INSERT INTO mitra (kode_mitra, nama_mitra, pic_nama, pic_telepon, kode_gudang_accurate, warna_identitas, is_active)
             VALUES (?, ?, ?, ?, ?, ?, 1)
         ");
         $stmt->execute([
-            strtoupper(trim($data['kode_mitra'])),
+            $kode,
             trim($data['nama_mitra']),
             trim($data['pic_nama'] ?? ''),
             trim($data['pic_telepon'] ?? ''),
-            strtoupper(trim($data['kode_gudang_accurate'] ?? ('GDG-' . $data['kode_mitra']))),
+            strtoupper(trim($data['kode_gudang_accurate'] ?? '')) ?: ('GDG-' . $kode . '-' . $namaBersih),
             $data['warna_identitas'] ?? '#3b82f6'
         ]);
         return (int)$db->lastInsertId();
@@ -86,9 +93,13 @@ class Mitra {
         ]);
     }
 
+    /** Hapus permanen; hanya jika mitra tidak dipakai di menu lain. */
     public static function delete(int $id): bool {
         $db = Database::getConnection();
-        $stmt = $db->prepare("UPDATE mitra SET is_active = 0 WHERE id = ?");
-        return $stmt->execute([$id]);
+        $m = self::findById($id);
+        if (!$m) throw new \Exception('Data mitra tidak ditemukan.');
+        \App\Services\MasterGuard::pastikanTidakDipakai('mitra', $id, "Mitra {$m['kode_mitra']} {$m['nama_mitra']}");
+        $db->prepare("DELETE FROM master_harga WHERE mitra_id = ?")->execute([$id]);
+        return $db->prepare("DELETE FROM mitra WHERE id = ?")->execute([$id]);
     }
 }

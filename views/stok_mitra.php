@@ -111,120 +111,46 @@ require_once __DIR__ . '/layout/header.php';
 <div class="page-header">
     <div>
         <h1 class="page-title">Saldo Stok Mitra Bisnis</h1>
-        <p class="page-subtitle">Segregasi stok catch-weight fisik (Kg & Kemasan) terpilah per mitra dengan valuasi finansial otomatis sesuai Master Harga Mitra</p>
+        <p class="page-subtitle">Segregasi stok catch-weight fisik terpilah per mitra dengan valuasi finansial otomatis sesuai Master Harga Mitra</p>
     </div>
-    <div style="display: flex; gap: 10px;" class="no-print">
-        <button type="button" class="btn btn-outline" onclick="window.print()">
-            <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-            <span>Cetak PDF</span>
-        </button>
-        <button type="button" class="btn btn-primary" onclick="exportTableToExcel('detailTable', 'Laporan_Stok_Mitra_Harga')">
-            <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px;"></i>
-            <span>Ekspor Excel (.xlsx)</span>
-        </button>
-    </div>
-</div>
-
-<!-- TAB SWITCHER NAVIGASI MEJA ANALISA SALDO STOK -->
-<div class="tabs-nav no-print" style="margin-bottom: 20px; display: flex; gap: 8px; border-bottom: 2px solid var(--border); padding-bottom: 12px; flex-wrap: wrap;">
-    <a href="index.php?page=stok_mitra&tab=rincian" class="btn <?= $activeTab === 'rincian' ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="table" style="width: 15px; height: 15px;"></i>
-        <span>📋 1. Rincian Stok Barang Mitra</span>
-    </a>
-    <a href="index.php?page=stok_mitra&tab=matriks" class="btn <?= $activeTab === 'matriks' ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="grid" style="width: 15px; height: 15px;"></i>
-        <span>🔲 2. Matriks Stok Kategori</span>
-    </a>
-    <a href="index.php?page=stok_mitra&tab=ringkasan" class="btn <?= $activeTab === 'ringkasan' ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; height: 38px; display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="credit-card" style="width: 15px; height: 15px;"></i>
-        <span>💳 3. Valuasi per Mitra</span>
-    </a>
-    <a href="index.php?page=stok_mitra&tab=semua" class="btn <?= $activeTab === 'semua' ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 600; height: 38px; display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
-        <i data-lucide="layout-grid" style="width: 15px; height: 15px;"></i>
-        <span>Tampilkan Semua</span>
-    </a>
 </div>
 
 <!-- 1. KARTU RINGKASAN KPI UTAMA (FISIK & VALUASI FINANSIAL) -->
-<div class="grid grid-cols-4" style="margin-bottom: 24px;">
-    <!-- KPI 1: Total Bobot Fisik Gudang -->
-    <div class="kpi-card blue">
-        <div>
-            <div class="kpi-label" style="color: #0284c7; display: flex; align-items: center; gap: 4px;">
-                <span>Total Stok Fisik Gudang</span>
-            </div>
+<div class="grid grid-cols-4 kpi-clean" style="margin-bottom: 24px;">
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Total Stok Fisik</div>
             <div class="kpi-value"><?= Helper::formatKg($grandTotalKg) ?></div>
-            <div class="kpi-sub">
-                <span class="badge badge-info" style="font-weight: 700;">
-                    <?= Helper::formatNumber($grandTotalLabel) ?> Kemasan Aktif
-                </span>
-                <span style="margin-left: 4px; font-weight: 600; color: #0284c7;">• 100% Catch-Weight</span>
-            </div>
+            <div class="kpi-sub"><?= Helper::formatNumber($grandTotalLabel) ?> kemasan aktif</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="layers" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="layers" style="width: 18px; height: 18px;"></i></div>
     </div>
 
-    <!-- KPI 2: Total Valuasi Finansial Stok -->
-    <div class="kpi-card green">
-        <div>
-            <div class="kpi-label" style="color: #059669; display: flex; align-items: center; gap: 4px;">
-                <span>Total Valuasi Nilai Stok</span>
-            </div>
-            <div class="kpi-value" style="color: #059669;">
-                <?= Helper::formatRupiah($grandTotalValuasi) ?>
-            </div>
-            <div class="kpi-sub">
-                <span class="badge badge-success" style="font-weight: 700;">
-                    Master Harga Terhubung
-                </span>
-                <span style="margin-left: 4px; font-weight: 600; color: #059669;">• 7 Mitra</span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Total Valuasi Stok</div>
+            <div class="kpi-value"><?= Helper::formatRupiah($grandTotalValuasi) ?></div>
+            <div class="kpi-sub">Sesuai Master Harga Mitra</div>
         </div>
-        <div class="kpi-icon-pod" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
-            <i data-lucide="wallet" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="wallet" style="width: 18px; height: 18px;"></i></div>
     </div>
 
-    <!-- KPI 3: Mitra Terisi / Aktif -->
-    <div class="kpi-card purple">
-        <div>
-            <div class="kpi-label" style="color: #7c3aed; display: flex; align-items: center; gap: 4px;">
-                <span>Mitra Terisi Stok</span>
-            </div>
-            <div class="kpi-value">
-                <?= $mitraWithStockCount ?> <span style="font-size: 15px; font-weight: 600; color: var(--text-muted);">/ <?= count($mitraList) ?> Mitra Bisnis</span>
-            </div>
-            <div class="kpi-sub">
-                <span class="badge badge-purple" style="font-weight: 700;">
-                    Segregasi Gudang Accurate
-                </span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Mitra Terisi Stok</div>
+            <div class="kpi-value"><?= $mitraWithStockCount ?><span class="kpi-unit">/ <?= count($mitraList) ?> mitra</span></div>
+            <div class="kpi-sub">Per gudang Accurate</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="building-2" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="building-2" style="width: 18px; height: 18px;"></i></div>
     </div>
 
-    <!-- KPI 4: Rata-rata Valuasi per Kg -->
-    <div class="kpi-card amber">
-        <div>
-            <div class="kpi-label" style="color: #d97706; display: flex; align-items: center; gap: 4px;">
-                <span>Rata-rata Nilai per Kg</span>
-            </div>
-            <div class="kpi-value">
-                <?= Helper::formatRupiah($avgValuasiPerKg) ?> <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">/kg</span>
-            </div>
-            <div class="kpi-sub">
-                <span class="badge badge-warning" style="font-weight: 700;">
-                    Kalkulasi Tertimbang
-                </span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-body">
+            <div class="kpi-label">Rata-rata Nilai per Kg</div>
+            <div class="kpi-value"><?= Helper::formatRupiah($avgValuasiPerKg) ?><span class="kpi-unit">/kg</span></div>
+            <div class="kpi-sub">Dihitung tertimbang</div>
         </div>
-        <div class="kpi-icon-pod">
-            <i data-lucide="tag" style="width: 24px; height: 24px;"></i>
-        </div>
+        <div class="kpi-icon-pod"><i data-lucide="tag" style="width: 18px; height: 18px;"></i></div>
     </div>
 </div>
 
@@ -300,7 +226,7 @@ require_once __DIR__ . '/layout/header.php';
                         <strong style="font-size: 13.5px; color: var(--text-main);"><?= Helper::formatKg($ms['total_kg']) ?></strong>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-top: 4px;">
-                        <span style="color: var(--text-muted);">Kemasan (SKU):</span>
+                        <span style="color: var(--text-muted);">Kemasan:</span>
                         <span style="font-weight: 700; color: var(--text-main);"><?= Helper::formatNumber($ms['total_kemasan']) ?> pcs <span style="color: var(--text-muted);">(<?= $ms['total_sku'] ?> SKU)</span></span>
                     </div>
                 </div>
@@ -322,52 +248,48 @@ require_once __DIR__ . '/layout/header.php';
 <?php if ($activeTab === 'rincian' || $activeTab === 'semua'): ?>
 <!-- 3. TABEL UTAMA: RINCIAN DATA STOK PER MITRA & MASTER HARGA -->
 <div class="card" style="margin-bottom: 26px;">
-    <!-- Sesi Filter Cepat & Tombol Filter Lanjutan -->
-    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" class="no-print">
-        <!-- Sisi Kiri: Filter Pills Cepat -->
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;">
-                Filter Cepat:
-            </span>
-
-            <!-- Semua Mitra -->
-            <a href="index.php?page=stok_mitra" 
-               class="badge <?= !$hasAnyFilter ? 'badge-primary' : 'badge-secondary' ?>" 
-               style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= !$hasAnyFilter ? 'font-weight: 800;' : '' ?>">
-                Semua Mitra (<?= count($allDetailItems) ?>)
-            </a>
-
-            <!-- Pill Per Mitra Populer -->
-            <?php foreach (array_slice($mitraList, 0, 4) as $m): ?>
-                <a href="index.php?page=stok_mitra&filter_mitra=<?= $m['id'] ?>" 
-                   class="badge <?= $selectedMitraFilter === (int)$m['id'] ? 'badge-primary' : 'badge-secondary' ?>" 
-                   style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $selectedMitraFilter === (int)$m['id'] ? 'font-weight: 800;' : '' ?>">
-                    <?= htmlspecialchars($m['kode_mitra']) ?>
-                </a>
-            <?php endforeach; ?>
+    <!-- Header Tabel -->
+    <div class="card-header no-print">
+        <div>
+            <h2 class="card-title">
+                <i data-lucide="calculator" style="width: 18px; height: 18px; color: #059669;"></i>
+                <span>Data Stok per Mitra & Master Harga</span>
+                <?php if ($activeMitraObj): ?>
+                    <span class="badge badge-primary" style="margin-left: 6px;">
+                        Mitra: <?= htmlspecialchars($activeMitraObj['kode_mitra']) ?> - <?= htmlspecialchars($activeMitraObj['nama_mitra']) ?>
+                    </span>
+                <?php endif; ?>
+            </h2>
+            <div class="card-description">
+                Rincian stok aktif beserta harga per kg dan total nilai per mitra
+            </div>
         </div>
-
-        <!-- Sisi Kanan: Tombol Buka Jumbotron Filter & Reset & Excel -->
         <div style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" class="btn <?= $hasAnyFilter ? 'btn-primary' : 'btn-outline' ?>" onclick="toggleMitraFilterPanel()" id="btnToggleFilterMitra" style="font-weight: 700; font-size: 12.5px; padding: 7px 16px; border-radius: 20px; display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow-sm);">
+            <?php $eksporTabel = 'detailTable'; $eksporNama = 'Rincian_Stok_Mitra_Harga'; include __DIR__ . '/layout/ekspor.php'; ?>
+        </div>
+    </div>
+
+    <!-- Toolbar: pencarian & filter -->
+    <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+        <!-- Instant Search Input -->
+        <div style="position: relative;">
+            <input type="text" id="tableSearchInput" class="form-control" placeholder="Cari nama barang / SKU..." style="height: 38px; padding-left: 32px; font-size: 13px; width: 300px;" onkeyup="filterDetailTable()">
+            <i data-lucide="search" style="position: absolute; left: 10px; top: 11px; width: 15px; height: 15px; color: var(--text-muted); pointer-events: none;"></i>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn <?= $hasAnyFilter ? 'btn-primary' : 'btn-outline' ?>" onclick="toggleMitraFilterPanel()" id="btnToggleFilterMitra" style="font-weight: 700; font-size: 12.5px; padding: 7px 16px; border-radius: 10px; height: 38px; display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow-sm);">
                 <i data-lucide="sliders-horizontal" style="width: 15px; height: 15px;"></i>
                 <span>Filter Lanjutan</span>
                 <?php if ($activeFilterCount > 0): ?>
                     <span class="badge" style="background: #ffffff; color: var(--primary); font-size: 11px; font-weight: 900; padding: 1px 7px; border-radius: 10px;"><?= $activeFilterCount ?></span>
                 <?php endif; ?>
             </button>
-
             <?php if ($hasAnyFilter): ?>
-                <a href="index.php?page=stok_mitra" class="btn btn-outline" style="font-size: 12px; padding: 7px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;" title="Reset Semua Filter">
+                <a href="index.php?page=stok_mitra" class="btn btn-outline" style="font-size: 12px; padding: 7px 14px; border-radius: 10px; height: 38px; display: inline-flex; align-items: center; gap: 5px;" title="Reset Semua Filter">
                     <i data-lucide="rotate-ccw" style="width: 13px; height: 13px;"></i>
                     <span>Reset</span>
                 </a>
             <?php endif; ?>
-
-            <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('detailTable', 'Rincian_Stok_Mitra_Harga')" style="border-radius: 20px; padding: 7px 14px;">
-                <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                <span>Ekspor Excel</span>
-            </button>
         </div>
     </div>
 
@@ -384,7 +306,7 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
             </div>
             <button type="button" onclick="toggleMitraFilterPanel(false)" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 8px;">
-                ✕ Tutup Panel
+                Tutup Panel
             </button>
         </div>
 
@@ -436,11 +358,11 @@ require_once __DIR__ . '/layout/header.php';
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 11.5px; margin-bottom: 4px; font-weight: 700;">Urutan Tampilan:</label>
                     <select name="sort" class="form-control" style="font-size: 12.5px; font-weight: 600; height: 38px;">
-                        <option value="" <?= empty($selectedSortFilter) ? 'selected' : '' ?>>⚡ Valuasi Tertinggi (Rp Terbesar)</option>
-                        <option value="berat_desc" <?= $selectedSortFilter === 'berat_desc' ? 'selected' : '' ?>>⚖️ Total Berat (KG Terbanyak)</option>
-                        <option value="kemasan_desc" <?= $selectedSortFilter === 'kemasan_desc' ? 'selected' : '' ?>>📦 Jumlah Kemasan Terbanyak</option>
-                        <option value="nama_asc" <?= $selectedSortFilter === 'nama_asc' ? 'selected' : '' ?>>🔤 Nama Produk (A - Z)</option>
-                        <option value="mitra_asc" <?= $selectedSortFilter === 'mitra_asc' ? 'selected' : '' ?>>🏢 Nama Mitra (A - Z)</option>
+                        <option value="" <?= empty($selectedSortFilter) ? 'selected' : '' ?>>Valuasi Tertinggi</option>
+                        <option value="berat_desc" <?= $selectedSortFilter === 'berat_desc' ? 'selected' : '' ?>>Total Berat</option>
+                        <option value="kemasan_desc" <?= $selectedSortFilter === 'kemasan_desc' ? 'selected' : '' ?>>Jumlah Kemasan Terbanyak</option>
+                        <option value="nama_asc" <?= $selectedSortFilter === 'nama_asc' ? 'selected' : '' ?>>Nama Produk</option>
+                        <option value="mitra_asc" <?= $selectedSortFilter === 'mitra_asc' ? 'selected' : '' ?>>Nama Mitra</option>
                     </select>
                 </div>
             </div>
@@ -495,31 +417,6 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
             <?php endif; ?>
         </form>
-    </div>
-
-    <!-- Header Tabel -->
-    <div class="card-header no-print">
-        <div>
-            <h2 class="card-title">
-                <i data-lucide="calculator" style="width: 18px; height: 18px; color: #059669;"></i>
-                <span>Data Stok per Mitra & Master Harga</span>
-                <?php if ($activeMitraObj): ?>
-                    <span class="badge badge-primary" style="margin-left: 6px;">
-                        Mitra: <?= htmlspecialchars($activeMitraObj['kode_mitra']) ?> - <?= htmlspecialchars($activeMitraObj['nama_mitra']) ?>
-                    </span>
-                <?php endif; ?>
-            </h2>
-            <div class="card-description">
-                Daftar rincian stok aktif lengkap dengan harga satuan per kg yang berlaku pada masing-masing mitra dan kalkulasi total nilai
-            </div>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <!-- Instant Search Input -->
-            <div style="position: relative;">
-                <input type="text" id="tableSearchInput" class="form-control" placeholder="Cari nama barang / SKU..." style="height: 38px; padding-left: 32px; font-size: 13px; width: 220px;" onkeyup="filterDetailTable()">
-                <i data-lucide="search" style="position: absolute; left: 10px; top: 11px; width: 15px; height: 15px; color: var(--text-muted); pointer-events: none;"></i>
-            </div>
-        </div>
     </div>
 
     <div class="table-responsive">
@@ -601,7 +498,7 @@ require_once __DIR__ . '/layout/header.php';
                                 </div>
                             <?php else: ?>
                                 <span class="badge badge-warning" style="font-size: 10.5px;" title="Harga belum diset di menu Master Harga">
-                                    Rp 0 / kg (Belum Diset)
+                                    Rp 0 / kg
                                 </span>
                             <?php endif; ?>
                         </td>
@@ -693,7 +590,7 @@ require_once __DIR__ . '/layout/header.php';
                 <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
                 <span>CSV</span>
             </button>
-            <span class="badge badge-success">✓ Terkoneksi Real-time</span>
+            <span class="badge badge-success">Terkoneksi Real-time</span>
         </div>
     </div>
 

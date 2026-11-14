@@ -63,8 +63,11 @@ class MasterHarga {
     /**
      * Simpan atau perbarui harga satu produk untuk mitra tertentu
      */
-    public static function saveHarga(int $mitraId, int $itemId, float $hargaPerKg, ?string $catatan = null): bool {
+    public static function saveHarga(int $mitraId, int $itemId, float $hargaPerKg, ?string $catatan = null, ?string $alasan = null): bool {
         $db = Database::getConnection();
+        $lama = $db->prepare("SELECT harga_per_kg FROM master_harga WHERE mitra_id = ? AND item_id = ?");
+        $lama->execute([$mitraId, $itemId]);
+        $hargaLama = $lama->fetchColumn();
         $stmt = $db->prepare("
             INSERT INTO master_harga (mitra_id, item_id, harga_per_kg, catatan)
             VALUES (?, ?, ?, ?)
@@ -73,7 +76,9 @@ class MasterHarga {
                 catatan = VALUES(catatan),
                 updated_at = CURRENT_TIMESTAMP
         ");
-        return $stmt->execute([$mitraId, $itemId, $hargaPerKg, $catatan]);
+        $ok = $stmt->execute([$mitraId, $itemId, $hargaPerKg, $catatan]);
+        if ($ok) \App\Services\LogHargaService::catat('MITRA', $mitraId, $itemId, $hargaLama === false ? null : (float)$hargaLama, $hargaPerKg, $alasan);
+        return $ok;
     }
 
     /**

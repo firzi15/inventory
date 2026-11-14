@@ -219,6 +219,85 @@ class StockService {
     }
 
     /**
+     * Ringkasan Dashboard: angka harian, daftar tindakan, dan tren masuk/keluar 14 hari.
+     */
+    public static function getDashboardOverview(int $days = 14): array {
+        $db = Database::getConnection();
+        $today = date('Y-m-d');
+
+        // Stok gudang utama (belum dimutasi ke mitra)
+        $gudang = self::getStockGudangUtamaSummary();
+
+        // Penerimaan hari ini (label berdasarkan surat jalan)
+        $stmt = $db->prepare("
+            SELECT COUNT(*) AS pcs, COALESCE(SUM(berat_netto), 0) AS kg, COUNT(DISTINCT no_surat_jalan) AS sj
+            FROM labels
+            WHERE no_surat_jalan IS NOT NULL AND TRIM(no_surat_jalan) != '' AND DATE(created_at) = ?
+        ");
+        $stmt->execute([$today]);
+        $masuk = $stmt->fetch() ?: [];
+
+        // Pengeluaran hari ini
+        $stmt = $db->prepare("
+            SELECT COUNT(*) AS nota, COALESCE(SUM(total_kg), 0) AS kg
+            FROM transaksi_stok
+            WHERE jenis_transaksi = 'PENGELUARAN' AND DATE(created_at) = ?
+        ");
+        $stmt->execute([$today]);
+        $keluar = $stmt->fetch() ?: [];
+
+        // Tren masuk vs keluar
+        $start = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+        $stmt = $db->prepare("
+            SELECT DATE(created_at) AS d, COALESCE(SUM(berat_netto), 0) AS kg
+            FROM labels
+            WHERE no_surat_jalan IS NOT NULL AND TRIM(no_surat_jalan) != '' AND DATE(created_at) >= ?
+            GROUP BY DATE(created_at)
+        ");
+        $stmt->execute([$start]);
+        $masukPerHari = [];
+        foreach ($stmt->fetchAll() as $r) { $masukPerHari[$r['d']] = (float)$r['kg']; }
+
+        $stmt = $db->prepare("
+            SELECT DATE(created_at) AS d, COALESCE(SUM(total_kg), 0) AS kg
+            FROM transaksi_stok
+            WHERE jenis_transaksi = 'PENGELUARAN' AND DATE(created_at) >= ?
+            GROUP BY DATE(created_at)
+        ");
+        $stmt->execute([$start]);
+        $keluarPerHari = [];
+        foreach ($stmt->fetchAll() as $r) { $keluarPerHari[$r['d']] = (float)$r['kg']; }
+
+        $trend = ['labels' => [], 'masuk' => [], 'keluar' => []];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-{$i} days"));
+            $trend['labels'][] = date('d/m', strtotime($d));
+            $trend['masuk'][]  = round($masukPerHari[$d] ?? 0, 2);
+            $trend['keluar'][] = round($keluarPerHari[$d] ?? 0, 2);
+        }
+
+        // Tindakan yang perlu dikerjakan
+        $sjBelumTimbang = count(\App\Models\Label::getSuratJalanListForWeighing());
+        $piutang = \App\Models\Piutang::getSummaryKpi();
+        $utang = \App\Models\Utang::getSummaryKpi();
+
+        return [
+            'gudang_kg'          => (float)$gudang['total_kg'],
+            'gudang_keranjang'   => (int)$gudang['total_barcode'],
+            'gudang_mengendap'   => (int)$gudang['count_mengendap'],
+            'masuk_kg'           => (float)($masuk['kg'] ?? 0),
+            'masuk_pcs'          => (int)($masuk['pcs'] ?? 0),
+            'masuk_sj'           => (int)($masuk['sj'] ?? 0),
+            'keluar_kg'          => (float)($keluar['kg'] ?? 0),
+            'keluar_nota'        => (int)($keluar['nota'] ?? 0),
+            'sj_belum_timbang'   => $sjBelumTimbang,
+            'piutang_overdue'    => (float)$piutang['total_overdue'],
+            'utang_overdue'      => (float)$utang['total_overdue'],
+            'trend'              => $trend,
+        ];
+    }
+
+    /**
      * Data Tren & Analitik Stok Lengkap (Mitra, Kategori, & Pergerakan 7 Hari)
      */
     public static function getStockTrendData(): array {

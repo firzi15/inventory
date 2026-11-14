@@ -43,103 +43,63 @@ require_once __DIR__ . '/layout/header.php';
     <!-- PAGE HEADER -->
     <div class="page-header no-print">
         <div>
-            <h1 class="page-title">AR Aging & Piutang Usaha</h1>
-            <p class="page-subtitle">Pelacakan piutang nota pengeluaran mitra, alokasi setoran parsial ("netes"), dan umur piutang pasar</p>
+            <h1 class="page-title"><?= $activeTab === 'nota' ? 'Sales Invoice' : 'AR Aging' ?></h1>
+            <p class="page-subtitle"><?= $activeTab === 'nota' ? 'Nota penjualan ke mitra dan setoran' : 'Umur piutang dan setoran mitra' ?></p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <?php if ($activeTab === 'nota'): ?>
             <button type="button" class="btn btn-primary" onclick="openPaymentModal()" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
                 <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
-                <span>Catat Setoran Uang Masuk</span>
+                <span>Catat Setoran</span>
             </button>
-            <button type="button" class="btn btn-outline" onclick="window.print()" style="display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-                <span>Cetak Rekap</span>
-            </button>
+            <?php endif; ?>
+            <?php $eksporNama = 'AR_Aging_' . $activeTab; $eksporJudul = ($activeTab === 'nota' ? 'Sales Invoice' : 'AR Aging'); include __DIR__ . '/layout/ekspor.php'; ?>
         </div>
     </div>
 
     <!-- 4 KARTU KPI AR AGING KEUANGAN -->
     <div class="grid grid-cols-4 no-print" style="gap: 16px; margin-bottom: 22px;">
         <!-- Card 1: Total Piutang Terbit -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #3b82f6; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Nilai Tagihan (Beli Putus)</span>
-                <div style="background: rgba(59, 130, 246, 0.12); color: #3b82f6; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="receipt" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Total Nilai Tagihan</div>
+                <div class="kpi-value"><?= Helper::formatRupiah($kpi['total_piutang_terbit']) ?></div>
+                <div class="kpi-sub">Dari total <strong><?= number_format($kpi['total_nota']) ?></strong> nota pengeluaran</div>
             </div>
-            <div style="font-size: 22px; font-weight: 900; color: #1e3a8a; line-height: 1.1;">
-                <?= Helper::formatRupiah($kpi['total_piutang_terbit']) ?>
-            </div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px;">
-                Dari total <strong><?= number_format($kpi['total_nota']) ?></strong> nota pengeluaran
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="receipt" style="width: 18px; height: 18px;"></i></div>
         </div>
 
         <!-- Card 2: Total Setoran Masuk -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #10b981; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Setoran Kas Terkumpul</span>
-                <div style="background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="wallet" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Total Setoran Kas Terkumpul</div>
+                <div class="kpi-value"><?= Helper::formatRupiah($kpi['total_setoran_masuk']) ?></div>
+                <div class="kpi-sub">Tercatat <strong><?= number_format($kpi['total_transaksi_bayar']) ?></strong> kali setoran kas / bank</div>
             </div>
-            <div style="font-size: 22px; font-weight: 900; color: #047857; line-height: 1.1;">
-                <?= Helper::formatRupiah($kpi['total_setoran_masuk']) ?>
-            </div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px;">
-                Tercatat <strong><?= number_format($kpi['total_transaksi_bayar']) ?></strong> kali setoran kas / bank
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="wallet" style="width: 18px; height: 18px;"></i></div>
         </div>
 
         <!-- Card 3: Sisa Piutang Berjalan -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #f59e0b; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Sisa Piutang Belum Lunas</span>
-                <div style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="hourglass" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Sisa Piutang Belum Lunas</div>
+                <div class="kpi-value"><?= Helper::formatRupiah($kpi['sisa_piutang_aktif']) ?></div>
+                <div class="kpi-sub">Lancar 0-7 hari: <strong><?= Helper::formatRupiah($kpi['aging_0_7']) ?></strong></div>
             </div>
-            <div style="font-size: 22px; font-weight: 900; color: #b45309; line-height: 1.1;">
-                <?= Helper::formatRupiah($kpi['sisa_piutang_aktif']) ?>
-            </div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px;">
-                Lancar (0-7 hari): <strong><?= Helper::formatRupiah($kpi['aging_0_7']) ?></strong>
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="hourglass" style="width: 18px; height: 18px;"></i></div>
         </div>
 
         <!-- Card 4: Piutang Lewat Tempo (>14 Hari) -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #ef4444; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Piutang Waspada / Overdue (&gt;14 Hari)</span>
-                <div style="background: rgba(239, 68, 68, 0.12); color: #ef4444; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="alert-circle" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Piutang Waspada / Overdue &gt;14 Hari</div>
+                <div class="kpi-value"><?= Helper::formatRupiah($kpi['total_overdue']) ?></div>
+                <div class="kpi-sub">Macet &gt;30 hari: <strong><?= Helper::formatRupiah($kpi['aging_gt_30']) ?></strong></div>
             </div>
-            <div style="font-size: 22px; font-weight: 900; color: #b91c1c; line-height: 1.1;">
-                <?= Helper::formatRupiah($kpi['total_overdue']) ?>
-            </div>
-            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px;">
-                Macet (&gt;30 hari): <strong><?= Helper::formatRupiah($kpi['aging_gt_30']) ?></strong>
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i></div>
         </div>
     </div>
 
-    <!-- TAB NAVIGASI -->
-    <div class="tabs-nav no-print" style="margin-bottom: 18px; border-bottom: 2px solid #e2e8f0; display: flex; gap: 8px;">
-        <a href="index.php?page=ar_aging&tab=matriks" class="tab-btn <?= $activeTab === 'matriks' ? 'active' : '' ?>" style="padding: 10px 18px; text-decoration: none; font-weight: 700; font-size: 13.5px; color: <?= $activeTab === 'matriks' ? 'var(--primary)' : 'var(--text-muted)' ?>; border-bottom: <?= $activeTab === 'matriks' ? '3px solid var(--primary)' : '3px solid transparent' ?>; display: inline-flex; align-items: center; gap: 8px;">
-            <i data-lucide="bar-chart-3" style="width: 16px; height: 16px;"></i>
-            <span>1. Matriks Umur Piutang per Mitra</span>
-        </a>
-        <a href="index.php?page=ar_aging&tab=nota" class="tab-btn <?= $activeTab === 'nota' ? 'active' : '' ?>" style="padding: 10px 18px; text-decoration: none; font-weight: 700; font-size: 13.5px; color: <?= $activeTab === 'nota' ? 'var(--primary)' : 'var(--text-muted)' ?>; border-bottom: <?= $activeTab === 'nota' ? '3px solid var(--primary)' : '3px solid transparent' ?>; display: inline-flex; align-items: center; gap: 8px;">
-            <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
-            <span>2. Pelacakan Nota Piutang</span>
-        </a>
-        <a href="index.php?page=ar_aging&tab=riwayat_setoran" class="tab-btn <?= $activeTab === 'riwayat_setoran' ? 'active' : '' ?>" style="padding: 10px 18px; text-decoration: none; font-weight: 700; font-size: 13.5px; color: <?= $activeTab === 'riwayat_setoran' ? 'var(--primary)' : 'var(--text-muted)' ?>; border-bottom: <?= $activeTab === 'riwayat_setoran' ? '3px solid var(--primary)' : '3px solid transparent' ?>; display: inline-flex; align-items: center; gap: 8px;">
-            <i data-lucide="wallet" style="width: 16px; height: 16px;"></i>
-            <span>3. Buku Kas Setoran Masuk</span>
-        </a>
-    </div>
 
     <!-- ========================================================================= -->
     <!-- TAB 1: MATRIKS UMUR PIUTANG PER MITRA (AGING BUCKETS)                    -->
@@ -149,7 +109,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 class="card-title" style="margin: 0; font-size: 16px;">Rekapitulasi Umur Piutang 7 Mitra Bisnis</h2>
-                    <p class="card-description" style="margin: 2px 0 0 0; font-size: 12.5px;">Klasifikasi sisa tagihan per mitra berdasarkan periode hari berjalan (Current, 8-14 hari, 15-30 hari, &gt;30 hari)</p>
+                    <p class="card-description" style="margin: 2px 0 0 0; font-size: 12.5px;">Klasifikasi sisa tagihan per mitra berdasarkan periode hari berjalan Current, 8-14 hari, 15-30 hari, &gt;30 hari</p>
                 </div>
             </div>
 
@@ -167,7 +127,6 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="text-align: right; min-width: 110px; color: #b45309;">8 - 14 Hari</th>
                             <th style="text-align: right; min-width: 110px; color: #c2410c;">15 - 30 Hari</th>
                             <th style="text-align: right; min-width: 110px; color: #b91c1c;">&gt; 30 Hari</th>
-                            <th class="no-print" style="width: 120px; text-align: center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -226,17 +185,6 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: <?= $m['aging_gt_30'] > 0 ? '800' : 'normal' ?>; color: <?= $m['aging_gt_30'] > 0 ? '#b91c1c' : '#94a3b8' ?>;">
                                 <?= $m['aging_gt_30'] > 0 ? Helper::formatRupiah($m['aging_gt_30']) : '-' ?>
                             </td>
-                            <td class="no-print" style="text-align: center;">
-                                <?php if ($m['sisa_piutang'] > 0): ?>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="openPaymentModal(<?= $m['mitra_id'] ?>, '<?= htmlspecialchars($m['nama_mitra'], ENT_QUOTES) ?>')" style="padding: 4px 12px; font-size: 11.5px; font-weight: 700;" title="Catat setoran pembayaran mitra ini">
-                                        Bayar
-                                    </button>
-                                <?php else: ?>
-                                    <span style="display: inline-block; padding: 3px 10px; background: #d1fae5; color: #065f46; font-weight: 700; font-size: 11px; border-radius: 4px;">
-                                        Lunas
-                                    </span>
-                                <?php endif; ?>
-                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -250,7 +198,6 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b45309;"><?= Helper::formatRupiah($tot8to14) ?></td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #c2410c;"><?= Helper::formatRupiah($tot15to30) ?></td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b91c1c;"><?= Helper::formatRupiah($totGt30) ?></td>
-                            <td class="no-print"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -286,7 +233,7 @@ require_once __DIR__ . '/layout/header.php';
                         <option value="SEMUA" <?= $selectedStatus === 'SEMUA' ? 'selected' : '' ?>>Semua Status</option>
                         <option value="BELUM_LUNAS" <?= $selectedStatus === 'BELUM_LUNAS' ? 'selected' : '' ?>>Semua Belum Lunas</option>
                         <option value="BELUM_BAYAR" <?= $selectedStatus === 'BELUM_BAYAR' ? 'selected' : '' ?>>Belum Ada Setoran</option>
-                        <option value="PARSIAL" <?= $selectedStatus === 'PARSIAL' ? 'selected' : '' ?>>Bayar Parsial (Netes)</option>
+                        <option value="PARSIAL" <?= $selectedStatus === 'PARSIAL' ? 'selected' : '' ?>>Bayar Parsial</option>
                         <option value="LUNAS" <?= $selectedStatus === 'LUNAS' ? 'selected' : '' ?>>Sudah Lunas</option>
                     </select>
                 </div>
@@ -428,7 +375,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2 class="card-title" style="margin: 0; font-size: 16px;">Buku Kas Penerimaan Setoran Mitra</h2>
-                    <p class="card-description" style="margin: 2px 0 0 0; font-size: 12.5px;">Riwayat seluruh transaksi uang masuk dari mitra (tunai / mutasi bank) dan alokasi nota yang ditutup</p>
+                    <p class="card-description" style="margin: 2px 0 0 0; font-size: 12.5px;">Riwayat seluruh transaksi uang masuk dari mitra dan alokasi nota yang ditutup</p>
                 </div>
             </div>
 
@@ -468,6 +415,10 @@ require_once __DIR__ . '/layout/header.php';
                                     <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);">
                                         <?= htmlspecialchars($p['no_bukti_bayar']) ?>
                                     </strong>
+                                    <?php if (($p['status'] ?? 'AKTIF') === 'BATAL'): ?>
+                                        <div><span style="display: inline-block; padding: 1px 6px; background: #e2e8f0; color: #475569; font-size: 10.5px; border-radius: 4px;">Dibatalkan</span></div>
+                                        <div style="font-size: 10.5px; color: var(--text-muted);"><?= htmlspecialchars($p['alasan_batal'] ?? '') ?></div>
+                                    <?php endif; ?>
                                     <div style="font-size: 10.5px; color: var(--text-muted);"><?= date('H:i', strtotime($p['created_at'])) ?> WIB</div>
                                 </td>
                                 <td style="font-size: 12px; color: var(--text-main);">
@@ -478,13 +429,17 @@ require_once __DIR__ . '/layout/header.php';
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($p['metode_bayar'] === 'TUNAI'): ?>
-                                        <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: #e0f2fe; color: #0284c7; border-radius: 4px;">TUNAI (KAS)</span>
+                                        <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: #e0f2fe; color: #0284c7; border-radius: 4px;">TUNAI</span>
                                     <?php else: ?>
                                         <span style="font-weight: 700; font-size: 11px; padding: 2px 8px; background: #f3e8ff; color: #7c3aed; border-radius: 4px;">TRANSFER (<?= htmlspecialchars($p['bank_tujuan'] ?: 'BANK') ?>)</span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #047857;">
-                                    <?= Helper::formatRupiah($jml) ?>
+                                    <?php if (($p['status'] ?? 'AKTIF') === 'BATAL'): ?>
+                                        <span style="color: #94a3b8; text-decoration: line-through;"><?= Helper::formatRupiah($p['jumlah_asal']) ?></span>
+                                    <?php else: ?>
+                                        <?= Helper::formatRupiah($jml) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if (!empty($p['daftar_nota_terpotong'])): ?>
@@ -534,7 +489,7 @@ require_once __DIR__ . '/layout/header.php';
         <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main);">Catat Setoran Pembayaran Mitra</h3>
-                <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Membukukan uang setoran kas/bank dan memotong nota piutang secara otomatis (FIFO) atau manual</p>
+                <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Membukukan uang setoran kas/bank dan memotong nota piutang secara otomatis atau manual</p>
             </div>
             <button type="button" onclick="closePaymentModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted);">✕</button>
         </div>
@@ -564,7 +519,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div>
                     <label class="form-label" style="font-weight: 700; font-size: 12px;">Metode Pembayaran *</label>
                     <select name="metode_bayar" id="pay_metode_bayar" class="form-control" onchange="toggleBankInput()" style="height: 40px;">
-                        <option value="TUNAI">Setoran Tunai (Kas Gudang/Kantor)</option>
+                        <option value="TUNAI">Setoran Tunai</option>
                         <option value="TRANSFER_BANK">Transfer Rekening Bank</option>
                     </select>
                 </div>
@@ -596,11 +551,11 @@ require_once __DIR__ . '/layout/header.php';
                 <div style="display: flex; gap: 16px;">
                     <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px; font-weight: 700;">
                         <input type="radio" name="mode_alokasi" value="FIFO" checked onchange="toggleAlokasiMode()">
-                        <span>Otomatis FIFO (Prioritaskan Nota Paling Tua)</span>
+                        <span>Otomatis FIFO</span>
                     </label>
                     <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px; font-weight: 700;">
                         <input type="radio" name="mode_alokasi" value="MANUAL" onchange="toggleAlokasiMode()">
-                        <span>Manual (Tentukan Sendiri per Nota)</span>
+                        <span>Manual</span>
                     </label>
                 </div>
             </div>
@@ -621,7 +576,7 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- 8. Catatan / Keterangan -->
             <div style="margin-bottom: 18px;">
-                <label class="form-label" for="pay_keterangan" style="font-weight: 700; font-size: 12px;">Catatan Tambahan (Opsional)</label>
+                <label class="form-label" for="pay_keterangan" style="font-weight: 700; font-size: 12px;">Catatan Tambahan</label>
                 <input type="text" name="keterangan" id="pay_keterangan" class="form-control" placeholder="Contoh: Titipan setoran via supir / toko pasar..." style="height: 38px;">
             </div>
 
@@ -725,6 +680,8 @@ async function onMitraChangeForPayment(focusTrxId = 0, focusAmount = 0) {
             let totalSisa = 0;
             currentUnpaidNotas.forEach(n => totalSisa += parseFloat(n.sisa_piutang));
             labelTotal.textContent = `Total Sisa Piutang: Rp ${formatNumberRp(totalSisa)}`;
+            // Setoran tidak boleh melebihi total sisa piutang
+            document.getElementById('pay_jumlah_bayar').max = totalSisa;
 
             if (focusAmount > 0) {
                 document.getElementById('pay_jumlah_bayar').value = focusAmount;
@@ -907,11 +864,14 @@ async function viewNotaHistory(trxId, noSj, totalBelanja, sisaPiutang) {
                         <td style="padding: 6px 8px;">
                             <strong style="font-family: 'JetBrains Mono', monospace;">${escapeHtml(h.no_bukti_bayar)}</strong>
                             <div style="font-size: 10.5px; color: var(--text-muted);">${escapeHtml(h.nama_kasir || 'Kasir')}</div>
+                            ${h.status_pembayaran === 'BATAL'
+                                ? `<div><span style="display:inline-block;padding:1px 6px;background:#e2e8f0;color:#475569;font-size:10.5px;border-radius:4px;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(h.alasan_batal || '')}</div>`
+                                : `<div><a href="javascript:void(0)" onclick="closeHistoryModal(); batalDokumen('batal_setoran_ar', { id: ${h.pembayaran_id} }, 'setoran ${escapeHtml(h.no_bukti_bayar)} (Rp ${formatNumberRp(h.total_setoran_induk)})')" style="font-size:11px;color:#dc2626;font-weight:700;">Batalkan setoran</a></div>`}
                         </td>
                         <td style="padding: 6px 8px;">${h.tanggal_bayar}</td>
                         <td style="padding: 6px 8px;">${escapeHtml(h.metode_bayar)}</td>
-                        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #047857;">
-                            Rp ${formatNumberRp(h.nominal_alokasi)}
+                        <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: ${h.status_pembayaran === 'BATAL' ? '#94a3b8; text-decoration: line-through' : '#047857'};">
+                            Rp ${formatNumberRp(h.status_pembayaran === 'BATAL' ? h.nominal_asal : h.nominal_alokasi)}
                         </td>
                         <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #b45309;">
                             Rp ${formatNumberRp(h.sisa_piutang_setelah)}

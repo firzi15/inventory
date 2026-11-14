@@ -22,7 +22,7 @@ require_once __DIR__ . '/layout/header.php';
     <div style="display: flex; gap: 8px;">
         <a href="Manual_Book_Sistem_Barcode_Inventory_Multi_Mitra.docx" class="btn btn-outline" download style="display: flex; align-items: center; gap: 6px;">
             <i data-lucide="file-text" style="width: 16px; height: 16px; color: #2563eb;"></i>
-            <span>Manual Book (.docx)</span>
+            <span>Manual Book</span>
         </a>
         <button type="button" class="btn btn-outline" onclick="openGuideModal()">
             <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i>
@@ -49,17 +49,17 @@ require_once __DIR__ . '/layout/header.php';
             <?php if (!empty($cfg['is_connected']) && !empty($cfg['session_id'])): ?>
                 <span class="badge badge-success" style="padding: 6px 12px; font-size: 12px;">
                     <i data-lucide="check-circle-2" style="width: 14px; height: 14px; margin-right: 4px;"></i>
-                    ✓ Live API Terhubung: <strong><?= htmlspecialchars($cfg['db_alias'] ?: ('ID ' . $cfg['db_id'])) ?></strong>
+                    Live API Terhubung: <strong><?= htmlspecialchars($cfg['db_alias'] ?: ('ID ' . $cfg['db_id'])) ?></strong>
                 </span>
             <?php elseif (!empty($cfg['api_token'])): ?>
                 <span class="badge badge-warning" style="padding: 6px 12px; font-size: 12px;">
                     <i data-lucide="clock" style="width: 14px; height: 14px; margin-right: 4px;"></i>
-                    ⏳ Token Tersimpan (Silakan Pilih Database)
+                    Token Tersimpan
                 </span>
             <?php else: ?>
                 <span class="badge badge-purple" style="padding: 6px 12px; font-size: 12px;">
                     <i data-lucide="shield-alert" style="width: 14px; height: 14px; margin-right: 4px;"></i>
-                    ⚙ Mode Simulasi / Menunggu API Token
+                    Mode Simulasi / Menunggu API Token
                 </span>
             <?php endif; ?>
         </div>
@@ -71,7 +71,7 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label class="form-label" style="font-weight: 700; font-size: 12.5px;">
-                        App Key (Developer ID):
+                        App Key:
                     </label>
                     <div style="display: flex; gap: 6px;">
                         <input type="text" id="cfgAppKey" class="form-control" value="<?= htmlspecialchars($cfg['app_key']) ?>" readonly style="background: var(--bg-muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;">
@@ -103,7 +103,7 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label class="form-label" style="font-weight: 700; font-size: 12.5px; display: flex; justify-content: space-between;">
-                        <span>API Token (Dihasilkan dari Accurate Store):</span>
+                        <span>API Token:</span>
                         <a href="javascript:void(0)" onclick="openGuideModal()" style="font-size: 11px; color: var(--primary); font-weight: 600; text-decoration: underline;">Cara dapatkan token?</a>
                     </label>
                     <textarea id="inputApiToken" name="api_token" class="form-control" rows="2" placeholder="Tempelkan (Paste) API Token panjang dari Accurate Online di sini..." style="font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: vertical;"><?= htmlspecialchars($cfg['api_token']) ?></textarea>
@@ -220,7 +220,7 @@ require_once __DIR__ . '/layout/header.php';
             <div style="display: flex; gap: 12px; background: var(--bg-muted); padding: 12px 16px; border-radius: 8px;">
                 <div style="background: #10b981; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">5</div>
                 <div>
-                    <strong>Tempel (Paste) Token ke Sistem Gudang</strong>
+                    <strong>Tempel Token ke Sistem Gudang</strong>
                     <div style="color: var(--text-muted); font-size: 12.5px;">Tempel token tersebut ke kolom <strong>API Token</strong> di atas, lalu klik <strong>Tes & Pilih DB</strong> untuk menyimpan database. Selesai!</div>
                 </div>
             </div>
@@ -243,10 +243,7 @@ require_once __DIR__ . '/layout/header.php';
             <div class="card-description">Daftar dokumen transaksi pengeluaran dan mutasi yang siap tersinkron ke Accurate Online</div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('tableAccurateSync', 'Log_Antrean_Accurate_Online')">
-                <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                <span>Ekspor Excel (.xlsx)</span>
-            </button>
+            <?php $eksporTabel = 'tableAccurateSync'; $eksporNama = 'Log_Antrean_Accurate_Online'; include __DIR__ . '/layout/ekspor.php'; ?>
             <span class="badge badge-purple"><?= count($queueList) ?> Dokumen</span>
         </div>
     </div>
@@ -287,21 +284,21 @@ require_once __DIR__ . '/layout/header.php';
                         <td><strong><?= $q['attempt_count'] ?></strong> / <?= $q['max_attempts'] ?></td>
                         <td>
                             <?php if ($q['status'] === 'SUCCESS'): ?>
-                                <span class="badge badge-success">✓ Terkirim</span>
+                                <span class="badge badge-success">Terkirim</span>
                             <?php elseif ($q['status'] === 'PENDING'): ?>
-                                <span class="badge badge-warning">⏳ Pending</span>
+                                <span class="badge badge-warning">Pending</span>
                             <?php else: ?>
-                                <span class="badge badge-destructive">⚠ Gagal</span>
+                                <span class="badge badge-destructive">Gagal</span>
                             <?php endif; ?>
                         </td>
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 6px; justify-content: center;">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="showPayload(<?= htmlspecialchars(json_encode($q['payload_json'])) ?>)">
-                                    🔍 JSON
+                                    JSON
                                 </button>
                                 <?php if ($q['status'] !== 'SUCCESS'): ?>
                                     <button type="button" class="btn btn-primary btn-sm" onclick="syncQueue(<?= $q['id'] ?>)">
-                                        ⚡ Kirim
+                                        Kirim
                                     </button>
                                 <?php endif; ?>
                             </div>

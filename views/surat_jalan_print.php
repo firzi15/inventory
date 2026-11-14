@@ -20,7 +20,7 @@ if (!$trx) {
 
 $items = $trx['items'] ?? [];
 $noSuratJalan = !empty($trx['no_referensi_eksternal']) ? $trx['no_referensi_eksternal'] : (!empty($trx['no_bast']) ? $trx['no_bast'] : $trx['no_transaksi']);
-$barcodeSjSvg = BarcodeService::generateCode128Svg($noSuratJalan, 55, 1.4);
+$barcodeSjSvg = BarcodeService::generateCode128Svg($noSuratJalan, 60, 1.8);
 
 // Pilihan Mode Cetak: 'admin' (ada harga), 'mitra' (non-harga, hanya satuan), 'keduanya' (cetak 2 lembar)
 $mode = strtolower(trim($_GET['mode'] ?? 'admin'));
@@ -76,7 +76,7 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
         <!-- Header Perusahaan & Barcode Surat Jalan -->
         <div class="header-company">
             <div class="logo-title">
-                <h1>Gudang Logistik Bersama</h1>
+                <h1>AR_BAROKAH</h1>
                 <p>Sistem Manajemen Inventory Multi-Mitra & Pengeluaran Catch-Weight</p>
             </div>
             <div class="barcode-header">
@@ -102,11 +102,11 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
             <!-- Kolom 1: Asal Pengeluaran Barang (Gudang) -->
             <div class="party-card origin">
                 <div class="party-card-title">
-                    <span>Asal Pengeluaran (Gudang Logistik)</span>
+                    <span>Asal Pengeluaran (AR_BAROKAH)</span>
                 </div>
                 <div class="meta-row">
                     <span class="meta-label">Lokasi Gudang:</span>
-                    <span class="meta-val">Gudang Logistik Utama</span>
+                    <span class="meta-val">AR_BAROKAH</span>
                 </div>
                 <div class="meta-row">
                     <span class="meta-label">Diserahkan Oleh:</span>

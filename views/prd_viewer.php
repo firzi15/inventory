@@ -1,464 +1,353 @@
 <?php
 /**
- * Interactive PRD Documentation Viewer (Vibrant & Eyecatching Edition)
+ * Panduan Cara Pakai: dokumentasi satu halaman untuk operator, finance, dan admin.
+ * Isi mengikuti menu dan aturan sistem yang berlaku sekarang.
  */
 
-$pageTitle = 'Dokumen PRD Interaktif - Sistem Barcode Inventory Multi-Mitra';
+$pageTitle = 'Panduan Cara Pakai';
 
 require_once __DIR__ . '/layout/header.php';
 ?>
 
-<!-- Breadcrumbs Vibrant -->
-<div class="no-print" style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-muted); margin-bottom: 14px; font-weight: 600;">
-    <span style="color: var(--primary);">Dokumentasi Resmi</span>
-    <span>/</span>
-    <span>Spesifikasi Produk (PRD)</span>
-    <span>/</span>
-    <span style="color: var(--text-main); font-weight: 800;">Barcode Multi-Mitra (Catch-Weight)</span>
+<style>
+.pj { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; max-width: 1080px; margin: 0 auto; padding: 8px 4px 80px; }
+.pj-toc { position: sticky; top: 16px; align-self: start; font-size: 13px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.pj-toc .pj-toc-head { margin: 18px 0 4px; font-weight: 700; color: var(--text-main); }
+.pj-toc .pj-toc-head:first-child { margin-top: 0; }
+.pj-toc a { display: block; padding: 3px 0; color: var(--text-muted); text-decoration: none; line-height: 1.4; }
+.pj-toc a:hover { color: var(--text-main); text-decoration: underline; }
+.pj-body { min-width: 0; max-width: 740px; color: var(--text-main); }
+.pj-body h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
+.pj-body .pj-lead { margin: 0 0 8px; color: var(--text-muted); font-size: 15px; line-height: 1.6; }
+.pj-body .pj-meta { margin: 0 0 36px; color: var(--text-muted); font-size: 12.5px; }
+.pj-body h2 { font-size: 21px; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); scroll-margin-top: 16px; }
+.pj-body h3 { font-size: 15.5px; margin: 26px 0 6px; scroll-margin-top: 16px; }
+.pj-body p, .pj-body li { font-size: 14.5px; line-height: 1.72; }
+.pj-body p { margin: 0 0 12px; }
+.pj-body ol, .pj-body ul { margin: 0 0 14px; padding-left: 22px; }
+.pj-body li { margin-bottom: 5px; }
+.pj-body .pj-note { margin: 14px 0; padding: 1px 0 1px 14px; border-left: 3px solid var(--border); color: var(--text-muted); }
+.pj-body .pj-note p { color: inherit; margin-bottom: 6px; }
+.pj-body table { width: 100%; border-collapse: collapse; margin: 6px 0 18px; font-size: 13.5px; }
+.pj-body th, .pj-body td { padding: 8px 12px 8px 0; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; line-height: 1.55; }
+.pj-body th { font-weight: 700; color: var(--text-muted); font-size: 12.5px; }
+.pj-body td:first-child { font-weight: 600; white-space: nowrap; padding-right: 20px; }
+.pj-body .pj-menu { font-weight: 600; }
+@media (max-width: 900px) {
+    .pj { grid-template-columns: 1fr; gap: 24px; }
+    .pj-toc { position: static; max-height: none; columns: 2; }
+    .pj-toc .pj-toc-head { break-after: avoid; }
+}
+@media print {
+    .pj { display: block; }
+    .pj-toc { display: none; }
+    .pj-body { max-width: none; }
+}
+</style>
+
+<div class="pj">
+
+<nav class="pj-toc no-print" aria-label="Daftar isi">
+    <div class="pj-toc-head">Mulai</div>
+    <a href="#alur">Alur kerja</a>
+    <a href="#istilah">Istilah</a>
+    <a href="#peran">Peran pengguna</a>
+    <a href="#aturan">Aturan yang perlu diingat</a>
+
+    <div class="pj-toc-head">Gudang</div>
+    <a href="#master">Master data</a>
+    <a href="#penerimaan">Penerimaan dan timbang</a>
+    <a href="#riwayat-penerimaan">Riwayat penerimaan</a>
+    <a href="#barang-datang">Barang datang</a>
+    <a href="#stok">Stok dan opname</a>
+    <a href="#pengeluaran">Pengeluaran ke mitra</a>
+
+    <div class="pj-toc-head">Keuangan</div>
+    <a href="#purchase-invoice">Purchase Invoice</a>
+    <a href="#ap-aging">AP Aging</a>
+    <a href="#sales-invoice">Sales Invoice</a>
+    <a href="#ar-aging">AR Aging</a>
+    <a href="#rekonsiliasi">Rekonsiliasi Bank</a>
+    <a href="#laba-rugi">Laba Rugi</a>
+    <a href="#coa">COA</a>
+    <a href="#book">Purchase Book dan Sales Book</a>
+
+    <div class="pj-toc-head">Lainnya</div>
+    <a href="#pembatalan">Pembatalan dan koreksi</a>
+    <a href="#ekspor">Ekspor dan filter</a>
+    <a href="#masalah">Jika ada masalah</a>
+</nav>
+
+<article class="pj-body">
+
+<h1>Panduan Cara Pakai</h1>
+<p class="pj-lead">Cara memakai sistem dari barang datang sampai laporan keuangan. Nama menu ditulis persis seperti di sidebar.</p>
+<p class="pj-meta">Diperbarui 14 November 2026</p>
+
+<h2 id="alur" style="border-top: 0; padding-top: 0; margin-top: 0;">Alur kerja</h2>
+<ol>
+    <li><strong>Master data.</strong> Isi pemasok, harga beli per artikel, mitra, dan harga jual per artikel.</li>
+    <li><strong>Penerimaan.</strong> Barang dari pemasok ditimbang per kemasan, barcode dicetak, lalu Surat Jalan penerimaan diselesaikan. Faktur pembelian terbit otomatis.</li>
+    <li><strong>Bayar pemasok.</strong> Pembayaran dicatat dari Purchase Invoice, per Surat Jalan, dibayar penuh.</li>
+    <li><strong>Pengeluaran.</strong> Scan barcode kemasan yang dikirim ke mitra, selesaikan, cetak Surat Jalan keluar. Nota penjualan terbit otomatis.</li>
+    <li><strong>Setoran mitra.</strong> Mitra membayar nota, boleh dicicil. Dicatat dari Sales Invoice.</li>
+    <li><strong>Rekonsiliasi Bank.</strong> Sekali sehari, total setoran hari itu dicocokkan dengan uang yang masuk di bank, dengan lampiran screenshot.</li>
+    <li><strong>Laporan.</strong> Laba Rugi, COA, AP Aging, AR Aging, Purchase Book, Sales Book, dan Barang Datang.</li>
+</ol>
+<p>Faktur, nota, dan jurnal tidak diketik manual untuk barang. Semuanya dibuat sistem dari penerimaan dan pengeluaran, sehingga angka di laporan selalu berasal dari satu sumber.</p>
+
+<h2 id="istilah">Istilah</h2>
+<table>
+    <tr><th>Istilah</th><th>Arti</th></tr>
+    <tr><td>Pemasok</td><td>Pihak yang menjual barang ke kita. Kodenya diisi manual saat dibuat.</td></tr>
+    <tr><td>Mitra</td><td>Pihak yang membeli barang dari gudang. Harga jualnya bisa berbeda untuk tiap mitra.</td></tr>
+    <tr><td>Kemasan / box</td><td>Satu keranjang atau box fisik dengan satu barcode. Berat ditimbang per kemasan.</td></tr>
+    <tr><td>Netto</td><td>Berat barang saja, bruto dikurangi tara.</td></tr>
+    <tr><td>Surat Jalan (SJ) penerimaan</td><td>Satu kali kedatangan barang dari satu pemasok. Satu SJ menghasilkan satu faktur pembelian.</td></tr>
+    <tr><td>Surat Jalan keluar</td><td>Satu kali pengiriman barang ke satu mitra. Nomornya menjadi nomor nota penjualan.</td></tr>
+    <tr><td>Purchase Invoice</td><td>Faktur pembelian: tagihan dari pemasok atau vendor yang harus kita bayar.</td></tr>
+    <tr><td>Sales Invoice</td><td>Nota penjualan: tagihan kita ke mitra.</td></tr>
+    <tr><td>Setoran</td><td>Uang yang dibayarkan mitra untuk nota.</td></tr>
+    <tr><td>HPP</td><td>Harga pokok barang yang terjual, memakai harga beli saat barang diterima.</td></tr>
+</table>
+
+<h2 id="peran">Peran pengguna</h2>
+<table>
+    <tr><th>Peran</th><th>Biasa mengerjakan</th></tr>
+    <tr><td>Operator Inbound</td><td>Penerimaan dan timbang, cetak barcode dan Surat Jalan penerimaan.</td></tr>
+    <tr><td>Operator Outbound</td><td>Scan Pengeluaran dan cetak Surat Jalan keluar.</td></tr>
+    <tr><td>Finance</td><td>Purchase Invoice, pembayaran pemasok, setoran mitra, Rekonsiliasi Bank, laporan.</td></tr>
+    <tr><td>Supervisor</td><td>Semua di atas, ditambah pembatalan dokumen.</td></tr>
+    <tr><td>Admin</td><td>Semua, termasuk master data dan pengaturan.</td></tr>
+</table>
+<p>Hak yang dibatasi sistem:</p>
+<table>
+    <tr><th>Tindakan</th><th>Boleh dilakukan oleh</th></tr>
+    <tr><td>Batalkan penerimaan atau pengeluaran</td><td>Admin, Supervisor</td></tr>
+    <tr><td>Batalkan faktur manual, pembayaran pemasok, setoran mitra</td><td>Admin, Supervisor, Finance</td></tr>
+    <tr><td>Rekonsiliasi Bank dan membukanya kembali</td><td>Admin, Supervisor, Finance</td></tr>
+</table>
+
+<h2 id="aturan">Aturan yang perlu diingat</h2>
+<ul>
+    <li><strong>Harga dibekukan saat transaksi.</strong> Harga beli dibekukan saat barang diterima, harga jual saat barang keluar. Mengubah master harga tidak mengubah transaksi yang sudah terjadi.</li>
+    <li><strong>Pemasok dibayar penuh per Surat Jalan.</strong> Tidak ada cicilan ke pemasok.</li>
+    <li><strong>Mitra boleh mencicil,</strong> tetapi total setoran tidak boleh melebihi sisa piutang mitra itu.</li>
+    <li><strong>Kode dibuat otomatis</strong> untuk mitra, produk, kategori, vendor, dan tipe biaya. Hanya kode pemasok yang diisi manual.</li>
+    <li><strong>Data master hanya bisa dihapus bila belum dipakai</strong> di menu lain. Kalau sudah dipakai, hapus dulu dokumen yang memakainya, atau nonaktifkan.</li>
+    <li><strong>Dokumen tidak dihapus, tetapi dibatalkan</strong> dengan alasan. Keuangannya ikut dikoreksi. Lihat bagian Pembatalan dan koreksi.</li>
+    <li><strong>Tanggal rekonsiliasi mengunci setoran.</strong> Setoran pada hari yang sudah direkonsiliasi tidak bisa dibatalkan sebelum rekonsiliasinya dibuka kembali.</li>
+</ul>
+
+<h2 id="master">Master data</h2>
+<p>Buka <span class="pj-menu">Master &amp; Pengaturan</span>. Setiap tab punya menu sendiri di sidebar.</p>
+<table>
+    <tr><th>Menu</th><th>Fungsi</th></tr>
+    <tr><td>Pemasok Nelayan</td><td>Daftar pemasok. Kode pemasok diisi manual dan harus unik.</td></tr>
+    <tr><td>Vendor Non-Pemasok</td><td>Vendor untuk biaya dan aset, misalnya toko es atau PLN. Dipilih saat membuat faktur operasional.</td></tr>
+    <tr><td>Tipe Biaya Operasional</td><td>Jenis biaya beserta akun COA, satuan, dan estimasi tarifnya. Memilih tipe biaya di faktur ikut mengisi akunnya.</td></tr>
+    <tr><td>Harga Pemasok</td><td>Harga beli per kg untuk tiap artikel dari tiap pemasok.</td></tr>
+    <tr><td>Harga Mitra</td><td>Harga jual per kg untuk tiap artikel ke tiap mitra.</td></tr>
+    <tr><td>Mitra Bisnis</td><td>Daftar mitra pembeli.</td></tr>
+    <tr><td>Master Produk</td><td>Artikel dan kategorinya (cumi, ikan, teri, udang, dan seterusnya).</td></tr>
+    <tr><td>Akun COA</td><td>Daftar akun buku besar. Lihat bagian COA.</td></tr>
+    <tr><td>Log Harga</td><td>Riwayat setiap perubahan harga beli dan harga jual.</td></tr>
+    <tr><td>Settingan API Accurate</td><td>Koneksi ke Accurate Online dan antrean pengirimannya.</td></tr>
+</table>
+<h3>Mengubah harga</h3>
+<ol>
+    <li>Buka Harga Pemasok atau Harga Mitra.</li>
+    <li>Ubah angka pada artikel yang dimaksud.</li>
+    <li>Isi kolom alasan perubahan bila perlu, lalu simpan.</li>
+</ol>
+<p>Hanya harga yang benar-benar berubah yang masuk ke Log Harga: harga lama, harga baru, selisih, siapa yang mengubah, dan alasannya.</p>
+<div class="pj-note"><p>Harga beli artikel dari pemasok harus sudah ada di Harga Pemasok sebelum barangnya diterima. Tanpa itu, penerimaan ditolak.</p></div>
+
+<h2 id="penerimaan">Penerimaan dan timbang</h2>
+<p>Menu: <span class="pj-menu">Penerimaan Barang &gt; Penerimaan &amp; Timbang</span>.</p>
+<ol>
+    <li>Pilih pemasok. Nomor Surat Jalan terisi otomatis.</li>
+    <li>Pilih kategori dan artikel.</li>
+    <li>Timbang satu kemasan, masukkan berat bersih, lalu klik <strong>Tambah Box</strong>. Tiap box mendapat barcode sendiri.</li>
+    <li>Cetak barcode box dengan <strong>Cetak Barcode</strong> dan tempel di kemasannya.</li>
+    <li>Ulangi untuk semua box. Ringkasan Surat Jalan di samping menunjukkan jumlah box dan total netto.</li>
+    <li>Setelah semua box masuk, klik <strong>Cetak Surat Jalan</strong>. Ini menyelesaikan Surat Jalan penerimaan.</li>
+</ol>
+<p>Saat Surat Jalan diselesaikan, sistem membuat satu Purchase Invoice untuk Surat Jalan itu. Nilainya memakai harga beli di Harga Pemasok pada saat itu, dan tidak berubah lagi sesudahnya. Stok masuk ke persediaan.</p>
+<p>Kalau barcode ingin dicetak lebih dulu dan ditimbang kemudian, pakai <strong>Cetak Barcode Keranjang Baru</strong> di halaman yang sama, lalu timbang dengan cara scan.</p>
+
+<h2 id="riwayat-penerimaan">Riwayat penerimaan</h2>
+<p>Menu: <span class="pj-menu">Penerimaan Barang &gt; Riwayat Penerimaan</span>. Berisi seluruh Surat Jalan penerimaan, beserta barcode dan beratnya.</p>
+<h3>Membatalkan penerimaan</h3>
+<p>Klik <strong>Batalkan</strong> pada Surat Jalan, isi alasan. Kemasan menjadi VOID, faktur pembelian menjadi Batal, dan jurnalnya dibalik. Syaratnya:</p>
+<ul>
+    <li>Tidak ada pembayaran ke pemasok untuk Surat Jalan itu. Kalau ada, batalkan pembayarannya dulu.</li>
+    <li>Tidak ada kemasan yang sudah dikeluarkan ke mitra. Kalau ada, batalkan pengeluarannya dulu.</li>
+</ul>
+
+<h2 id="barang-datang">Barang datang</h2>
+<p>Menu: <span class="pj-menu">Penerimaan Barang &gt; Barang Datang</span>. Laporan barang yang diterima pada rentang tanggal, dengan total nilai pembelian.</p>
+<ul>
+    <li>Filter: tanggal, kategori, artikel, pemasok, status bayar (semua, belum lunas, lunas).</li>
+    <li>Pilih <strong>Kelompokkan per</strong> pemasok, Surat Jalan, atau kategori.</li>
+    <li>Setiap jenis barang diakhiri baris <strong>TOTAL</strong> (misalnya TOTAL CUMI). Di bawahnya ada TOTAL tiap jenis untuk seluruh data, lalu <strong>GRAND TOTAL</strong> untuk semua jenis.</li>
+    <li>Tombol <strong>Box</strong> pada tiap baris membuka rincian per box: barcode, bruto, tara, netto, harga, dan nilai.</li>
+</ul>
+<p>Total laporan ini selalu sama dengan total Purchase Invoice stok.</p>
+
+<h2 id="stok">Stok dan opname</h2>
+<table>
+    <tr><th>Menu</th><th>Fungsi</th></tr>
+    <tr><td>Stok Barang Gudang &gt; Sisa Stok Gudang</td><td>Barang yang masih ada di gudang, difilter per tanggal, pemasok, dan artikel.</td></tr>
+    <tr><td>Stok Barang Gudang &gt; Stock Opname</td><td>Mencocokkan barang fisik dengan data sistem. Kemasan yang belum di-scan berstatus Menunggu Scan Barcode.</td></tr>
+    <tr><td>Saldo Stok Gudang</td><td>Rincian stok per mitra, matriks per kategori, dan valuasi. Nilai di sini adalah estimasi memakai harga master, bukan nilai buku. Nilai buku ada di COA akun 1200.</td></tr>
+</table>
+
+<h2 id="pengeluaran">Pengeluaran ke mitra</h2>
+<p>Menu: <span class="pj-menu">Pengeluaran Barang ke Mitra &gt; Scan Pengeluaran</span>.</p>
+<ol>
+    <li>Pilih mitra penerima. Pemasok asal terisi otomatis dari barcode yang di-scan. Nomor Surat Jalan terisi otomatis.</li>
+    <li>Scan barcode tiap kemasan yang dikirim. Daftar kemasan dan total netto bertambah di tabel.</li>
+    <li>Periksa daftar, hapus baris yang salah scan bila ada.</li>
+    <li>Klik <strong>Selesaikan Pengeluaran</strong>, lalu <strong>Cetak Surat Jalan</strong>.</li>
+</ol>
+<p>Surat Jalan keluar tidak menampilkan nama pemasok. Setelah pengeluaran selesai, sistem membuat nota penjualan ke mitra dengan harga jual dari Harga Mitra saat itu, dan mencatat HPP dari harga beli barang tersebut.</p>
+<h3>Riwayat dan pembatalan</h3>
+<p><span class="pj-menu">Riwayat Pengeluaran</span> menampilkan Surat Jalan keluar dalam dua tampilan: per Surat Jalan dan per barang. Pengeluaran bisa dibatalkan oleh Admin atau Supervisor dengan alasan, selama:</p>
+<ul>
+    <li>belum ada setoran mitra untuk nota itu (batalkan setorannya dulu), dan</li>
+    <li>belum terkirim ke Accurate.</li>
+</ul>
+<p>Setelah dibatalkan, kemasan kembali ke stok gudang dan nota serta jurnalnya dibalik.</p>
+
+<h2 id="purchase-invoice">Purchase Invoice</h2>
+<p>Menu: <span class="pj-menu">Purchase Invoice &gt; Daftar Faktur</span>. Berisi dua jenis faktur.</p>
+<ul>
+    <li><strong>Faktur stok</strong> terbit otomatis dari penerimaan. Tidak diketik dan tidak bisa diubah.</li>
+    <li><strong>Faktur operasional</strong> dibuat manual untuk biaya dan aset non-stok.</li>
+</ul>
+<h3>Membuat faktur operasional</h3>
+<ol>
+    <li>Klik <strong>Faktur Operasional</strong>.</li>
+    <li>Pilih <strong>Akun</strong>. Pilihannya dikelompokkan Biaya dan Aset, diambil dari Akun COA yang aktif.</li>
+    <li>Pilih vendor. Untuk vendor yang belum ada, pilih Vendor Lainnya dan ketik namanya.</li>
+    <li>Isi tanggal faktur dan jatuh tempo.</li>
+    <li>Isi baris item: deskripsi, qty, satuan, harga. Klik <strong>Tambah Baris</strong> bila ada lebih dari satu.</li>
+    <li>Simpan Faktur.</li>
+</ol>
+<p>Akun yang dipilih langsung dipakai pada jurnal. Akun Kas, Persediaan, dan akun pendapatan tidak bisa dipilih di sini.</p>
+<h3>Membayar</h3>
+<p>Klik <strong>Bayar</strong> pada faktur. Pembayaran untuk Surat Jalan pemasok harus melunasi seluruh sisa Surat Jalan yang dipilih; nominal tidak diketik sendiri.</p>
+
+<h2 id="ap-aging">AP Aging</h2>
+<p>Menu: <span class="pj-menu">AP Aging</span>. Hanya laporan, tidak ada input.</p>
+<ul>
+    <li><strong>Ringkasan per Pemasok:</strong> total tagihan, dibayar, sisa utang, dan umurnya (0-7, 8-14, 15-30, di atas 30 hari).</li>
+    <li><strong>Riwayat Pembayaran:</strong> semua pembayaran ke pemasok. Pembayaran yang dibatalkan ditandai dan nominal aslinya dicoret.</li>
+</ul>
+<p>Semua input pembayaran dilakukan dari Purchase Invoice.</p>
+
+<h2 id="sales-invoice">Sales Invoice</h2>
+<p>Menu: <span class="pj-menu">Sales Invoice &gt; Daftar Nota</span>. Nota terbit otomatis dari Pengeluaran.</p>
+<h3>Mencatat setoran mitra</h3>
+<ol>
+    <li>Klik <strong>Catat Setoran</strong> (atau tombol setoran pada nota).</li>
+    <li>Pilih mitra, tanggal, dan metode (tunai atau transfer bank).</li>
+    <li>Isi jumlah. Boleh sebagian. Sistem menolak jumlah yang melebihi total sisa piutang mitra itu.</li>
+    <li>Pilih pembagian: otomatis ke nota tertua lebih dulu, atau manual per nota.</li>
+    <li>Simpan.</li>
+</ol>
+
+<h2 id="ar-aging">AR Aging</h2>
+<p>Menu: <span class="pj-menu">AR Aging</span>. Hanya laporan.</p>
+<ul>
+    <li><strong>Ringkasan per Mitra:</strong> total belanja, total setoran, sisa piutang, dan umur piutang.</li>
+    <li><strong>Riwayat Setoran:</strong> semua setoran mitra, termasuk yang dibatalkan.</li>
+</ul>
+
+<h2 id="rekonsiliasi">Rekonsiliasi Bank</h2>
+<p>Menu: <span class="pj-menu">Rekonsiliasi Bank</span>. Dilakukan sekali sehari untuk mengaudit uang masuk pada hari itu.</p>
+<p>Halaman menampilkan satu baris per hari yang punya setoran: jumlah setoran, total tunai, total transfer, dan total menurut sistem.</p>
+<ol>
+    <li>Klik <strong>Rekonsiliasi</strong> pada tanggal yang akan diaudit. Rincian setoran hari itu tampil per mitra.</li>
+    <li>Isi <strong>Total uang masuk di bank</strong> sesuai mutasi atau screenshot bank.</li>
+    <li>Lampirkan satu atau lebih screenshot atau slip bank (JPG, PNG, WEBP, atau PDF, maksimal 8 MB per file).</li>
+    <li>Jika angkanya berbeda dari total sistem, isi catatan penyebabnya.</li>
+    <li>Simpan.</li>
+</ol>
+<table>
+    <tr><th>Status</th><th>Arti</th></tr>
+    <tr><td>Belum direkonsiliasi</td><td>Hari itu belum diaudit.</td></tr>
+    <tr><td>Sesuai</td><td>Total bank sama dengan total sistem.</td></tr>
+    <tr><td>Selisih</td><td>Total bank berbeda. Selisih dan catatannya tersimpan.</td></tr>
+    <tr><td>Setoran berubah</td><td>Setelah direkonsiliasi, total setoran hari itu berubah (misalnya ada setoran baru). Audit ulang.</td></tr>
+</table>
+<p>Setoran pada hari yang sudah direkonsiliasi terkunci. Untuk mengubah atau membatalkannya, buka <strong>Lihat</strong> pada tanggal itu, klik <strong>Buka kembali</strong>, isi alasan, lalu lakukan perubahan dan rekonsiliasi ulang. Pembukaan kembali tercatat di log audit.</p>
+
+<h2 id="laba-rugi">Laba Rugi</h2>
+<p>Menu: <span class="pj-menu">Laba Rugi &gt; Laba Rugi</span>. Semua angka dibaca dari jurnal dengan dasar akrual: penjualan diakui saat barang keluar, bukan saat uang masuk.</p>
+<ul>
+    <li>Tabel Januari sampai Desember plus total tahun: Penjualan, HPP, Laba Kotor, Biaya Operasional, Laba Bersih, dan marginnya.</li>
+    <li>Di bawah tiap kelompok ada baris per akun COA. Klik angka akun untuk melihat mutasinya pada bulan itu.</li>
+    <li>Bulan yang dipilih dibandingkan dengan bulan sebelumnya.</li>
+    <li>Rincian penjualan dan HPP per mitra, serta biaya per vendor.</li>
+    <li>Baris pemeriksaan di bawah tabel membandingkan laba bersih dengan saldo akun di COA. Seharusnya selalu tertulis Cocok.</li>
+</ul>
+<p><span class="pj-menu">Laba per Surat Jalan</span> menampilkan penjualan, HPP, laba, dan margin tiap Surat Jalan keluar.</p>
+<div class="pj-note"><p>Pembatalan dicatat pada tanggal pembatalan, bukan tanggal dokumen aslinya. Penjualan yang dibatalkan di bulan berikutnya mengoreksi bulan berikutnya itu.</p></div>
+
+<h2 id="coa">COA</h2>
+<p>Menu: <span class="pj-menu">Laba Rugi &gt; COA</span> untuk melihat saldo, dan <span class="pj-menu">Master &amp; Pengaturan &gt; Akun COA</span> untuk mengelola akun.</p>
+<ul>
+    <li>Saldo setiap akun dihitung dari jurnal. Klik kode akun untuk melihat mutasinya.</li>
+    <li>Di bawah tabel ada pemeriksaan jurnal seimbang: total debit sama dengan total kredit.</li>
+    <li>Ada delapan akun inti: 1000 Kas &amp; Bank, 1100 Piutang &amp; Aset Lainnya, 1200 Inventory, 2000 Utang, 3000 Modal, 4000 Penjualan, 5000 HPP, 6000 Biaya Operasional. Akun inti dipakai posting otomatis, tidak bisa dihapus atau dinonaktifkan.</li>
+    <li>Sub-akun ditambah dengan tombol tambah pada akun induknya. Kode 4 digit di rentang kelompoknya, misalnya Beban 6000 sampai 9999.</li>
+    <li>Akun yang sudah dipakai di jurnal atau faktur tidak bisa dihapus, hanya dinonaktifkan.</li>
+</ul>
+
+<h2 id="book">Purchase Book dan Sales Book</h2>
+<p>Menu: <span class="pj-menu">Purchase Invoice &gt; Purchase Book</span> dan <span class="pj-menu">Sales Invoice &gt; Sales Book</span>. Dipakai untuk membandingkan harga dari waktu ke waktu.</p>
+<ul>
+    <li>Purchase Book: harga beli per artikel dari tiap pemasok. Sales Book: harga jual per artikel ke tiap mitra, beserta HPP dan margin.</li>
+    <li>Tiap baris menampilkan selisih harga terhadap transaksi sebelumnya untuk artikel dan pihak yang sama.</li>
+    <li>Pilih satu artikel untuk melihat grafik tren harga dan tabel perbandingan antar pemasok atau mitra.</li>
+    <li><strong>Urutkan</strong> berdasarkan tanggal, pemasok atau mitra, harga, atau nama artikel, naik atau turun. Urutan per pemasok, mitra, atau artikel menampilkan baris TOTAL tiap kelompok, dan semuanya diakhiri GRAND TOTAL.</li>
+    <li>Di bagian bawah ada log perubahan harga master untuk filter yang sama.</li>
+</ul>
+
+<h2 id="pembatalan">Pembatalan dan koreksi</h2>
+<p>Dokumen yang sudah terbit tidak diedit atau dihapus. Kesalahan dikoreksi dengan pembatalan, yang membuat jurnal pembalik. Alasan wajib diisi dan tercatat.</p>
+<table>
+    <tr><th>Yang dibatalkan</th><th>Di mana</th><th>Syarat</th></tr>
+    <tr><td>Penerimaan</td><td>Riwayat Penerimaan</td><td>Tidak ada pembayaran pemasok dan tidak ada kemasan yang sudah keluar.</td></tr>
+    <tr><td>Pengeluaran</td><td>Riwayat Pengeluaran</td><td>Tidak ada setoran mitra untuk nota itu dan belum terkirim ke Accurate.</td></tr>
+    <tr><td>Faktur operasional</td><td>Daftar Faktur</td><td>Belum ada pembayaran. Faktur stok dibatalkan lewat Riwayat Penerimaan.</td></tr>
+    <tr><td>Pembayaran pemasok</td><td>Rincian faktur (daftar pembayarannya)</td><td>Tidak ada syarat tambahan.</td></tr>
+    <tr><td>Setoran mitra</td><td>Riwayat setoran pada nota (Daftar Nota)</td><td>Hari setorannya belum direkonsiliasi, atau rekonsiliasinya sudah dibuka kembali.</td></tr>
+</table>
+<p>Urutan membatalkan mengikuti arah sebaliknya: setoran atau pembayaran dibatalkan lebih dulu, baru dokumen di bawahnya (pengeluaran atau penerimaan).</p>
+
+<h2 id="ekspor">Ekspor dan filter</h2>
+<ul>
+    <li>Halaman laporan punya tombol <strong>Excel</strong> dan <strong>PDF</strong>. Excel membuat satu sheet per tabel di halaman, dengan nilai Rupiah sebagai angka. PDF membuka dialog cetak; pilih Simpan sebagai PDF.</li>
+    <li>Yang diekspor hanya yang tampil: baris yang tersaring tidak ikut, dan kolom Aksi tidak disertakan.</li>
+    <li>Semua pilihan dropdown bisa dicari dengan mengetik jika daftarnya panjang. Panah atas/bawah dan Enter bekerja di dalam dropdown.</li>
+</ul>
+
+<h2 id="masalah">Jika ada masalah</h2>
+<table>
+    <tr><th>Gejala</th><th>Penyebab dan tindakan</th></tr>
+    <tr><td>Penerimaan ditolak karena harga</td><td>Harga beli artikel itu dari pemasok belum diisi. Isi di Master &gt; Harga Pemasok.</td></tr>
+    <tr><td>Tidak bisa membatalkan penerimaan</td><td>Masih ada pembayaran pemasok atau kemasan yang sudah keluar. Batalkan dulu yang di bawahnya.</td></tr>
+    <tr><td>Tidak bisa membatalkan setoran</td><td>Hari setoran itu sudah direkonsiliasi. Buka kembali rekonsiliasinya.</td></tr>
+    <tr><td>Setoran ditolak</td><td>Jumlahnya melebihi sisa piutang mitra.</td></tr>
+    <tr><td>Tidak bisa menghapus master</td><td>Masih dipakai di menu lain. Pesan error menyebutkan di mana. Hapus atau batalkan dokumen itu dulu, atau nonaktifkan.</td></tr>
+    <tr><td>Laba Rugi tertulis Tidak cocok dengan COA</td><td>Ada jurnal yang tidak terbaca di salah satu sisi. Hubungi admin dan jangan dipakai untuk laporan sebelum dicek.</td></tr>
+    <tr><td>Rekonsiliasi tertulis Setoran berubah</td><td>Ada setoran baru atau perubahan setelah hari itu diaudit. Buka kembali dan rekonsiliasi ulang.</td></tr>
+</table>
+
+</article>
 </div>
-
-<!-- Page Title Header -->
-<div class="page-header no-print">
-    <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <span class="badge badge-default">PRD Resmi v1.1.0</span>
-            <span class="badge badge-success">✓ Siap Diimplementasikan</span>
-            <span class="badge badge-info">REST API Accurate Online</span>
-        </div>
-        <h1 class="page-title" style="font-size: 28px;">Sistem Barcode Inventory Multi-Mitra</h1>
-        <p class="page-subtitle" style="font-size: 15px; max-width: 860px;">
-            Spesifikasi Warehouse Execution System (WES) untuk penanganan barang dengan bobot bervariasi (<em>catch-weight</em>) milik 7 mitra bisnis dan sinkronisasi otomatis ke Accurate Online.
-        </p>
-    </div>
-    <div style="display: flex; gap: 10px;">
-        <a href="Manual_Book_Sistem_Barcode_Inventory_Multi_Mitra.docx" class="btn btn-outline" download style="color: #2563eb; border-color: #2563eb;">
-            <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
-            <span>Unduh Manual Book (.docx)</span>
-        </a>
-        <button type="button" class="btn btn-outline" onclick="window.print()">
-            <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-            <span>Cetak PDF</span>
-        </button>
-        <a href="index.php?page=dashboard" class="btn btn-primary">
-            <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
-            <span>Buka Dashboard</span>
-        </a>
-    </div>
-</div>
-
-<div class="prd-container">
-    <!-- Sidebar Dokumentasi Vibrant -->
-    <aside class="prd-sidebar no-print">
-        <div style="margin-bottom: 18px;">
-            <input type="text" id="prdSearch" class="form-control" placeholder="🔍 Cari bab PRD..." style="height: 38px; font-size: 13px;">
-        </div>
-
-        <div style="margin-bottom: 14px;">
-            <div class="prd-sidebar-title">🎯 Getting Started</div>
-            <ul class="prd-sidebar-links">
-                <li><a href="#bab1" class="prd-sidebar-link"><i data-lucide="sparkles" style="width: 14px; height: 14px; color: var(--primary);"></i> 1. Ringkasan Eksekutif</a></li>
-                <li><a href="#bab2" class="prd-sidebar-link"><i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: #10b981;"></i> 2. Masalah & Solusi</a></li>
-                <li><a href="#bab3" class="prd-sidebar-link"><i data-lucide="target" style="width: 14px; height: 14px; color: #f59e0b;"></i> 3. Ruang Lingkup v1</a></li>
-            </ul>
-        </div>
-
-        <div style="margin-bottom: 14px;">
-            <div class="prd-sidebar-title">🏗️ Arsitektur Sistem</div>
-            <ul class="prd-sidebar-links">
-                <li><a href="#bab4" class="prd-sidebar-link"><i data-lucide="users" style="width: 14px; height: 14px; color: #8b5cf6;"></i> 4. Pengguna & RBAC</a></li>
-                <li><a href="#bab5" class="prd-sidebar-link"><i data-lucide="database" style="width: 14px; height: 14px; color: #0ea5e9;"></i> 5. Struktur Data & ERD</a></li>
-                <li><a href="#bab6" class="prd-sidebar-link"><i data-lucide="tag" style="width: 14px; height: 14px; color: #ec4899;"></i> 6. Format Barcode 100x50mm</a></li>
-                <li><a href="#bab7" class="prd-sidebar-link"><i data-lucide="refresh-cw" style="width: 14px; height: 14px; color: #10b981;"></i> 7. Integrasi API Accurate</a></li>
-            </ul>
-        </div>
-
-        <div style="margin-bottom: 14px;">
-            <div class="prd-sidebar-title">⚙️ Operasional & Alur Mutasi</div>
-            <ul class="prd-sidebar-links">
-                <li><a href="#bab7b" class="prd-sidebar-link"><i data-lucide="route" style="width: 14px; height: 14px; color: #8b5cf6;"></i> 7b. Mutasi, POS & BAST</a></li>
-                <li><a href="#bab8" class="prd-sidebar-link"><i data-lucide="shield-check" style="width: 14px; height: 14px; color: #0284c7;"></i> 8. Non-Fungsional</a></li>
-                <li><a href="#bab9" class="prd-sidebar-link"><i data-lucide="milestone" style="width: 14px; height: 14px; color: #d97706;"></i> 9. Roadmap Bertahap</a></li>
-                <li><a href="#bab10" class="prd-sidebar-link"><i data-lucide="list-checks" style="width: 14px; height: 14px; color: #ef4444;"></i> 10. Checklist Kesiapan</a></li>
-            </ul>
-        </div>
-
-        <div style="padding: 14px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--bg-muted); font-size: 12.5px; margin-top: 14px;">
-            <div style="font-weight: 800; color: var(--text-main); margin-bottom: 4px;">🛠️ Kerangka Aplikasi:</div>
-            <div style="color: var(--text-muted); line-height: 1.5;">Seluruh modul PHP & skema database telah aktif dan siap digunakan.</div>
-            <a href="setup.php" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; font-weight: 700;">
-                Inisialisasi Database
-            </a>
-        </div>
-    </aside>
-
-    <!-- Konten Utama PRD -->
-    <article class="prd-content">
-        <!-- Bab 1 -->
-        <section id="bab1">
-            <h2><i data-lucide="sparkles" style="color: var(--primary);"></i> 1. Ringkasan Eksekutif & Latar Belakang</h2>
-            <p>
-                Sistem Barcode Inventory Multi-Mitra dirancang khusus untuk memecahkan kendala pengelolaan stok fisik barang pergudangan dingin (*cold storage* / pergudangan umum) yang memiliki bobot berbeda-beda pada setiap kemasannya (<strong>catch-weight</strong>) dan dimiliki secara terpisah oleh <strong>7 Mitra Bisnis</strong>.
-            </p>
-            <p>
-                Setiap satu kemasan fisik barang diidentifikasi secara unik oleh <strong>satu label barcode</strong> yang merekam data berat aktual timbangan (*netto*), kepemilikan mitra, jenis barang, nomor batch, dan tanggal masuk.
-            </p>
-
-            <div class="alert alert-info" style="margin: 22px 0;">
-                <i data-lucide="info" style="width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px;"></i>
-                <div>
-                    <div style="font-weight: 800; font-size: 14.5px; margin-bottom: 4px;">Tiga Fondasi Utama Sistem:</div>
-                    <ul style="margin-left: 20px; font-size: 13.5px; line-height: 1.7;">
-                        <li><strong>Segregasi Total Multi-Mitra:</strong> Stok terpisah mutlak per 7 mitra (M01 s/d M07) tanpa risiko salah kirim antar mitra.</li>
-                        <li><strong>Akurasi Catch-Weight:</strong> Timbangan digital terhubung via USB/RS-232 menghapus kesalahan pengetikan manual (*zero typo*).</li>
-                        <li><strong>Sinkronisasi Accurate Otomatis:</strong> Dokumen transaksi terkirim otomatis ke REST API Accurate Online tanpa perlu input ulang.</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bab 2 -->
-        <section id="bab2">
-            <h2><i data-lucide="check-circle-2" style="color: #10b981;"></i> 2. Matriks Permasalahan vs Solusi</h2>
-            <div class="table-responsive">
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;">No</th>
-                            <th>Kondisi Masalah Saat Ini</th>
-                            <th>Dampak Operasional</th>
-                            <th>Solusi dalam Sistem Barcode v1</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="badge badge-secondary">01</span></td>
-                            <td>Barang milik 7 mitra disimpan bercampur di gudang.</td>
-                            <td>Sulit mengetahui saldo pasti per mitra; risiko salah kirim barang milik mitra lain.</td>
-                            <td>
-                                <span class="badge badge-success">✓ Segregasi Digital</span>
-                                <div style="font-size: 12.5px; margin-top: 4px; color: var(--text-muted);">Setiap barcode terikat mutlak ke 1 mitra dan divalidasi saat scan keluar.</div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge badge-secondary">02</span></td>
-                            <td>Berat kemasan bervariasi (*catch-weight*), dicatat manual di kertas.</td>
-                            <td>Salah hitung berat total; klaim selisih kilogram dari pelanggan / mitra.</td>
-                            <td>
-                                <span class="badge badge-info">✓ Auto-Capture Timbangan</span>
-                                <div style="font-size: 12.5px; margin-top: 4px; color: var(--text-muted);">Pembacaan otomatis timbangan digital (resolusi 0.01 kg). Netto = Bruto − Tara.</div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge badge-secondary">03</span></td>
-                            <td>Data stok dicatat dua kali (di gudang lalu diinput ulang ke Accurate).</td>
-                            <td>Saldo pembukuan Accurate selalu selisih dengan stok fisik riil di gudang.</td>
-                            <td>
-                                <span class="badge badge-purple">✓ Integrasi API Accurate</span>
-                                <div style="font-size: 12.5px; margin-top: 4px; color: var(--text-muted);">Pengiriman otomatis per transaksi via background queue. Tanpa input ganda.</div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge badge-secondary">04</span></td>
-                            <td>Laporan saldo ke mitra memakan waktu lama.</td>
-                            <td>Admin lembur merekap Excel manual setiap ada permintaan data dari mitra.</td>
-                            <td>
-                                <span class="badge badge-warning">✓ Ekspor 1-Klik</span>
-                                <div style="font-size: 12.5px; margin-top: 4px; color: var(--text-muted);">Matriks stok real-time siap ekspor ke Excel/PDF dalam hitungan detik.</div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Bab 3 -->
-        <section id="bab3">
-            <h2><i data-lucide="target" style="color: #f59e0b;"></i> 3. Ruang Lingkup Proyek (Scope of Work)</h2>
-            <div class="grid grid-cols-2" style="margin: 20px 0;">
-                <div style="border: 2px solid #10b981; border-radius: var(--radius); padding: 20px; background: rgba(16, 185, 129, 0.04);">
-                    <div style="font-weight: 800; font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                        <span class="badge badge-success">Masuk Lingkup</span>
-                        <span>Fase 1 (Wajib / P1)</span>
-                    </div>
-                    <ul style="margin-left: 20px; font-size: 13.5px; line-height: 1.8; color: var(--text-main);">
-                        <li>Master 7 Mitra, Jenis Barang, Item SKU (tarik dari Accurate).</li>
-                        <li>Stasiun Timbang & Cetak Label Thermal 100 × 50 mm.</li>
-                        <li>Penerimaan barang (Inbound) via cetak label otomatis aktif.</li>
-                        <li>Pengeluaran barang (Outbound) dengan validasi scan anti-tertukar.</li>
-                        <li>Stok Opname digital untuk deteksi label missing & selisih bobot.</li>
-                        <li>Laporan Matriks Stok Multi-Mitra (Kg & Kemasan) dan Ekspor Excel.</li>
-                        <li>Antrean Sinkronisasi REST API Accurate Online.</li>
-                    </ul>
-                </div>
-
-                <div style="border: 2px dashed #94a3b8; border-radius: var(--radius); padding: 20px; background: var(--bg-muted);">
-                    <div style="font-weight: 800; font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                        <span class="badge badge-secondary">Di Luar Lingkup</span>
-                        <span>Fase 2 (Rilis Lanjutan)</span>
-                    </div>
-                    <ul style="margin-left: 20px; font-size: 13.5px; line-height: 1.8; color: var(--text-muted);">
-                        <li>Modul Pembelian & Penjualan penuh (tetap di Accurate Online).</li>
-                        <li>Penagihan / Invoice biaya sewa gudang ke mitra.</li>
-                        <li>Portal login mandiri (*client portal*) untuk mitra eksternal.</li>
-                        <li>Aplikasi native iOS/Android (Fase 1 menggunakan web responsif).</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bab 4 -->
-        <section id="bab4">
-            <h2><i data-lucide="users" style="color: #8b5cf6;"></i> 4. Pengguna & Hak Akses (User Roles)</h2>
-            <div class="table-responsive">
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th>Peran (Role)</th>
-                            <th>Tugas Utama</th>
-                            <th>Hak Akses Menu</th>
-                            <th>Perangkat Utama</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Admin Sistem</strong></td>
-                            <td>Kelola user, master mitra, koneksi API Accurate, konfigurasi sistem.</td>
-                            <td><span class="badge badge-default">Semua Menu</span></td>
-                            <td>PC Desktop</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Supervisor Gudang</strong></td>
-                            <td>Otorisasi toleransi berat abnormal, persetujuan void label, validasi opname.</td>
-                            <td><span class="badge badge-purple">Approval & Transaksi</span></td>
-                            <td>PC / Tablet</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Operator Penerimaan</strong></td>
-                            <td>Menimbang kemasan, cetak label barcode, terima barang masuk.</td>
-                            <td><span class="badge badge-info">Timbang & Penerimaan</span></td>
-                            <td>PC Stasiun Timbang</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Operator Pengeluaran</strong></td>
-                            <td>Scan barcode untuk pengiriman keluar, validasi barang, mutasi rak.</td>
-                            <td><span class="badge badge-success">Pengeluaran & Opname</span></td>
-                            <td>Handheld Android / HP</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Admin Keuangan</strong></td>
-                            <td>Pantau status sinkron Accurate, kirim ulang antrean yang tertunda.</td>
-                            <td><span class="badge badge-warning">Laporan & Antrean API</span></td>
-                            <td>PC Desktop</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Bab 5 -->
-        <section id="bab5">
-            <h2><i data-lucide="database" style="color: #0ea5e9;"></i> 5. Konsep & Struktur Data Utama</h2>
-            <p>
-                Formula utama sistem: <strong>1 Kemasan Fisik = 1 Label Barcode Unik</strong>. Stok dihitung dalam dual metric:
-            </p>
-            <div class="grid grid-cols-2" style="margin: 18px 0;">
-                <div style="border: 2px solid rgba(14, 165, 233, 0.4); border-radius: var(--radius); padding: 18px; background: rgba(14, 165, 233, 0.05);">
-                    <div style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: #0284c7;">Satuan Utama</div>
-                    <div style="font-size: 24px; font-weight: 900; color: #0284c7; margin: 4px 0;">Kilogram (Kg)</div>
-                    <div style="font-size: 12.5px; color: var(--text-muted);">Resolusi 0.01 kg (Netto = Bruto − Tara)</div>
-                </div>
-                <div style="border: 2px solid rgba(16, 185, 129, 0.4); border-radius: var(--radius); padding: 18px; background: rgba(16, 185, 129, 0.05);">
-                    <div style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: #10b981;">Satuan Bantu</div>
-                    <div style="font-size: 24px; font-weight: 900; color: #10b981; margin: 4px 0;">Jumlah Kemasan (Pcs)</div>
-                    <div style="font-size: 12.5px; color: var(--text-muted);">Pencocokan unit fisik saat stok opname</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bab 6 -->
-        <section id="bab6">
-            <h2><i data-lucide="tag" style="color: #ec4899;"></i> 6. Desain Barcode & Label Thermal (100 × 50 mm)</h2>
-            <p>
-                Label barcode dicetak menggunakan printer thermal stiker ukuran standar industri 100 × 50 mm. Simbologi menggunakan <strong>Code 128 (Auto)</strong> yang terbaca cepat di semua barcode scanner 1D dan 2D.
-            </p>
-
-            <div style="background: rgba(79, 70, 229, 0.08); border: 2px solid rgba(79, 70, 229, 0.3); border-radius: var(--radius); padding: 18px; margin: 18px 0;">
-                <div style="font-size: 12px; color: var(--primary); font-weight: 800; text-transform: uppercase;">FORMAT PENOMORAN BARCODE ID:</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: var(--text-main); margin: 6px 0;">
-                    [KodeMitra]-[KodeJenis]-[YYMMDD]-[Urut 5 digit]
-                </div>
-                <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
-                    Contoh: <code>M03-JB02-261022-00045</code> (Mitra 03 • Frozen Cuts • Tgl 22-10-2026 • Urut #45)
-                </div>
-            </div>
-
-            <div style="margin: 22px 0;">
-                <a href="index.php?page=timbang_cetak" class="btn btn-primary btn-lg">
-                    <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
-                    <span>Buka Stasiun Cetak Label Thermal 100x50 mm</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Bab 7 -->
-        <section id="bab7">
-            <h2><i data-lucide="refresh-cw" style="color: #10b981;"></i> 7. Integrasi REST API Accurate Online</h2>
-            <p>
-                Sistem barcode mengagregasi kemasan per transaksi (per SKU, per mitra, total kg) sebelum mengirim payload ke Accurate Online agar pembukuan akuntansi tetap ringkas tanpa ribuan baris label individu.
-            </p>
-            <div class="table-responsive">
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th>Entitas Sistem Barcode</th>
-                            <th>Entitas Accurate Online</th>
-                            <th>Arah Data</th>
-                            <th>Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Master Item / SKU</td>
-                            <td>Barang & Jasa (<code>item/list.do</code>)</td>
-                            <td>Accurate ➔ Barcode</td>
-                            <td>Accurate sebagai master data SKU tunggal</td>
-                        </tr>
-                        <tr>
-                            <td>Mitra Bisnis (7 Mitra)</td>
-                            <td>Gudang per Mitra (<code>GDG-M01</code> s/d <code>GDG-M07</code>)</td>
-                            <td>Terkonfigurasi Sekali</td>
-                            <td>1 Mitra = 1 Gudang di Accurate</td>
-                        </tr>
-                        <tr>
-                            <td>Pengeluaran Barang</td>
-                            <td>Penyesuaian Persediaan (Pengurangan)</td>
-                            <td>Barcode ➔ Accurate</td>
-                            <td>Kirim total Kg per SKU via Background Queue</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Bab 7b: Mutasi & POS Accurate -->
-        <section id="bab7b">
-            <h2><i data-lucide="route" style="color: #8b5cf6;"></i> 7b. Mutasi Pergerakan Barang & Integrasi POS Accurate</h2>
-            <p>
-                Sistem mengadopsi <strong>Alur Pergerakan Fisik Multi-Tahap (Custody Transfer)</strong> yang menghubungkan sumber bahan baku, gudang penyimpanan 7 mitra, ruang kasir display office, hingga pembeli langsung kasir POS:
-            </p>
-
-            <div class="grid grid-cols-2" style="margin: 20px 0; gap: 16px;">
-                <div style="border: 1.5px solid #10b981; border-radius: var(--radius); padding: 18px; background: rgba(16, 185, 129, 0.05);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                        <span class="badge badge-success">Alur 01</span>
-                        <strong style="color: #10b981;">Pengepul ➔ Gudang 7 Mitra</strong>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                        Penerimaan bahan mentah/karkas dari peternak/pengepul. Ditimbang catch-weight dan dilabeli barcode unik untuk masuk ke stok mitra.
-                    </div>
-                </div>
-
-                <div style="border: 1.5px solid #8b5cf6; border-radius: var(--radius); padding: 18px; background: rgba(139, 92, 246, 0.05);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                        <span class="badge badge-purple">Alur 02</span>
-                        <strong style="color: #8b5cf6;">Gudang Mitra ➔ Office POS</strong>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                        Mutasi persediaan ke display toko office. Tersinkron otomatis ke endpoint Accurate <code>item-transfer/save.do</code> (Pindah Barang).
-                    </div>
-                </div>
-
-                <div style="border: 1.5px solid #f59e0b; border-radius: var(--radius); padding: 18px; background: rgba(245, 158, 11, 0.05);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                        <span class="badge badge-warning">Alur 03</span>
-                        <strong style="color: #d97706;">Office POS ➔ Pembeli Langsung</strong>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                        Penjualan kasir POS. Scan barcode kemasan, otomatis membukukan Faktur Penjualan <code>sales-invoice/save.do</code> di Accurate Online.
-                    </div>
-                </div>
-
-                <div style="border: 1.5px solid #0ea5e9; border-radius: var(--radius); padding: 18px; background: rgba(14, 165, 233, 0.05);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                        <span class="badge badge-info">Alur 04</span>
-                        <strong style="color: #0284c7;">Mutasi Antar Rak / Gudang</strong>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-                        Reposisi fisik antar rak atau perpindahan kamar pendingin (cold storage) tanpa mengubah kepemilikan mitra.
-                    </div>
-                </div>
-            </div>
-
-            <div style="border: 2px solid rgba(139, 92, 246, 0.3); border-radius: var(--radius); padding: 20px; background: var(--bg-card); margin: 20px 0;">
-                <h3 style="font-size: 16px; font-weight: 800; color: #8b5cf6; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="file-check-2" style="width: 20px; height: 20px;"></i>
-                    Berita Acara Serah Terima (BAST) Mengikat User Login Aktif
-                </h3>
-                <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.7;">
-                    Setiap mutasi barang mencatat pihak penyerah dan penerima secara resmi. Pihak penerima <strong>terkunci secara otomatis berdasarkan sesi User Login</strong> yang sedang aktif, menghasilkan dokumen resmi berformat A4 dengan nomor BAST unik (<code>BAST-YYMMDD-XXXX</code>), tabel paket barang, bobot netto catch-weight, serta 3 kolom tanda tangan legal.
-                </p>
-                <div style="display: flex; gap: 12px; margin-top: 14px;">
-                    <a href="index.php?page=mutasi" class="btn btn-primary">
-                        <i data-lucide="route" style="width: 16px; height: 16px;"></i>
-                        <span>Buka Stasiun Mutasi & BAST</span>
-                    </a>
-                    <a href="index.php?page=bast_print&id=1" target="_blank" class="btn btn-outline">
-                        <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-                        <span>Lihat Contoh Cetak BAST A4</span>
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bab 8 & 9 -->
-        <section id="bab8">
-            <h2><i data-lucide="shield-check" style="color: #0284c7;"></i> 8. Kebutuhan Non-Fungsional</h2>
-            <div class="grid grid-cols-2" style="margin: 18px 0;">
-                <div style="border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; background: var(--bg-card);">
-                    <div style="font-weight: 800; font-size: 14px; margin-bottom: 8px; color: var(--primary);">⚡ Kecepatan Respon</div>
-                    <ul style="font-size: 13px; color: var(--text-muted); margin-left: 20px; line-height: 1.8;">
-                        <li>Respon Scan Barcode &lt; 0.8 detik</li>
-                        <li>Proses Timbang hingga Cetak &lt; 2.5 detik</li>
-                        <li>Audio Feedback Beep langsung dari Web Audio API</li>
-                    </ul>
-                </div>
-                <div style="border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; background: var(--bg-card);">
-                    <div style="font-weight: 800; font-size: 14px; margin-bottom: 8px; color: #10b981;">🛡️ Keandalan Offline</div>
-                    <ul style="font-size: 13px; color: var(--text-muted); margin-left: 20px; line-height: 1.8;">
-                        <li>Gudang tetap menimbang & mencetak saat internet putus</li>
-                        <li>Buffer queue menampung transaksi secara lokal</li>
-                        <li>Retry otomatis 3× saat koneksi Accurate pulih</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Bab 10 -->
-        <section id="bab10">
-            <h2><i data-lucide="list-checks" style="color: #ef4444;"></i> 10. Checklist Kesiapan & Pertanyaan Terbuka</h2>
-            <div style="border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; background: var(--bg-card);">
-                <ul style="font-size: 13.5px; color: var(--text-muted); line-height: 2.2; margin-left: 20px;">
-                    <li>[✓] <strong style="color: var(--text-main);">Format Barcode:</strong> Code 128 (<code>[Mitra]-[Jenis]-[YYMMDD]-[Urut]</code>) - <em>Disetujui</em></li>
-                    <li>[✓] <strong style="color: var(--text-main);">Ukuran Fisik Label:</strong> 100 × 50 mm Thermal - <em>Disetujui</em></li>
-                    <li>[ ] <strong style="color: var(--text-main);">Pemetaan Gudang Accurate:</strong> Konfirmasi nama kode gudang 7 Mitra bersama tim akuntansi.</li>
-                    <li>[ ] <strong style="color: var(--text-main);">Pengadaan Hardware:</strong> Printer thermal 4 inci (TSC/Zebra) & Timbangan serial/USB.</li>
-                </ul>
-            </div>
-        </section>
-    </article>
-</div>
-
-<script>
-    const searchInput = document.getElementById('prdSearch');
-    const sidebarLinks = document.querySelectorAll('.prd-sidebar-link');
-
-    searchInput.addEventListener('input', function() {
-        const q = this.value.toLowerCase();
-        sidebarLinks.forEach(link => {
-            const matches = link.innerText.toLowerCase().includes(q);
-            link.parentElement.style.display = matches ? '' : 'none';
-        });
-    });
-</script>
 
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

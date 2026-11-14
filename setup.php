@@ -28,26 +28,31 @@ $logs = [];
 $success = false;
 
 try {
+    $dbHost = Config::getDbHost();
+    $dbPort = Config::getDbPort();
+    $dbName = Config::getDbName();
+    $dbUser = Config::getDbUser();
+    $dbPass = Config::getDbPass();
+
     // 1. Coba koneksi ke MySQL Server
-    $logs[] = ['type' => 'info', 'text' => "Menghubungkan ke MySQL di " . Config::DB_HOST . ":" . Config::DB_PORT . "..."];
+    $logs[] = ['type' => 'info', 'text' => "Menghubungkan ke MySQL di {$dbHost}:{$dbPort}..."];
     
     $rootPdo = new PDO(
-        sprintf('mysql:host=%s;port=%s;charset=utf8mb4', Config::DB_HOST, Config::DB_PORT),
-        Config::DB_USER,
-        Config::DB_PASS,
+        sprintf('mysql:host=%s;port=%s;charset=utf8mb4', $dbHost, $dbPort),
+        $dbUser,
+        $dbPass,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
     // 2. Buat Database jika belum ada
-    $dbName = Config::DB_NAME;
     $rootPdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     $logs[] = ['type' => 'success', 'text' => "Database `{$dbName}` siap digunakan."];
 
     // 3. Sambungkan ke Database tersebut
     $pdo = new PDO(
-        sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', Config::DB_HOST, Config::DB_PORT, $dbName),
-        Config::DB_USER,
-        Config::DB_PASS,
+        sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $dbHost, $dbPort, $dbName),
+        $dbUser,
+        $dbPass,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
@@ -209,11 +214,10 @@ try {
         $count = (int)$sqlitePdo->query("SELECT COUNT(*) FROM mitra")->fetchColumn();
         if ($count === 0) {
             $sqlitePdo->exec("
-                INSERT INTO users (username, password_hash, nama_lengkap, role) VALUES
-                ('admin', 'admin123', 'Administrator Sistem', 'ADMIN'),
-                ('spv_gudang', 'admin123', 'Bambang Supriyanto (SPV)', 'SUPERVISOR'),
-                ('opr_timbang', 'admin123', 'Rizky Operator Penerimaan', 'OPERATOR_INBOUND'),
-                ('opr_kirim', 'admin123', 'Dani Operator Pengeluaran', 'OPERATOR_OUTBOUND');
+                INSERT INTO users (id, username, password_hash, nama_lengkap, role) VALUES
+                (1, 'nia', '$2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S', 'Nia', 'ADMIN'),
+                (2, 'arif', '$2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S', 'Arif', 'ARIF'),
+                (3, 'operator', '$2y$10$vN0h284a7M71Gf1/E81e8ebm0zYQvUvL3dwhD43v2L1kK342tXb.S', 'Operator Gudang', 'OPERATOR');
 
                 INSERT INTO mitra (kode_mitra, nama_mitra, pic_nama, kode_gudang_accurate, warna_identitas) VALUES
                 ('M01', 'PT Sumber Pangan Prima', 'Hendra Wijaya', 'GDG-M01-SUMBERPANGAN', '#2563eb'),

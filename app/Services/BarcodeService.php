@@ -40,42 +40,97 @@ class BarcodeService {
      */
     /**
      * Menghasilkan barcode Code 128 dalam format SVG murni (Standar ISO/IEC 15417)
-     * Menggunakan crispEdges dan quiet-zone standar agar 100% terbaca oleh semua jenis scanner barcode
+     * Menggunakan Code 128 Auto (Code Set B & C) dengan rasio tebal-tinggi standar retail (ala bungkus rokok/EAN)
+     * Menggunakan crispEdges, quiet-zone lebar, dan preserveAspectRatio="xMidYMid meet" agar 100% terbaca oleh scanner laser Taffware
      */
-    public static function generateCode128Svg(string $text, int $height = 65, float $narrowBarWidth = 1.6): string {
+    public static function generateCode128Svg(string $text, int $height = 120, float $narrowBarWidth = 2.0, int $quietModules = 15): string {
         $text = trim($text);
         if (empty($text)) {
             $text = 'SAMPLE-BARCODE';
         }
 
-        // Gunakan Code Set B (cocok untuk huruf besar, kecil, angka, dan dash '-')
-        $values = [104]; // Start B
-        $checksum = 104;
+        $tokens = [];
+        $len = strlen($text);
+        $hasLongNumbers = preg_match('/\d{4,}/', $text);
 
-        for ($i = 0; $i < strlen($text); $i++) {
-            $ascii = ord($text[$i]);
-            $val = $ascii - 32; // Dalam Code Set B: ASCII 32 (' ') = 0, ASCII 126 ('~') = 94
-            if ($val < 0 || $val > 95) {
-                $val = 0;
+        if ($hasLongNumbers) {
+            $pos = 0;
+            $currentSet = null;
+
+            $countDigits = function($str, $start) use ($len) {
+                $c = 0;
+                for ($k = $start; $k < $len; $k++) {
+                    if (ctype_digit($str[$k])) $c++;
+                    else break;
+                }
+                return $c;
+            };
+
+            while ($pos < $len) {
+                $digitsAhead = $countDigits($text, $pos);
+
+                if ($currentSet === null) {
+                    if ($digitsAhead >= 4) {
+                        $tokens[] = 105; // Start C
+                        $currentSet = 'C';
+                    } else {
+                        $tokens[] = 104; // Start B
+                        $currentSet = 'B';
+                    }
+                }
+
+                if ($currentSet === 'B') {
+                    if ($digitsAhead >= 4) {
+                        $tokens[] = 99; // Switch to C
+                        $currentSet = 'C';
+                    } else {
+                        $val = ord($text[$pos]) - 32;
+                        if ($val < 0 || $val > 95) $val = 0;
+                        $tokens[] = $val;
+                        $pos++;
+                    }
+                } elseif ($currentSet === 'C') {
+                    if ($digitsAhead >= 2) {
+                        $pair = substr($text, $pos, 2);
+                        $tokens[] = (int)$pair;
+                        $pos += 2;
+                    } else {
+                        $tokens[] = 100; // Switch to B
+                        $currentSet = 'B';
+                    }
+                }
             }
-            $values[] = $val;
-            $checksum += $val * ($i + 1);
+        } else {
+            // Pure Code Set B
+            $tokens[] = 104; // Start B
+            for ($i = 0; $i < $len; $i++) {
+                $ascii = ord($text[$i]);
+                $val = $ascii - 32; // Dalam Code Set B: ASCII 32 (' ') = 0, ASCII 126 ('~') = 94
+                if ($val < 0 || $val > 95) {
+                    $val = 0;
+                }
+                $tokens[] = $val;
+            }
         }
 
-        $checkDigit = $checksum % 103;
-        $values[] = $checkDigit;
-        $values[] = 106; // Stop pattern
+        // Checksum calculation
+        $checksum = $tokens[0];
+        for ($i = 1; $i < count($tokens); $i++) {
+            $checksum += $tokens[$i] * $i;
+        }
+        $tokens[] = $checksum % 103;
+        $tokens[] = 106; // Stop pattern
 
         // Bangun pola bar dan space
         $patternString = '';
-        foreach ($values as $v) {
+        foreach ($tokens as $v) {
             if (isset(self::$code128Patterns[$v])) {
                 $patternString .= self::$code128Patterns[$v];
             }
         }
 
-        // Standar Quiet Zone (margin putih aman kiri & kanan minimal 10x modul)
-        $quietZone = max(14.0, 10 * $narrowBarWidth);
+        // Standar Quiet Zone (margin putih aman kiri & kanan minimal 15x modul untuk scanner laser Taffware)
+        $quietZone = max(24.0, $quietModules * $narrowBarWidth);
         $x = $quietZone;
         $svgBars = '';
         $isBar = true;
@@ -94,7 +149,7 @@ class BarcodeService {
         $totalWidth = $x + $quietZone;
 
         return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.2f %d" preserveAspectRatio="none" width="100%%" height="100%%" shape-rendering="crispEdges" style="display:block;margin:0 auto;background:#ffffff;">' .
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.2f %d" preserveAspectRatio="xMidYMid meet" width="100%%" height="100%%" shape-rendering="crispEdges" style="display:block;margin:0 auto;background:#ffffff;">' .
             '<rect width="100%%" height="100%%" fill="#ffffff"/>' .
             '%s' .
             '</svg>',

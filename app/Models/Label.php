@@ -22,9 +22,9 @@ class Label {
 
         $prefix = sprintf('%s-%s-%s-', strtoupper(trim($kodeMitra)), strtoupper(trim($kodeJenis)), $dateStr);
 
-        // Cari nomor urut terbesar pada hari & prefix tersebut
-        $stmt = $db->prepare("SELECT id_label FROM labels WHERE id_label LIKE ? ORDER BY id_label DESC LIMIT 1");
-        $stmt->execute([$prefix . '%']);
+        // Cari nomor urut terbesar pada hari tersebut (Global Daily Sequence agar anti-duplicate antar pemasok)
+        $stmt = $db->prepare("SELECT id_label FROM labels WHERE id_label LIKE ? ORDER BY id DESC LIMIT 1");
+        $stmt->execute(['%-' . $dateStr . '-%']);
         $lastRow = $stmt->fetch();
 
         $nextSeq = 1;
@@ -33,6 +33,18 @@ class Label {
             $lastNum = (int)end($parts);
             $nextSeq = $lastNum + 1;
         }
+
+        // Loop verifikasi untuk menjamin nomor urut hari ini 100% unik global dan tidak pernah double
+        do {
+            $candidateSeqStr = sprintf('%05d', $nextSeq);
+            $stmtCheck = $db->prepare("SELECT COUNT(*) FROM labels WHERE id_label LIKE ?");
+            $stmtCheck->execute(['%-' . $dateStr . '-' . $candidateSeqStr]);
+            if ((int)$stmtCheck->fetchColumn() > 0) {
+                $nextSeq++;
+            } else {
+                break;
+            }
+        } while (true);
 
         return sprintf('%s%05d', $prefix, $nextSeq);
     }
@@ -231,7 +243,8 @@ class Label {
 
             $lbl = self::findByBarcode($idLabel);
             if ($lbl) {
-                $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($idLabel, 65, 1.6);
+                $compactCode = self::getCompactBarcode($idLabel);
+                $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
                 $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($idLabel, 120);
                 $results[] = $lbl;
             }
@@ -273,20 +286,25 @@ class Label {
         // Ambil harga beli pemasok jika ada master_harga_pemasok
         $hargaBeliPerKg = 0.00;
         try {
-            $stmtHrg = $db->prepare("SELECT harga_beli_per_kg FROM master_harga_pemasok WHERE pemasok_id = ? AND item_id = ? LIMIT 1");
+            $stmtHrg = $db->prepare("SELECT harga_per_kg FROM master_harga_pemasok WHERE pemasok_id = ? AND item_id = ? LIMIT 1");
             $stmtHrg->execute([$pemasokId, $itemId]);
             $hargaBeliPerKg = (float)($stmtHrg->fetchColumn() ?: 0.00);
         } catch (\Throwable $e) {}
+        if ($hargaBeliPerKg <= 0) {
+            throw new Exception("Harga beli pemasok untuk produk ini belum diatur di Master Harga Pemasok. Atur harga terlebih dahulu.");
+        }
 
         $totalNilai = round($netto * $hargaBeliPerKg, 2);
         $tglProd = date('Y-m-d');
         $operatorId = !empty($data['operator_id']) ? (int)$data['operator_id'] : (int)($_SESSION['user_login']['id'] ?? 3);
 
+        self::pastikanKolomHargaBeli($db);
+
         $sql = "
             INSERT INTO labels (
                 id_label, pemasok_id, mitra_id, item_id, lokasi_id, berat_bruto, berat_tara, berat_netto,
-                harga_per_kg, total_nilai, batch_no, no_surat_jalan, tgl_produksi, status, is_timbang_selesai, operator_timbang_id, catatan
-            ) VALUES (?, ?, NULL, ?, NULL, ?, 0, ?, ?, ?, ?, ?, ?, 'AKTIF', 1, ?, ?)
+                harga_per_kg, harga_beli_per_kg, total_nilai, batch_no, no_surat_jalan, tgl_produksi, status, is_timbang_selesai, operator_timbang_id, catatan
+            ) VALUES (?, ?, NULL, ?, NULL, ?, 0, ?, ?, ?, ?, ?, ?, ?, 'AKTIF', 1, ?, ?)
         ";
         $stmt = $db->prepare($sql);
         $stmt->execute([
@@ -295,6 +313,7 @@ class Label {
             $item['id'],
             $netto,
             $netto,
+            $hargaBeliPerKg,
             $hargaBeliPerKg,
             $totalNilai,
             $noSj,
@@ -306,7 +325,8 @@ class Label {
 
         $lbl = self::findByBarcode($idLabel);
         if (!$lbl) throw new Exception("Gagal membuat data barcode.");
-        $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($idLabel, 65, 1.6);
+        $compactCode = self::getCompactBarcode($idLabel);
+        $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
         $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($idLabel, 120);
 
         return $lbl;
@@ -404,8 +424,9 @@ class Label {
         ]);
 
         $updated = self::findByBarcode($barcode);
-        $updated['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($barcode, 65, 1.6);
-        $updated['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($barcode, 120);
+        $compactCode = self::getCompactBarcode($updated['id_label']);
+        $updated['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
+        $updated['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($updated['id_label'], 120);
         return $updated;
     }
 
@@ -661,10 +682,43 @@ class Label {
     }
 
     /**
-     * Cari label berdasarkan kode barcode
+     * Helper menghasilkan kode barcode kompak (Retail Style ala EAN/Kemasan)
+     * Contoh: KH001-PRD01-261108-00001 -> 261108-00001
+     * Menghasilkan barcode yang jauh lebih tebal & mudah dibaca scanner laser Taffware
      */
+    public static function getCompactBarcode(string $idLabel): string {
+        $parts = explode('-', trim($idLabel));
+        if (count($parts) >= 4) {
+            return $parts[2] . '-' . $parts[3];
+        }
+        if (count($parts) === 3) {
+            return $parts[1] . '-' . $parts[2];
+        }
+        return $idLabel;
+    }
+
+    /**
+     * Cari label berdasarkan kode barcode (Mendukung scan Full ID maupun Compact Retail Barcode)
+     */
+    /**
+     * Harga beli pemasok dibekukan per label (kolom harga_beli_per_kg).
+     * Kolom harga_per_kg dipakai harga jual saat pengeluaran, jadi tidak boleh dipakai sebagai biaya.
+     */
+    private static function pastikanKolomHargaBeli(\PDO $db): void {
+        static $ok = false;
+        if ($ok) return;
+        $ada = $db->query("SHOW COLUMNS FROM labels LIKE 'harga_beli_per_kg'")->fetch();
+        if (!$ada) {
+            $db->exec("ALTER TABLE labels ADD COLUMN harga_beli_per_kg DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER harga_per_kg");
+        }
+        $ok = true;
+    }
+
     public static function findByBarcode(string $barcode): ?array {
         $db = Database::getConnection();
+        $barcode = trim($barcode);
+        if (empty($barcode)) return null;
+
         $sql = "
             SELECT 
                 l.*,
@@ -680,10 +734,12 @@ class Label {
             JOIN items i ON l.item_id = i.id
             JOIN jenis_barang j ON i.jenis_id = j.id
             LEFT JOIN users u ON l.operator_timbang_id = u.id
-            WHERE l.id_label = ?
+            WHERE l.id_label = ? OR l.id_label LIKE ?
+            ORDER BY (l.id_label = ?) DESC, l.id DESC
+            LIMIT 1
         ";
         $stmt = $db->prepare($sql);
-        $stmt->execute([trim($barcode)]);
+        $stmt->execute([$barcode, '%' . $barcode, $barcode]);
         $res = $stmt->fetch();
         if ($res) {
             $res['last_mutasi'] = self::getLastMutasi((int)$res['id']);
@@ -814,6 +870,9 @@ class Label {
         $sql = "
             SELECT 
                 l.no_surat_jalan,
+                SUM(l.status = 'VOID') AS jml_void,
+                SUM(l.status = 'KELUAR') AS jml_keluar,
+                MAX(CASE WHEN l.status = 'VOID' THEN l.alasan_void END) AS alasan_void,
                 MAX(l.pemasok_id) as pemasok_id,
                 COALESCE(MAX(p.kode_pemasok), 'PMS-01') AS kode_pemasok,
                 COALESCE(MAX(p.nama_pemasok), 'Pemasok Umum') AS nama_pemasok,
@@ -970,7 +1029,8 @@ class Label {
         $rows = $stmt->fetchAll();
 
         foreach ($rows as &$lbl) {
-            $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($lbl['id_label'], 65, 1.6);
+            $compactCode = self::getCompactBarcode($lbl['id_label']);
+            $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
             $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($lbl['id_label'], 120);
         }
 
@@ -978,26 +1038,35 @@ class Label {
     }
 
     /**
-     * Mengambil 1 barcode dan menduplikasinya menjadi 10 pcs (1 lembar A4 penuh)
+     * Mengambil 1 barcode dan menduplikasinya sebanyak $qty pcs
      */
-    public static function getSingleDuplicate10(string $barcode): array {
+    public static function getSingleDuplicate(string $barcode, int $qty = 1): array {
         $label = self::findByBarcode($barcode);
         if (!$label) {
             throw new Exception("Barcode '{$barcode}' tidak ditemukan");
         }
 
-        $barcodeSvg = \App\Services\BarcodeService::generateCode128Svg($label['id_label'], 65, 1.6);
+        $compactCode = self::getCompactBarcode($label['id_label']);
+        $barcodeSvg = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
         $qrSvg = \App\Services\BarcodeService::generateQrSvg($label['id_label'], 120);
 
         $label['barcode_svg'] = $barcodeSvg;
         $label['qr_svg'] = $qrSvg;
 
         $results = [];
-        for ($i = 0; $i < 10; $i++) {
+        $qty = max(1, min(100, $qty));
+        for ($i = 0; $i < $qty; $i++) {
             $results[] = $label;
         }
 
         return $results;
+    }
+
+    /**
+     * Mengambil 1 barcode dan menduplikasinya menjadi 10 pcs (1 lembar A4 penuh)
+     */
+    public static function getSingleDuplicate10(string $barcode): array {
+        return self::getSingleDuplicate($barcode, 10);
     }
 
     /**
@@ -1006,7 +1075,18 @@ class Label {
     public static function getByBarcodes(array $barcodes): array {
         if (empty($barcodes)) return [];
         $db = Database::getConnection();
-        $placeholders = implode(',', array_fill(0, count($barcodes), '?'));
+        
+        $whereParts = [];
+        $params = [];
+        foreach ($barcodes as $b) {
+            $b = trim($b);
+            if (empty($b)) continue;
+            $whereParts[] = "(l.id_label = ? OR l.id_label LIKE ?)";
+            $params[] = $b;
+            $params[] = '%' . $b;
+        }
+        if (empty($whereParts)) return [];
+        $whereSql = implode(' OR ', $whereParts);
         
         $sql = "
             SELECT 
@@ -1021,15 +1101,16 @@ class Label {
             LEFT JOIN mitra m ON l.mitra_id = m.id
             JOIN items i ON l.item_id = i.id
             JOIN jenis_barang j ON i.jenis_id = j.id
-            WHERE l.id_label IN ({$placeholders})
+            WHERE {$whereSql}
             ORDER BY l.id ASC
         ";
         $stmt = $db->prepare($sql);
-        $stmt->execute(array_values($barcodes));
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         foreach ($rows as &$lbl) {
-            $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($lbl['id_label'], 65, 1.6);
+            $compactCode = self::getCompactBarcode($lbl['id_label']);
+            $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
             $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($lbl['id_label'], 120);
         }
 
@@ -1509,16 +1590,18 @@ class Label {
      */
     public static function opnameVerify(string $barcode, ?int $userId = null): array {
         $db = Database::getConnection();
+        $barcode = trim($barcode);
         $stmt = $db->prepare("
             SELECT l.*, i.nama_item, p.nama_pemasok, m.nama_mitra
             FROM labels l
             JOIN items i ON l.item_id = i.id
             LEFT JOIN pemasok p ON l.pemasok_id = p.id
             LEFT JOIN mitra m ON l.mitra_id = m.id
-            WHERE l.id_label = ?
+            WHERE l.id_label = ? OR l.id_label LIKE ?
+            ORDER BY (l.id_label = ?) DESC, l.id DESC
             LIMIT 1
         ");
-        $stmt->execute([trim($barcode)]);
+        $stmt->execute([$barcode, '%' . $barcode, $barcode]);
         $label = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!$label) {
@@ -1532,7 +1615,7 @@ class Label {
         if ($label['status'] === 'KELUAR') {
             return [
                 'success' => false,
-                'message' => "Barcode '{$barcode}' ({$label['nama_item']}) sudah berstatus KELUAR dari gudang!"
+                'message' => "Barcode '{$label['id_label']}' ({$label['nama_item']}) sudah berstatus KELUAR dari gudang!"
             ];
         }
 
@@ -1541,7 +1624,7 @@ class Label {
             $namaMitra = $label['nama_mitra'] ?? 'Mitra Terdaftar';
             return [
                 'success' => false,
-                'message' => "Barcode '{$barcode}' ({$label['nama_item']}) SUDAH DIMUTASI KE MITRA: {$namaMitra}, sehingga tidak boleh ada di fisik gudang utama!"
+                'message' => "Barcode '{$label['id_label']}' ({$label['nama_item']}) SUDAH DIMUTASI KE MITRA: {$namaMitra}, sehingga tidak boleh ada di fisik gudang utama!"
             ];
         }
 
@@ -1557,12 +1640,14 @@ class Label {
         return [
             'success'          => true,
             'message'          => $alreadyVerified 
-                ? "Barcode '{$barcode}' sudah pernah terverifikasi di database (diperbarui: {$formattedTime})."
-                : "Kemasan '{$barcode}' COCOK & BERHASIL DIVERIFIKASI FISIK KE DATABASE!",
+                ? "Barcode '{$label['id_label']}' sudah pernah terverifikasi di database (diperbarui: {$formattedTime})."
+                : "Kemasan '{$label['id_label']}' COCOK & BERHASIL DIVERIFIKASI FISIK KE DATABASE!",
             'already_verified' => $alreadyVerified,
             'verified_at'      => $now,
             'formatted_time'   => $formattedTime,
+            'id_label'         => $label['id_label'],
             'barcode'          => $label['id_label'],
+            'scanned_barcode'  => $barcode,
             'item_name'        => $label['nama_item']
         ];
     }

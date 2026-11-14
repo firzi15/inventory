@@ -183,27 +183,14 @@ require_once __DIR__ . '/layout/header.php';
 <div class="page-header no-print">
     <div>
         <h1 class="page-title">Penerimaan & Timbang Barang Masuk</h1>
-        <p class="page-subtitle">Stasiun satu pintu: input/baca timbangan keranjang dan langsung cetak stiker barcode berbobot riil</p>
-    </div>
-    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <span id="scaleStatusBadge" class="badge badge-success" style="font-size: 12.5px; padding: 6px 14px; font-weight: 700;">
-            ● Timbangan Siap
-        </span>
-        <span class="badge badge-purple" style="font-size: 12.5px; padding: 6px 14px; font-weight: 700;">
-            <i data-lucide="printer" style="width: 14px; height: 14px; margin-right: 4px;"></i> Stiker Thermal 100×50 mm
-        </span>
+        <p class="page-subtitle">Penimbangan keranjang masuk dan pencetakan barcode berbobot riil per surat jalan</p>
     </div>
 </div>
 <?php elseif ($activeTab === 'massal'): ?>
 <div class="page-header no-print">
     <div>
-        <h1 class="page-title">Buat & Cetak Barcode Keranjang (Batch Kosong)</h1>
+        <h1 class="page-title">Buat & Cetak Barcode Keranjang</h1>
         <p class="page-subtitle">Cetak stiker barcode untuk keranjang baru sebelum dilakukan penimbangan barang masuk</p>
-    </div>
-    <div style="display: flex; gap: 8px; align-items: center;">
-        <span class="badge badge-purple" style="font-size: 12.5px; padding: 6px 14px; font-weight: 700;">
-            <i data-lucide="printer" style="width: 14px; height: 14px; margin-right: 4px;"></i> 10 Barcode / Lembar A4
-        </span>
     </div>
 </div>
 <?php elseif ($activeTab === 'stok_gudang'): ?>
@@ -212,12 +199,6 @@ require_once __DIR__ . '/layout/header.php';
         <h1 class="page-title">Stok Barang Gudang Utama</h1>
         <p class="page-subtitle">Sisa stok fisik di gudang penerimaan utama yang belum dialokasikan / dimutasi ke mitra bisnis</p>
     </div>
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <button type="button" class="btn btn-outline" onclick="window.print()" style="display: flex; align-items: center; gap: 6px;">
-            <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-            <span>Cetak Rekap Stok</span>
-        </button>
-    </div>
 </div>
 <?php elseif ($activeTab === 'riwayat_penerimaan'): ?>
 <div class="page-header no-print">
@@ -225,44 +206,19 @@ require_once __DIR__ . '/layout/header.php';
         <h1 class="page-title">Riwayat Penerimaan Barang Masuk</h1>
         <p class="page-subtitle">Daftar lengkap seluruh arsip label barcode kemasan, surat jalan masuk, dan bobot timbangan riil</p>
     </div>
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <span class="badge badge-purple" style="font-weight: 800; padding: 6px 14px;">
-            <?= number_format($totalPenerimaan) ?> Total Data
-        </span>
-    </div>
 </div>
 <?php else: ?>
 <div class="page-header no-print">
     <div>
         <h1 class="page-title">Penerimaan & Timbang Barang Masuk</h1>
-        <p class="page-subtitle">Stasiun satu pintu penimbangan dan pencetakan barcode barang masuk</p>
+        <p class="page-subtitle">Penimbangan keranjang masuk dan pencetakan barcode</p>
     </div>
 </div>
 <?php endif; ?>
 
-<!-- Navigasi Tab Sub-Modul Penerimaan -->
-<div class="tabs-container no-print" style="margin-bottom: 22px; display: flex; gap: 8px; border-bottom: 2px solid var(--border); padding-bottom: 10px; flex-wrap: wrap;">
-    <a href="index.php?page=timbang_cetak" class="btn <?= ($activeTab === 'timbang_cetak') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 800; border-radius: 20px; padding: 8px 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="scale" style="width: 16px; height: 16px;"></i>
-        <span>⚖️ Penerimaan & Timbang (Satu Pintu)</span>
-    </a>
-    <a href="index.php?page=timbang_cetak&tab=riwayat_penerimaan" class="btn <?= ($activeTab === 'riwayat_penerimaan') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 800; border-radius: 20px; padding: 8px 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="clipboard-list" style="width: 16px; height: 16px;"></i>
-        <span>📋 Riwayat Penerimaan (<?= number_format($totalPenerimaan) ?> Data)</span>
-    </a>
-    <a href="index.php?page=timbang_cetak&tab=stok_gudang" class="btn <?= ($activeTab === 'stok_gudang') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; border-radius: 20px; padding: 8px 16px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="package" style="width: 15px; height: 15px;"></i>
-        <span>📦 Sisa Stok Gudang</span>
-    </a>
-    <a href="index.php?page=timbang_cetak&tab=massal" class="btn <?= ($activeTab === 'massal') ? 'btn-primary' : 'btn-outline' ?>" style="font-weight: 700; border-radius: 20px; padding: 8px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; opacity: 0.85;" title="Mode cetak massal lembar A4 kosongan tanpa bobot">
-        <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
-        <span>Cetak Massal Kosong (Opsional)</span>
-    </a>
-</div>
-
 <!-- Hidden fallback container untuk template barcode SVG -->
 <div id="barcodeSvgContainer" style="display: none;">
-    <?= BarcodeService::generateCode128Svg($sampleBarcode, 65, 1.6) ?>
+    <?= BarcodeService::generateCode128Svg($sampleBarcode, 120, 2.0) ?>
 </div>
 
 <!-- ========================================================================= -->
@@ -276,36 +232,40 @@ require_once __DIR__ . '/layout/header.php';
         <div class="card no-print" style="box-shadow: var(--shadow-md);">
             <div class="card-header" style="border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <h2 class="card-title" style="font-size: 17px; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="scale" style="width: 20px; height: 20px; color: #10b981;"></i>
+                    <h2 class="card-title" style="font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="scale" style="width: 18px; height: 18px; color: #10b981;"></i>
                         <span>Input Timbang & Cetak Barcode</span>
                     </h2>
-                    <div class="card-description">Pilih produk, masukkan netto timbangan, dan tekan Enter untuk cetak stiker berbobot</div>
+                    <div class="card-description">Input penimbangan keranjang masuk per surat jalan</div>
                 </div>
-                <span class="badge badge-success" style="font-weight: 800;">● Stasiun Aktif</span>
             </div>
 
             <div style="padding: 16px;">
                 <!-- 1. HEADER SESI SURAT JALAN -->
                 <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                    <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <span>🚚 Informasi Surat Jalan Pemasok (Sesi Truk Masuk)</span>
-                        <span class="badge badge-purple" style="font-size: 10px;">Multi-Produk 1 SJ</span>
+                    <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                        <span>Informasi Surat Jalan</span>
                     </div>
                     <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label" for="onestop_pemasok_id" style="font-size: 12px; margin-bottom: 4px;">Pemasok (Supplier) <span style="color:red;">*</span></label>
+                            <label class="form-label" for="onestop_pemasok_id" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="building-2" style="width: 14px; height: 14px; color: #64748b;"></i>
+                                <span>Pemasok <span style="color: #ef4444;">*</span></span>
+                            </label>
                             <select id="onestop_pemasok_id" class="form-control" style="font-weight: 700; height: 42px; font-size: 13px;" onchange="onOneStopPemasokChanged()">
                                 <?php foreach ($pemasokList as $p): ?>
                                     <option value="<?= $p['id'] ?>" data-kode="<?= htmlspecialchars($p['kode_pemasok']) ?>" data-nama="<?= htmlspecialchars($p['nama_pemasok']) ?>">
-                                        <?= htmlspecialchars($p['kode_pemasok']) ?> - <?= htmlspecialchars($p['nama_pemasok']) ?>
+                                        <?= htmlspecialchars($p['kode_pemasok']) ?> — <?= htmlspecialchars($p['nama_pemasok']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="form-group" style="margin: 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <label class="form-label" for="onestop_no_sj" style="font-size: 12px; margin: 0;">No. Surat Jalan <span style="color:red;">*</span></label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <label class="form-label" for="onestop_no_sj" style="font-size: 12px; font-weight: 700; color: #334155; margin: 0; display: flex; align-items: center; gap: 5px;">
+                                    <i data-lucide="file-text" style="width: 14px; height: 14px; color: #64748b;"></i>
+                                    <span>No. Surat Jalan <span style="color: #ef4444;">*</span></span>
+                                </label>
                                 <span class="badge badge-secondary" style="font-size: 10px; cursor: pointer;" onclick="onOneStopPemasokChanged()" title="Klik untuk refresh nomor surat jalan">Auto</span>
                             </div>
                             <input type="text" id="onestop_no_sj" class="form-control" value="<?= htmlspecialchars($defaultSuratJalan) ?>" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #1e40af; height: 42px; background: #ffffff; border: 1.5px solid #93c5fd; font-size: 13.5px;" placeholder="No Surat Jalan..." onchange="onOneStopSjChanged()">
@@ -313,140 +273,132 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                 </div>
 
-                <!-- 2. PEMILIHAN KATEGORI & PRODUK + QUICK CHIPS -->
+                <!-- 2. PEMILIHAN KATEGORI & PRODUK -->
                 <div style="margin-bottom: 16px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; margin-bottom: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px;">
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label" for="onestop_jenis_filter" style="font-size: 12px; margin-bottom: 4px;">Jenis / Kategori <span style="color:red;">*</span></label>
-                            <select id="onestop_jenis_filter" class="form-control" style="font-weight: 700; color: #8b5cf6; height: 42px; font-size: 13px;" onchange="onOneStopJenisChanged()">
-                                <option value="">-- Semua Kategori --</option>
+                            <label class="form-label" for="onestop_jenis_filter" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="layers" style="width: 14px; height: 14px; color: #64748b;"></i>
+                                <span>Kategori <span style="color: #ef4444;">*</span></span>
+                            </label>
+                            <select id="onestop_jenis_filter" class="form-control" style="font-weight: 700; height: 42px; font-size: 13px;" onchange="onOneStopJenisChanged()">
+                                <option value="">-- Pilih Kategori --</option>
                                 <?php foreach ($jenisList as $j): ?>
                                     <option value="<?= $j['id'] ?>"><?= htmlspecialchars($j['nama_jenis']) ?> (<?= htmlspecialchars($j['kode_jenis']) ?>)</option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label" for="onestop_item_id" style="font-size: 12px; margin-bottom: 4px;">Nama Produk / Komoditas <span style="color:red;">*</span></label>
-                            <select id="onestop_item_id" class="form-control" style="font-weight: 800; height: 42px; font-size: 13.5px;" onchange="onOneStopProductChanged(this.value)">
-                                <option value="">-- Pilih Produk --</option>
-                                <?php foreach ($itemList as $it): ?>
-                                    <option value="<?= $it['id'] ?>" data-jenis="<?= (int)$it['jenis_id'] ?>" data-nama="<?= htmlspecialchars($it['nama_item']) ?>" data-kode="<?= htmlspecialchars($it['kode_item']) ?>">
-                                        <?= htmlspecialchars($it['nama_item']) ?> (<?= htmlspecialchars($it['kode_item']) ?>)
-                                    </option>
-                                <?php endforeach; ?>
+                            <label class="form-label" for="onestop_item_id" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="package" style="width: 14px; height: 14px; color: #64748b;"></i>
+                                <span>Produk <span style="color: #ef4444;">*</span></span>
+                            </label>
+                            <select id="onestop_item_id" class="form-control" disabled style="font-weight: 800; height: 42px; font-size: 13.5px;" onchange="onOneStopProductChanged(this.value)">
+                                <option value="">-- Pilih Kategori Dahulu --</option>
                             </select>
-                        </div>
-                    </div>
-
-                    <!-- Tombol Cepat Produk (Quick Product Chips) -->
-                    <div style="background: #faf5ff; border: 1.5px dashed #d8b4fe; border-radius: 8px; padding: 10px 12px;">
-                        <div style="font-size: 11px; font-weight: 800; color: #7e22ce; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
-                            <i data-lucide="zap" style="width: 13px; height: 13px;"></i>
-                            <span>Klik Cepat Produk (Tanpa Cari Dropdown):</span>
-                        </div>
-                        <div id="quickProductPills" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <!-- Injected by JS -->
                         </div>
                     </div>
                 </div>
 
                 <!-- 3. DISPLAY TIMBANGAN DIGITAL & INPUT NETTO -->
-                <div style="background: #f1f5f9; border: 2.5px solid #10b981; border-radius: 12px; padding: 18px; margin-bottom: 18px; text-align: center; box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="background: #f8fafc; border: 2px solid #10b981; border-radius: 10px; padding: 16px; margin-bottom: 16px; text-align: center;">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
                         <span style="font-size: 12px; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
                             <i data-lucide="scale" style="width: 15px; height: 15px;"></i>
-                            <span>Bobot Bersih Keranjang (Netto)</span>
-                        </span>
-                        <span id="onestop_scale_status" class="badge badge-success" style="font-size: 11px; padding: 3px 8px; font-weight: 800;">
-                            ● Timbangan Siap
+                            <span>Berat Bersih</span>
                         </span>
                     </div>
 
                     <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                         <input type="number" id="onestop_berat_netto" step="0.01" min="0.01" max="999.99" class="form-control" placeholder="0.00" 
-                               style="font-family: 'JetBrains Mono', monospace; font-size: 46px; font-weight: 900; text-align: center; color: #0f172a; height: 76px; width: 230px; border: 2.5px solid #10b981; border-radius: 10px; background: #ffffff; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);"
+                               style="font-family: 'JetBrains Mono', monospace; font-size: 44px; font-weight: 900; text-align: center; color: #0f172a; height: 70px; width: 220px; border: 2px solid #10b981; border-radius: 8px; background: #ffffff;"
                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleSaveWeighedBox(); }">
-                        <span style="font-size: 28px; font-weight: 900; color: #047857;">KG</span>
+                        <span style="font-size: 26px; font-weight: 900; color: #047857;">KG</span>
                     </div>
 
                     <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; font-size: 11.5px; color: #64748b; flex-wrap: wrap;">
-                        <span>Tekan <strong style="color: #0f172a; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">[ENTER]</strong> untuk simpan & cetak</span>
-                        <span>•</span>
-                        <a href="javascript:void(0)" onclick="readFromConnectedScale()" style="color: #2563eb; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>
-                            <span>Ambil dari Timbangan Serial</span>
-                        </a>
+                        <span>Tekan <strong style="color: #0f172a; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">[ENTER]</strong> untuk tambah box</span>
                     </div>
                 </div>
 
-                <!-- 4. TOMBOL SIMPAN & CETAK STIKER -->
-                <button type="button" id="btnSaveWeighedBox" class="btn btn-primary" onclick="handleSaveWeighedBox()" style="width: 100%; height: 54px; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; background: #059669; border-color: #059669; box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); border-radius: 8px; cursor: pointer;">
-                    <i data-lucide="printer" style="width: 22px; height: 22px;"></i>
-                    <span id="labelBtnSaveWeighed">💾 SIMPAN & CETAK STIKER BARCODE (ENTER)</span>
+                <!-- 4. TOMBOL TAMBAH BOX KE DAFTAR -->
+                <button type="button" id="btnSaveWeighedBox" class="btn btn-primary" onclick="handleSaveWeighedBox()" style="width: 100%; height: 46px; font-size: 14.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; background: #059669; border-color: #059669; border-radius: 8px; cursor: pointer;">
+                    <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+                    <span id="labelBtnSaveWeighed">Tambah Box</span>
                 </button>
             </div>
         </div>
 
         <!-- KOLOM KANAN: LIVE SUMMARY SURAT JALAN & DAFTAR KERANJANG TERAKHIR -->
         <div class="card no-print" style="box-shadow: var(--shadow-md);">
-            <div class="card-header" style="border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
                     <h2 class="card-title" style="font-size: 16px; display: flex; align-items: center; gap: 6px;">
                         <i data-lucide="clipboard-check" style="width: 18px; height: 18px; color: #3b82f6;"></i>
-                        <span>Ringkasan Sesi Surat Jalan</span>
+                        <span>Ringkasan Surat Jalan</span>
                     </h2>
                     <div class="card-description" id="summarySjSubtitle">No. SJ: <?= htmlspecialchars($defaultSuratJalan) ?></div>
                 </div>
-                <span class="badge badge-secondary" id="badgeTotalBoxHeader">0 Box Masuk</span>
             </div>
 
             <div style="padding: 16px;">
-                <!-- Kartu Akumulasi Total -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-                    <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 8px; padding: 12px; text-align: center;">
-                        <div style="font-size: 11px; font-weight: 800; color: #1e40af; text-transform: uppercase;">Total Keranjang / Box</div>
-                        <div id="statTotalBox" style="font-size: 26px; font-weight: 900; color: #1d4ed8; font-family: 'JetBrains Mono', monospace;">0 Pcs</div>
-                    </div>
-                    <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 8px; padding: 12px; text-align: center;">
-                        <div style="font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase;">Total Berat Riil (Netto)</div>
-                        <div id="statTotalBerat" style="font-size: 26px; font-weight: 900; color: #059669; font-family: 'JetBrains Mono', monospace;">0.00 KG</div>
-                    </div>
-                </div>
-
-                <!-- Breakdown per Produk di Surat Jalan Ini -->
-                <div style="margin-bottom: 14px;">
-                    <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Rincian Komoditas Produk di Truk Ini:</div>
-                    <div id="containerProductBreakdown" style="border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: #ffffff;">
-                        <div style="padding: 12px; text-align: center; font-size: 12px; color: #94a3b8;">
-                            Belum ada keranjang yang ditimbang untuk sesi Surat Jalan ini.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live Feed: Daftar Keranjang yang Baru Saja Ditimbang -->
+                <!-- Rincian Produk di Surat Jalan Ini (Sama Persis seperti Tabel Scan Pengeluaran) -->
                 <div style="margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">Daftar Box Terakhir Ditimbang:</span>
-                        <span style="font-size: 11px; color: #94a3b8;">Terbaru di atas</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 11.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Rincian Produk:</span>
+                        <span style="font-size: 11.5px; color: #94a3b8;">Terbaru di atas</span>
                     </div>
-                    <div id="containerRecentBoxes" style="max-height: 230px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; background: #ffffff;">
-                        <div style="padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
-                            Data keranjang yang baru ditimbang akan muncul di sini.
-                        </div>
+                    <div id="containerProductBreakdown" style="display: none;"></div>
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="table-custom" id="tableInboundRecentBoxes">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align: center;">No</th>
+                                    <th>ID Barcode Kemasan</th>
+                                    <th>Nama Barang / Produk</th>
+                                    <th>Kategori</th>
+                                    <th style="text-align: right; width: 110px;">Netto (Kg)</th>
+                                    <th style="text-align: center; width: 60px; position: sticky; right: 0; background: var(--bg-muted, #f8fafc); z-index: 25; box-shadow: -2px 0 4px rgba(0,0,0,0.04);">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="containerRecentBoxes">
+                                <tr id="emptyInboundRow">
+                                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+                                        <div style="font-weight: 700; font-size: 13.5px; color: var(--text-main);">Belum ada box ditimbang</div>
+                                        <div style="font-size: 11.5px; margin-top: 3px;">Timbang box pada formulir di sebelah kiri untuk memasukkan ke sesi ini.</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="inboundTotalFoot" style="display: none;">
+                                <tr style="background: var(--bg-muted);">
+                                    <td colspan="4" style="text-align: right; font-weight: 700; color: var(--text-muted); font-size: 12.5px;">Total <span id="inboundTotalBoxCount">0</span> box</td>
+                                    <td id="inboundTotalBerat" style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px;">0.00 kg</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
 
-                <!-- Tombol Dokumen Penerimaan & Selesaikan Sesi -->
-                <div style="display: flex; gap: 8px; flex-direction: column;">
-                    <a id="btnCetakBASTPenerimaan" href="index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=<?= urlencode($defaultSuratJalan) ?>" target="_blank" class="btn btn-outline" style="font-weight: 800; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px solid #0284c7; color: #0284c7; border-radius: 6px;">
-                        <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-                        <span>🖨️ Cetak Surat Jalan Penerimaan / BAST</span>
-                    </a>
-                    <button type="button" class="btn btn-secondary" onclick="handleFinishInboundSession()" style="font-weight: 800; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1e293b; color: #ffffff; border-radius: 6px; cursor: pointer;">
-                        <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
-                        <span>🔒 Selesaikan Surat Jalan Ini (Truk Selesai)</span>
+                <!-- Tombol Cetak Semua Barcode Thermal di Sesi Ini -->
+                <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 11.5px; font-weight: 800; color: #334155; text-transform: uppercase;">
+                            Cetak Barcode Box:
+                        </span>
+                        <span class="badge badge-purple" id="badgePrintCount" style="font-size: 11px; font-weight: 800;">0 Barcode</span>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="printAllBarcodesInSession('thermal')" id="btnPrintBatchThermal" style="width: 100%; font-weight: 700; font-size: 13px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #4f46e5; border-color: #4f46e5; border-radius: 6px; cursor: pointer;">
+                        <i data-lucide="tag" style="width: 15px; height: 15px;"></i>
+                        <span>Cetak Barcode</span>
                     </button>
                 </div>
+
+                <!-- Tombol Tunggal: Cetak Surat Jalan (Disabled sampai barcode dicetak) -->
+                <button type="button" class="btn btn-secondary" onclick="handleFinishInboundSession()" id="btnFinishSession" disabled style="width: 100%; font-weight: 700; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #1e293b; color: #ffffff; border-radius: 6px; cursor: not-allowed; opacity: 0.5;" title="Silakan cetak barcode terlebih dahulu">
+                    <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+                    <span id="labelBtnFinishSession">Cetak Surat Jalan</span>
+                </button>
             </div>
         </div>
     </div>
@@ -474,7 +426,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Pemasok & Surat Jalan -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                     <div class="form-group" style="margin: 0;">
-                        <label class="form-label" for="bulk_pemasok_id">Pemasok (Supplier) <span style="color:red;">*</span></label>
+                        <label class="form-label" for="bulk_pemasok_id">Pemasok <span style="color:red;">*</span></label>
                         <select name="pemasok_id" id="bulk_pemasok_id" class="form-control" required style="font-weight: 700; height: 42px;">
                             <?php foreach ($pemasokList as $p): ?>
                                 <option value="<?= $p['id'] ?>" data-kode="<?= htmlspecialchars($p['kode_pemasok']) ?>" data-nama="<?= htmlspecialchars($p['nama_pemasok']) ?>">
@@ -496,7 +448,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 14px; margin-bottom: 14px;">
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" for="bulk_jenis_filter">Jenis / Kategori <span style="color:red;">*</span></label>
-                        <select id="bulk_jenis_filter" class="form-control" required style="font-weight: 700; color: #8b5cf6; height: 42px;">
+                        <select id="bulk_jenis_filter" class="form-control" required style="font-weight: 700; height: 42px;">
                             <option value="">-- Pilih Jenis / Kategori Terlebih Dahulu --</option>
                             <?php foreach ($jenisList as $j): ?>
                                 <option value="<?= $j['id'] ?>"><?= htmlspecialchars($j['nama_jenis']) ?> (<?= htmlspecialchars($j['kode_jenis']) ?>)</option>
@@ -527,9 +479,9 @@ require_once __DIR__ . '/layout/header.php';
                             
                             <!-- Pilihan Cepat Kuantitas Sederhana -->
                             <div class="qty-pill-group">
-                                <button type="button" class="qty-pill-btn active" data-qty="10" onclick="setBulkQty(10, this)" title="1 Lembar A4 Penuh (10 Barcode)">10 Pcs (1 Lembar A4)</button>
-                                <button type="button" class="qty-pill-btn" data-qty="20" onclick="setBulkQty(20, this)" title="2 Lembar A4">20 Pcs (2 Lembar)</button>
-                                <button type="button" class="qty-pill-btn" data-qty="5" onclick="setBulkQty(5, this)" title="Setengah Lembar A4 (5 Pcs)">5 Pcs (½ Lembar)</button>
+                                <button type="button" class="qty-pill-btn active" data-qty="10" onclick="setBulkQty(10, this)" title="1 Lembar A4 Penuh (10 Barcode)">10 Pcs</button>
+                                <button type="button" class="qty-pill-btn" data-qty="20" onclick="setBulkQty(20, this)" title="2 Lembar A4">20 Pcs</button>
+                                <button type="button" class="qty-pill-btn" data-qty="5" onclick="setBulkQty(5, this)" title="Setengah Lembar A4 (5 Pcs)">5 Pcs</button>
                             </div>
                         </div>
                     </div>
@@ -537,7 +489,7 @@ require_once __DIR__ . '/layout/header.php';
 
                 <button type="submit" class="btn btn-primary btn-lg" id="btnGenerateBulk" style="width: 100%; height: 50px; font-weight: 800; font-size: 15px; background: #8b5cf6; border-color: #8b5cf6; cursor: pointer;">
                     <i data-lucide="barcode" style="width: 18px; height: 18px;"></i>
-                    <span>⚡ Buat Barcode Kemasan</span>
+                    <span>Buat Barcode Kemasan</span>
                 </button>
             </form>
         </div>
@@ -550,7 +502,7 @@ require_once __DIR__ . '/layout/header.php';
                         <i data-lucide="check-circle-2" style="width: 18px; height: 18px; color: #10b981;"></i>
                         <span>Hasil Barcode Massal Siap Cetak</span>
                     </h2>
-                    <div class="card-description" id="bulkResultDesc">Daftar barcode siap cetak lembar PDF (10 pcs/lembar A4)</div>
+                    <div class="card-description" id="bulkResultDesc">Daftar barcode siap cetak lembar PDF</div>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button type="button" class="btn btn-outline btn-sm" id="btnPreviewSheet" style="display: none;" onclick="openSheetPreviewModal()">
@@ -566,9 +518,8 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- Placeholder sederhana saat belum ada barcode -->
             <div id="bulkStatusPlaceholder" style="padding: 40px 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
-                <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.6;">🏷️</div>
                 <div>Belum ada barcode yang dibuat.</div>
-                <div style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">Pilih pemasok dan produk pada formulir di sebelah kiri lalu klik <strong>"⚡ Buat Barcode Kemasan"</strong>.</div>
+                <div style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">Pilih pemasok dan produk pada formulir di sebelah kiri lalu klik <strong>"Buat Barcode Kemasan"</strong>.</div>
             </div>
 
             <!-- List Preview Hasil Batch -->
@@ -617,21 +568,21 @@ require_once __DIR__ . '/layout/header.php';
                         </button>
                         <button type="button" id="btnSelesaiTimbangSJ" class="btn btn-sm" onclick="handleSelesaiTimbangClick()" disabled style="padding: 4px 12px; font-size: 12px; font-weight: 800; height: 32px; display: inline-flex; align-items: center; gap: 6px; background: #cbd5e1; border-color: #cbd5e1; color: #64748b; cursor: not-allowed; transition: all 0.2s;" title="Scan barcode dan isi berat timbangan terlebih dahulu">
                             <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
-                            <span id="labelBtnSelesaiTimbang">✓ Selesai Timbang</span>
+                            <span id="labelBtnSelesaiTimbang">Selesai Timbang</span>
                         </button>
                         <a id="btnCetakSJPenerimaan" href="#" target="_blank" class="btn btn-primary btn-sm" onclick="handleCetakSJClick(event)" style="padding: 4px 12px; font-size: 12px; font-weight: 700; height: 32px; display: inline-flex; align-items: center; gap: 6px; background: #64748b; border-color: #64748b; color: #ffffff; opacity: 0.55; cursor: not-allowed; transition: all 0.2s;" title="Tombol cetak terkunci. Klik 'Selesai Timbang' terlebih dahulu setelah selesai menimbang.">
                             <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
-                            <span>🖨️ Cetak Surat Jalan Penerimaan</span>
+                            <span>Cetak Surat Jalan</span>
                         </a>
                     </div>
                 </div>
 
                 <!-- Dropdown Pilih Surat Jalan -->
                 <div style="position: relative;">
-                    <select id="selectWeighSJ" class="form-control" style="font-size: 13.5px; font-weight: 700; height: 46px; border: 2px solid #93c5fd; border-radius: 8px; background-color: #f8fafc; color: #0f172a;">
-                        <option value="">-- Pilih Surat Jalan Penerimaan (Klik untuk Memilih) --</option>
+                    <select id="selectWeighSJ" class="form-control" style="font-size: 13.5px; font-weight: 700; height: 46px;">
+                        <option value="">-- Pilih Surat Jalan Penerimaan --</option>
                         <?php if (empty($suratJalanWeighList)): ?>
-                            <option value="" disabled>-- Tidak ada Surat Jalan yang menunggu penimbangan (Semua telah selesai) --</option>
+                            <option value="" disabled>-- Tidak ada Surat Jalan yang menunggu penimbangan --</option>
                         <?php else: ?>
                             <?php foreach ($suratJalanWeighList as $sj): ?>
                                 <option value="<?= htmlspecialchars($sj['no_surat_jalan']) ?>" 
@@ -660,11 +611,11 @@ require_once __DIR__ . '/layout/header.php';
                         </div>
                         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                             <span class="badge badge-secondary" id="badgeSJTotal">Total: 0 Pcs</span>
-                            <span class="badge badge-warning" id="badgeSJSisa" style="font-weight: 800;">⏳ Belum: 0 Pcs</span>
-                            <span class="badge badge-success" id="badgeSJSelesai">✓ Sudah: 0 Pcs</span>
+                            <span class="badge badge-warning" id="badgeSJSisa" style="font-weight: 800;">Belum: 0 Pcs</span>
+                            <span class="badge badge-success" id="badgeSJSelesai">Sudah: 0 Pcs</span>
                             <button type="button" class="btn btn-outline btn-sm" id="btnLihatBarcodeDiRiwayat" onclick="openSJBarcodeHistoryModal(document.getElementById('infoSJNo')?.innerText)" style="font-size: 11.5px; font-weight: 700; color: #4f46e5; border-color: #c7d2fe; background: #eef2ff; cursor: pointer;" title="Lihat daftar barcode keranjang surat jalan ini di riwayat">
                                 <i data-lucide="list" style="width: 13px; height: 13px;"></i>
-                                <span>Lihat Daftar Barcode di Riwayat ➔</span>
+                                <span>Lihat Daftar Barcode</span>
                             </button>
                         </div>
                     </div>
@@ -675,18 +626,9 @@ require_once __DIR__ . '/layout/header.php';
                             <i data-lucide="check-circle-2" style="width: 20px; height: 20px;"></i>
                             <span>Semua Keranjang pada Surat Jalan Ini Telah Selesai Ditimbang!</span>
                         </div>
-                        <div style="font-size: 12.5px; color: #065f46; margin-bottom: 12px;">
+                        <div style="font-size: 12.5px; color: #065f46; margin-bottom: 0;">
                             Total berat riil penerimaan barang masuk telah tercatat lengkap di sistem.
-                        </div>
-                        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" id="btnNoticeSelesaiTimbang" class="btn btn-sm btn-success" onclick="handleSelesaiTimbangClick()" style="font-weight: 800; padding: 7px 18px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;">
-                                <i data-lucide="check-circle" style="width: 15px; height: 15px;"></i>
-                                <span>✓ Selesai Timbang</span>
-                            </button>
-                            <a id="btnCetakSJNotice" href="#" target="_blank" class="btn btn-success" onclick="handleCetakSJClick(event)" style="font-weight: 800; padding: 7px 18px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 8px; opacity: 0.55; cursor: not-allowed; background: #64748b; border-color: #64748b;">
-                                <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
-                                <span>🖨️ Cetak Surat Jalan Penerimaan (A4 / PDF)</span>
-                            </a>
+                            Gunakan tombol Selesai Timbang dan Cetak Surat Jalan di bagian atas.
                         </div>
                     </div>
                 </div>
@@ -719,7 +661,7 @@ require_once __DIR__ . '/layout/header.php';
                         </div>
                     </div>
                     <div id="scanStatusBadgeContainer">
-                        <span class="badge badge-warning" id="scanStatusBadge">⚠ Belum Ditimbang</span>
+                        <span class="badge badge-warning" id="scanStatusBadge">Belum Ditimbang</span>
                     </div>
                 </div>
             </div>
@@ -751,7 +693,7 @@ require_once __DIR__ . '/layout/header.php';
 
                 <button type="button" class="btn btn-success btn-lg" id="btnSimpanBerat" style="width: 100%; height: 50px; font-size: 15px; font-weight: 800;">
                     <i data-lucide="check" style="width: 20px; height: 20px;"></i>
-                    <span>💾 Simpan Berat Riil (Tekan Enter)</span>
+                    <span>Simpan Berat Riil</span>
                 </button>
             </div>
         </div>
@@ -762,14 +704,13 @@ require_once __DIR__ . '/layout/header.php';
                 <div>
                     <h2 class="card-title" style="font-size: 16px;">
                         <i data-lucide="history" style="width: 18px; height: 18px; color: #10b981;"></i>
-                        <span>Barcode yang Baru Saja Ditimbang (Sesi Ini)</span>
+                        <span>Barcode yang Baru Saja Ditimbang</span>
                     </h2>
                     <div class="card-description">Daftar barcode yang sudah selesai ditimbang pada sesi ini</div>
                 </div>
             </div>
 
             <div id="sessionWeighedPlaceholder" style="padding: 40px 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
-                <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.6;">⚖️</div>
                 <div>Belum ada barcode yang ditimbang sesi ini.</div>
                 <div style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">Pilih Surat Jalan di sebelah kiri, scan barcode keranjang, lalu simpan bobot riil.</div>
             </div>
@@ -792,133 +733,64 @@ require_once __DIR__ . '/layout/header.php';
         <!-- 4 KARTU KPI / STATISTIK GUDANG UTAMA -->
         <div class="grid grid-cols-4" style="gap: 16px; margin-bottom: 22px;">
         <!-- Card 1: Total Sisa Stok KG -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #4f46e5; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Sisa Stok Gudang</span>
-                <div style="background: rgba(79, 70, 229, 0.12); color: #4f46e5; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="package" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Total Sisa Stok Gudang</div>
+                <div class="kpi-value"><?= number_format($gudangSummary['total_kg'], 2, ',', '.') ?> <span class="kpi-unit">KG</span></div>
+                <div class="kpi-sub">Siap Mutasi: <?= number_format($gudangSummary['total_kg_siap'], 2, ',', '.') ?> KG</div>
             </div>
-            <div style="font-size: 26px; font-weight: 900; color: #4f46e5; line-height: 1.1;">
-                <?= number_format($gudangSummary['total_kg'], 2, ',', '.') ?> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">KG</span>
-            </div>
-            <div style="font-size: 12px; color: #10b981; margin-top: 6px; font-weight: 700;">
-                ✓ Siap Mutasi: <?= number_format($gudangSummary['total_kg_siap'], 2, ',', '.') ?> KG
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="package" style="width: 18px; height: 18px;"></i></div>
         </div>
 
         <!-- Card 2: Total Keranjang -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #7c3aed; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Jumlah Keranjang / Pcs</span>
-                <div style="background: rgba(124, 58, 237, 0.12); color: #7c3aed; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="boxes" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Jumlah Keranjang / Pcs</div>
+                <div class="kpi-value"><?= number_format($gudangSummary['total_barcode']) ?> <span class="kpi-unit">Keranjang</span></div>
+                <div class="kpi-sub">Rata-rata: <strong><?= number_format($gudangSummary['avg_kg_per_keranjang'], 2, ',', '.') ?></strong> kg/keranjang</div>
             </div>
-            <div style="font-size: 26px; font-weight: 900; color: #7c3aed; line-height: 1.1;">
-                <?= number_format($gudangSummary['total_barcode']) ?> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">Keranjang</span>
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-                Rata-rata: <strong><?= number_format($gudangSummary['avg_kg_per_keranjang'], 2, ',', '.') ?></strong> kg/keranjang
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="boxes" style="width: 18px; height: 18px;"></i></div>
         </div>
 
-        <!-- Card 3: Kesiapan Timbangan -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #10b981; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Kesiapan Timbangan</span>
-                <div style="background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="scale" style="width: 17px; height: 17px;"></i>
-                </div>
+        <!-- Card 3: Status Penimbangan -->
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Status Penimbangan</div>
+                <div class="kpi-value"><?= number_format($gudangSummary['total_barcode']) ?> <span class="kpi-unit">Keranjang</span></div>
+                <div class="kpi-sub">100% Ditimbang di Awal</div>
             </div>
-            <div style="font-size: 26px; font-weight: 900; color: #10b981; line-height: 1.1;">
-                <?= number_format($gudangSummary['sudah_ditimbang']) ?> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">Ditimbang</span>
-            </div>
-            <div style="font-size: 12px; color: #f59e0b; margin-top: 6px; font-weight: 600;">
-                ⏳ <?= number_format($gudangSummary['belum_ditimbang']) ?> keranjang belum ditimbang
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i></div>
         </div>
 
         <!-- Card 4: Asal Pemasok & Produk -->
-        <div class="card" style="padding: 16px; border-left: 4px solid #06b6d4; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Pemasok & Varian</span>
-                <div style="background: rgba(6, 182, 212, 0.12); color: #06b6d4; padding: 6px; border-radius: 8px;">
-                    <i data-lucide="truck" style="width: 17px; height: 17px;"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-body">
+                <div class="kpi-label">Pemasok & Varian</div>
+                <div class="kpi-value"><?= number_format($gudangSummary['total_pemasok']) ?> <span class="kpi-unit">Pemasok</span></div>
+                <div class="kpi-sub">Terdiri dari <strong><?= number_format($gudangSummary['total_item']) ?></strong> jenis produk</div>
             </div>
-            <div style="font-size: 26px; font-weight: 900; color: #06b6d4; line-height: 1.1;">
-                <?= number_format($gudangSummary['total_pemasok']) ?> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">Pemasok</span>
-            </div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-                Terdiri dari <strong><?= number_format($gudangSummary['total_item']) ?></strong> jenis produk
-            </div>
+            <div class="kpi-icon-pod"><i data-lucide="truck" style="width: 18px; height: 18px;"></i></div>
         </div>
     </div>
 
     <!-- ===================================================================== -->
     <?php 
     $hasAnyFilter = !empty($filterGudangPemasok) || !empty($filterGudangJenis) || !empty($filterGudangItem) || 
-                    !empty($filterGudangTimbang) || !empty($filterGudangDate) || !empty($filterGudangStartDate) || 
+                    !empty($filterGudangDate) || !empty($filterGudangStartDate) || 
                     !empty($filterGudangEndDate) || !empty($filterGudangSort) || !empty($filterGudangSearch);
     $activeFilterCount = 0;
     if (!empty($filterGudangPemasok)) $activeFilterCount++;
     if (!empty($filterGudangJenis)) $activeFilterCount++;
     if (!empty($filterGudangItem)) $activeFilterCount++;
-    if (!empty($filterGudangTimbang)) $activeFilterCount++;
     if (!empty($filterGudangDate) || !empty($filterGudangStartDate) || !empty($filterGudangEndDate)) $activeFilterCount++;
     if (!empty($filterGudangSort)) $activeFilterCount++;
     if (!empty($filterGudangSearch)) $activeFilterCount++;
     ?>
 
     <!-- ===================================================================== -->
-    <!-- QUICK FILTER PILLS & TOMBOL JUMBOTRON FILTER                           -->
+    <!-- TOMBOL JUMBOTRON FILTER & RESET DATA GUDANG                            -->
     <!-- ===================================================================== -->
-    <div class="no-print" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px;">
-        <!-- Sisi Kiri: Filter Cepat Pills -->
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <span style="font-size: 11.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-right: 2px;">
-                <i data-lucide="sparkles" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle; color: #8b5cf6;"></i> Filter Cepat:
-            </span>
-
-            <!-- 1. Semua Stok -->
-            <a href="<?= buildStockGudangUrl(['status_timbang' => '', 'date_range' => '', 'start_date' => '', 'end_date' => '']) ?>" 
-               class="badge <?= (empty($filterGudangTimbang) && empty($filterGudangDate) && empty($filterGudangStartDate)) ? 'badge-primary' : 'badge-secondary' ?>" 
-               style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s;">
-                Semua Stok (<?= number_format($gudangBaseSummary['total_barcode']) ?>)
-            </a>
-
-            <!-- 2. Belum Ditimbang -->
-            <a href="<?= buildStockGudangUrl(['status_timbang' => 'BELUM', 'date_range' => '', 'start_date' => '', 'end_date' => '']) ?>" 
-               class="badge <?= $filterGudangTimbang === 'BELUM' ? 'badge-warning' : 'badge-secondary' ?>" 
-               style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $filterGudangTimbang === 'BELUM' ? 'border: 1.5px solid #f59e0b; font-weight: 800; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);' : '' ?>">
-                ⏳ Perlu Ditimbang (<?= number_format($gudangBaseSummary['belum_ditimbang']) ?>)
-            </a>
-
-            <!-- 3. Siap Alokasi / Sudah Timbang -->
-            <a href="<?= buildStockGudangUrl(['status_timbang' => 'SUDAH', 'date_range' => '', 'start_date' => '', 'end_date' => '']) ?>" 
-               class="badge <?= $filterGudangTimbang === 'SUDAH' ? 'badge-success' : 'badge-secondary' ?>" 
-               style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $filterGudangTimbang === 'SUDAH' ? 'border: 1.5px solid #10b981; font-weight: 800; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);' : '' ?>">
-                ✓ Siap Alokasi (<?= number_format($gudangBaseSummary['sudah_ditimbang']) ?>)
-            </a>
-
-            <!-- 4. Masuk Hari Ini -->
-            <a href="<?= buildStockGudangUrl(['date_range' => 'today', 'status_timbang' => '']) ?>" 
-               class="badge <?= $filterGudangDate === 'today' ? 'badge-purple' : 'badge-secondary' ?>" 
-               style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $filterGudangDate === 'today' ? 'border: 1.5px solid #8b5cf6; font-weight: 800; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);' : '' ?>">
-                📅 Masuk Hari Ini (<?= number_format($gudangBaseSummary['count_hari_ini']) ?>)
-            </a>
-
-            <!-- 5. Mengendap > 3 Hari (Warning Aging) -->
-            <?php if ($gudangBaseSummary['count_mengendap'] > 0): ?>
-            <a href="<?= buildStockGudangUrl(['date_range' => 'older_3_days', 'status_timbang' => '']) ?>" 
-               class="badge <?= $filterGudangDate === 'older_3_days' ? 'badge-danger' : 'badge-secondary' ?>" 
-               style="padding: 7px 14px; font-size: 12px; border-radius: 20px; text-decoration: none; cursor: pointer; transition: all 0.2s; <?= $filterGudangDate === 'older_3_days' ? 'border: 1.5px solid #ef4444; font-weight: 800; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);' : '' ?>">
-                ⚠️ Mengendap >3 Hari (<?= number_format($gudangBaseSummary['count_mengendap']) ?>)
-            </a>
-            <?php endif; ?>
-        </div>
-
+    <div class="no-print" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 14px;">
         <!-- Sisi Kanan: Tombol Buka Jumbotron Filter & Reset -->
         <div style="display: flex; gap: 8px; align-items: center;">
             <button type="button" class="btn <?= $hasAnyFilter ? 'btn-primary' : 'btn-outline' ?>" onclick="toggleGudangFilterPanel()" id="btnToggleFilterGudang" style="font-weight: 700; font-size: 12.5px; padding: 7px 16px; border-radius: 20px; display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow-sm);">
@@ -954,7 +826,7 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                 </div>
                 <button type="button" onclick="toggleGudangFilterPanel(false)" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 8px;">
-                    ✕ Tutup Panel
+                    Tutup Panel
                 </button>
             </div>
 
@@ -1004,25 +876,15 @@ require_once __DIR__ . '/layout/header.php';
                         </select>
                     </div>
 
-                    <!-- 4. Status Timbang -->
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" style="font-size: 11.5px; margin-bottom: 4px; font-weight: 700;">Status Timbang:</label>
-                        <select name="status_timbang" class="form-control" style="font-size: 12.5px; font-weight: 600; height: 38px;">
-                            <option value="">-- Semua Status --</option>
-                            <option value="SUDAH" <?= $filterGudangTimbang === 'SUDAH' ? 'selected' : '' ?>>✓ Siap Alokasi (> 0 KG)</option>
-                            <option value="BELUM" <?= $filterGudangTimbang === 'BELUM' ? 'selected' : '' ?>>⏳ Belum Ditimbang (0 KG)</option>
-                        </select>
-                    </div>
-
-                    <!-- 5. Urutan (Sorting) -->
+                    <!-- Urutan (Sorting) -->
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" style="font-size: 11.5px; margin-bottom: 4px; font-weight: 700;">Urutan Tampilan:</label>
                         <select name="sort" class="form-control" style="font-size: 12.5px; font-weight: 600; height: 38px;">
-                            <option value="" <?= empty($filterGudangSort) ? 'selected' : '' ?>>⚡ Total Berat (KG Terbanyak)</option>
-                            <option value="fifo" <?= $filterGudangSort === 'fifo' ? 'selected' : '' ?>>⏱️ FIFO: Masuk Terlama (Dahulukan)</option>
+                            <option value="" <?= empty($filterGudangSort) ? 'selected' : '' ?>>Total Berat</option>
+                            <option value="fifo" <?= $filterGudangSort === 'fifo' ? 'selected' : '' ?>>FIFO: Masuk Terlama</option>
                             <option value="lifo" <?= $filterGudangSort === 'lifo' ? 'selected' : '' ?>>🆕 Masuk Terbaru</option>
-                            <option value="keranjang_desc" <?= $filterGudangSort === 'keranjang_desc' ? 'selected' : '' ?>>📦 Keranjang Terbanyak</option>
-                            <option value="nama_asc" <?= $filterGudangSort === 'nama_asc' ? 'selected' : '' ?>>🔤 Nama Produk (A - Z)</option>
+                            <option value="keranjang_desc" <?= $filterGudangSort === 'keranjang_desc' ? 'selected' : '' ?>>Keranjang Terbanyak</option>
+                            <option value="nama_asc" <?= $filterGudangSort === 'nama_asc' ? 'selected' : '' ?>>Nama Produk</option>
                         </select>
                     </div>
                 </div>
@@ -1036,12 +898,12 @@ require_once __DIR__ . '/layout/header.php';
                             <!-- Dropdown Preset Tanggal Tunggal -->
                             <div style="display: flex; gap: 4px; align-items: center;">
                                 <select onchange="setDateRangePreset(this.value); this.value='';" style="font-size: 11px; font-weight: 700; height: 24px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--primary); cursor: pointer;" title="Pilih preset tanggal cepat">
-                                    <option value="" disabled selected>⚡ Pilih Periode ▼</option>
+                                    <option value="" disabled selected>Pilih Periode ▼</option>
                                     <option value="today">Hari Ini</option>
                                     <option value="yesterday">Kemarin</option>
                                     <option value="7days">7 Hari Terakhir</option>
                                     <option value="this_month">Bulan Ini</option>
-                                    <option value="clear">✕ Bersihkan Tanggal</option>
+                                    <option value="clear">Bersihkan Tanggal</option>
                                 </select>
                             </div>
                         </label>
@@ -1116,12 +978,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <a href="<?= buildStockGudangUrl(['item_id' => '']) ?>" style="color: inherit; text-decoration: none; font-weight: 900; margin-left: 2px;">✕</a>
                             </span>
                         <?php endif; ?>
-                        <?php if ($filterGudangTimbang): ?>
-                            <span class="badge badge-secondary" style="font-size: 11px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px;">
-                                Status: <?= $filterGudangTimbang === 'SUDAH' ? 'Siap Alokasi' : 'Belum Ditimbang' ?>
-                                <a href="<?= buildStockGudangUrl(['status_timbang' => '']) ?>" style="color: inherit; text-decoration: none; font-weight: 900; margin-left: 2px;">✕</a>
-                            </span>
-                        <?php endif; ?>
+
                         <?php if ($filterGudangDate): ?>
                             <?php
                             $dateLabel = [
@@ -1222,14 +1079,12 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="text-align: right; min-width: 120px; padding: 12px 14px; white-space: nowrap;">Rata-rata / Pcs</th>
                             <th style="text-align: center; min-width: 140px; padding: 12px 14px; white-space: nowrap;">Status Kesiapan</th>
                             <?= renderStockGudangTh('Surat Jalan Terakhir', 'sj_asc', 'sj_desc', $filterGudangSort, 'left', 'min-width: 180px; padding: 12px 14px;') ?>
-                            <th style="text-align: center; min-width: 120px; padding: 12px 14px; white-space: nowrap;" class="no-print">Aksi Alokasi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($gudangPerItem)): ?>
                             <tr>
-                                <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                    <div style="font-size: 36px; margin-bottom: 8px;">📦</div>
+                                <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
                                     <div style="font-weight: 700; font-size: 15px;">Tidak ada sisa stok barang di gudang utama.</div>
                                     <div style="font-size: 12.5px; margin-top: 4px;">Semua barang masuk telah berhasil dimutasikan ke mitra atau belum ada penerimaan baru.</div>
                                 </td>
@@ -1273,19 +1128,9 @@ require_once __DIR__ . '/layout/header.php';
                                         <?= $row['avg_kg'] !== null ? number_format((float)$row['avg_kg'], 2, ',', '.') . ' kg' : '-' ?>
                                     </td>
                                     <td style="text-align: center; padding: 12px 14px; white-space: nowrap;">
-                                        <?php if ($row['belum_ditimbang_cnt'] == 0): ?>
-                                            <span class="badge badge-success" style="font-size: 11px; padding: 4px 8px;" title="Seluruh keranjang sudah ditimbang dan siap dimutasi ke mitra">
-                                                ✓ <?= $row['sudah_ditimbang_cnt'] ?> Siap Mutasi
-                                            </span>
-                                        <?php elseif ($row['sudah_ditimbang_cnt'] > 0): ?>
-                                            <span class="badge badge-warning" style="font-size: 11px; padding: 4px 8px;" title="Sebagian keranjang sudah ditimbang">
-                                                <?= $row['sudah_ditimbang_cnt'] ?> Siap • <?= $row['belum_ditimbang_cnt'] ?> Timbang
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge badge-secondary" style="font-size: 11px; padding: 4px 8px; color: #f59e0b;" title="Belum ada keranjang yang ditimbang bobot riilnya">
-                                                ⏳ <?= $row['belum_ditimbang_cnt'] ?> Belum Ditimbang
-                                            </span>
-                                        <?php endif; ?>
+                                        <span class="badge badge-success" style="font-size: 11px; padding: 4px 8px;" title="Seluruh keranjang sudah ditimbang saat penerimaan dan siap dialokasikan ke mitra">
+                                            <?= (int)($row['total_keranjang'] ?? $row['total_pcs'] ?? 0) ?> Siap Alokasi
+                                        </span>
                                     </td>
                                     <td style="padding: 12px 14px; white-space: nowrap;">
                                         <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--primary); background: rgba(0,0,0,0.03); padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); display: inline-block;">
@@ -1294,19 +1139,6 @@ require_once __DIR__ . '/layout/header.php';
                                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
                                             <?= !empty($row['latest_masuk']) ? date('d/m/Y H:i', strtotime($row['latest_masuk'])) : '' ?>
                                         </div>
-                                    </td>
-                                    <td style="text-align: center; padding: 12px 14px; white-space: nowrap;" class="no-print">
-                                        <?php if ($row['sudah_ditimbang_cnt'] > 0): ?>
-                                            <a href="index.php?page=mutasi&alur=PEMASOK_KE_MITRA<?= $row['pemasok_id'] > 0 ? '&pemasok_id=' . $row['pemasok_id'] : '' ?>" class="btn btn-sm btn-primary" style="font-size: 11.5px; padding: 4px 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px;" title="Alokasikan stok barang ini ke salah satu mitra">
-                                                <i data-lucide="arrow-right-left" style="width: 13px; height: 13px;"></i>
-                                                <span>Alokasi</span>
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="index.php?page=timbang_cetak&tab=scantimbang" class="btn btn-sm btn-outline" style="font-size: 11.5px; padding: 4px 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; color: #d97706; border-color: #fde68a;" title="Timbang keranjang terlebih dahulu">
-                                                <i data-lucide="scale" style="width: 13px; height: 13px;"></i>
-                                                <span>Timbang</span>
-                                            </a>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -1344,14 +1176,12 @@ require_once __DIR__ . '/layout/header.php';
                             <?= renderStockGudangTh('No. Surat Jalan', 'sj_asc', 'sj_desc', $filterGudangSort, 'left', 'min-width: 180px; padding: 12px 14px;') ?>
                             <?= renderStockGudangTh('Tanggal Masuk', 'tgl_asc', 'tgl_desc', $filterGudangSort, 'left', 'min-width: 140px; padding: 12px 14px;') ?>
                             <th style="text-align: center; min-width: 140px; padding: 12px 14px; white-space: nowrap;">Status Kesiapan</th>
-                            <th style="text-align: center; min-width: 100px; padding: 12px 14px; white-space: nowrap;" class="no-print">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($gudangLabels)): ?>
                             <tr>
-                                <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                    <div style="font-size: 32px; margin-bottom: 6px;">🏷️</div>
+                                <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
                                     <div style="font-weight: 700;">Tidak ada stiker barcode yang cocok dengan filter ini.</div>
                                 </td>
                             </tr>
@@ -1383,16 +1213,10 @@ require_once __DIR__ . '/layout/header.php';
                                         </span>
                                     </td>
                                     <td style="text-align: right; padding: 12px 20px 12px 14px; white-space: nowrap;">
-                                        <?php if ((float)$lbl['berat_netto'] > 0): ?>
-                                            <strong style="color: #10b981; font-size: 14px;">
-                                                <?= number_format((float)$lbl['berat_netto'], 2, ',', '.') ?>
-                                            </strong>
-                                            <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;"> KG</span>
-                                        <?php else: ?>
-                                            <span style="color: #f59e0b; font-style: italic; font-size: 12px; font-weight: 600;">
-                                                0.00 KG (Belum Ditimbang)
-                                            </span>
-                                        <?php endif; ?>
+                                        <strong style="color: #10b981; font-size: 14px;">
+                                            <?= number_format((float)$lbl['berat_netto'], 2, ',', '.') ?>
+                                        </strong>
+                                        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;"> KG</span>
                                     </td>
                                     <td style="padding: 12px 14px; white-space: nowrap;">
                                         <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text-main); background: rgba(0,0,0,0.03); padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border);">
@@ -1403,28 +1227,9 @@ require_once __DIR__ . '/layout/header.php';
                                         <?= date('d/m/Y H:i', strtotime($lbl['created_at'])) ?>
                                     </td>
                                     <td style="text-align: center; padding: 12px 14px; white-space: nowrap;">
-                                        <?php if ((float)$lbl['berat_netto'] > 0): ?>
-                                            <span class="badge badge-success" style="font-size: 11px; padding: 4px 8px;">
-                                                ✓ Siap Dimutasi
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge badge-warning" style="font-size: 11px; padding: 4px 8px;">
-                                                ⏳ Menunggu Timbang
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="text-align: center; padding: 12px 14px; white-space: nowrap;" class="no-print">
-                                        <?php if ((float)$lbl['berat_netto'] <= 0): ?>
-                                            <a href="index.php?page=timbang_cetak&tab=scantimbang&barcode=<?= urlencode($lbl['id_label']) ?>" class="btn btn-sm btn-success" style="padding: 4px 10px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px;" title="Scan & Timbang Bobot Riil Sekarang">
-                                                <i data-lucide="scale" style="width: 13px; height: 13px;"></i>
-                                                <span>Timbang</span>
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="index.php?page=mutasi&alur=PEMASOK_KE_MITRA<?= $lbl['pemasok_id'] > 0 ? '&pemasok_id=' . $lbl['pemasok_id'] : '' ?>" class="btn btn-sm btn-outline" style="padding: 4px 10px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px;" title="Pindahkan ke Mitra Bisnis">
-                                                <i data-lucide="arrow-right-left" style="width: 13px; height: 13px;"></i>
-                                                <span>Mutasi</span>
-                                            </a>
-                                        <?php endif; ?>
+                                        <span class="badge badge-success" style="font-size: 11px; padding: 4px 8px;">
+                                            Siap Alokasi
+                                        </span>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -1490,8 +1295,8 @@ require_once __DIR__ . '/layout/header.php';
                     <i data-lucide="file-text" style="width: 20px; height: 20px;"></i>
                 </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 800;" id="sheetPreviewTitle">Pratinjau Lembar Cetak PDF (A4)</h3>
-                    <div style="font-size: 12px; color: var(--text-muted);" id="sheetPreviewSubtitle">10 Pcs per Lembar A4 (Grid 2×5) • 5 Pcs Proporsional ½ Lembar</div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 800;" id="sheetPreviewTitle">Pratinjau Lembar Cetak PDF</h3>
+                    <div style="font-size: 12px; color: var(--text-muted);" id="sheetPreviewSubtitle">10 Pcs per Lembar A4 • 5 Pcs Proporsional ½ Lembar</div>
                 </div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -1500,7 +1305,7 @@ require_once __DIR__ . '/layout/header.php';
                     <span>Cetak ke PDF / Printer</span>
                 </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="closeSheetPreviewModal()" style="font-weight: 700;">
-                    ✕ Tutup
+                    Tutup
                 </button>
             </div>
         </div>
@@ -1515,7 +1320,7 @@ require_once __DIR__ . '/layout/header.php';
     <div style="background: var(--bg-card, #ffffff); border-radius: 16px; width: 560px; max-width: 95vw; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1.5px solid var(--border); overflow: hidden; animation: popIn 0.2s ease;">
         <div style="padding: 16px 20px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 24px;">🖨️</span>
+                
                 <div>
                     <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff;">Opsi Cetak Ulang Barcode</h3>
                     <div style="font-size: 12px; opacity: 0.9;">Pilih format cetak barcode yang diinginkan</div>
@@ -1535,39 +1340,38 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <!-- Pilihan Menu Cetak -->
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Opsi 1: Cetak 1 Pcs ini Menjadi 1 Lembar Penuh (10 pcs stiker kembar) -->
-                <button type="button" onclick="executeReprintSingle10()" class="btn" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
-                    <div style="font-size: 28px; line-height: 1;">📄</div>
-                    <div style="flex: 1;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <strong style="color: #4338ca; font-size: 14px;">Cetak 1 Lembar Penuh (10 Pcs Barcode Ini)</strong>
-                            <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Sesuai Permintaan</span>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Opsi 1: Cetak Barcode Ini dengan Pilihan Jumlah Lembar (Custom Qty) -->
+                <div style="background: #eef2ff; border: 2px solid #6366f1; border-radius: 12px; padding: 14px 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <strong style="color: #4338ca; font-size: 14px;">Cetak Barcode Ini</strong>
+                                </div>
+                                <div style="font-size: 12px; color: #4b5563; margin-top: 3px;">
+                                    Jumlah stiker yang dicetak:
+                                </div>
+                            </div>
                         </div>
-                        <div style="font-size: 12px; color: #4b5563; margin-top: 3px;">
-                            Barcode 1 pcs ini akan digandakan mengisi 10 slot stiker dalam 1 lembar A4 penuh (sekali print 10 pcs).
+                        <div style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                            <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-weight: 800; height: 36px;" onclick="stepReprintQty(-1)">−</button>
+                            <input type="number" id="reprintQtyInput" min="1" max="100" value="10" style="width: 58px; height: 36px; text-align: center; font-weight: 800; font-size: 14px; border: 1.5px solid #6366f1; border-radius: 6px; background: #fff;" onchange="validateReprintQty(this)">
+                            <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-weight: 800; height: 36px;" onclick="stepReprintQty(1)">+</button>
+                            <button type="button" onclick="executeReprintCustomQty()" class="btn btn-primary" style="padding: 6px 16px; height: 36px; font-weight: 700; background: #4f46e5; border-color: #4f46e5; display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="printer" style="width: 15px; height: 15px;"></i>
+                                <span>Cetak</span>
+                            </button>
                         </div>
                     </div>
-                </button>
+                </div>
 
-                <!-- Opsi 2: Cetak Sisa Barcode yang Belum Ditimbang dalam Kelompok Surat Jalan Ini -->
+                <!-- Opsi 2: Cetak Seluruh Barcode di Surat Jalan Ini -->
                 <button type="button" onclick="executeReprintGroupSJ()" class="btn" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; background: #f0fdf4; border: 1.5px solid #22c55e; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
-                    <div style="font-size: 28px; line-height: 1;">📦</div>
                     <div style="flex: 1;">
-                        <strong style="color: #15803d; font-size: 14px;">Cetak Sisa Barcode di Surat Jalan Ini (Belum Ditimbang)</strong>
+                        <strong style="color: #15803d; font-size: 14px;">Cetak Seluruh Barcode di Surat Jalan Ini</strong>
                         <div style="font-size: 12px; color: #4b5563; margin-top: 3px;" id="reprintGroupDesc">
-                            Mencetak sisa barcode yang belum ditimbang (mencegah pencetakan ganda untuk barcode yang sudah ditimbang).
-                        </div>
-                    </div>
-                </button>
-
-                <!-- Opsi 3: Cetak Single 1 Pcs (Thermal Roll / 1 Label) -->
-                <button type="button" onclick="executeReprintSingleThermal()" class="btn" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; background: var(--bg-muted); border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s;">
-                    <div style="font-size: 28px; line-height: 1;">🏷️</div>
-                    <div style="flex: 1;">
-                        <strong style="color: var(--text-main); font-size: 14px;">Cetak Satuan Saja (1 Pcs Label Thermal 100×50 mm)</strong>
-                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
-                            Cetak hanya 1 stiker barcode tunggal untuk printer thermal roll standar.
+                            Mencetak seluruh stiker barcode pada kelompok surat jalan ini.
                         </div>
                     </div>
                 </button>
@@ -1582,60 +1386,69 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <!-- MODAL DAFTAR BARCODE SURAT JALAN (RIWAYAT & ARSIP PENERIMAAN)             -->
 <!-- ========================================================================= -->
-<div class="sheet-preview-backdrop no-print" id="modalSJBarcodeList" style="display: none; align-items: center; justify-content: center; z-index: 100000; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); padding: 18px;">
-    <div style="background: var(--bg-card); border-radius: 12px; width: 100%; max-width: 860px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35); border: 1.5px solid var(--border);">
+<div class="sheet-preview-backdrop no-print" id="modalSJBarcodeList" style="display: none; align-items: center; justify-content: center; z-index: 100000; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); padding: 18px;">
+    <div style="background: var(--bg-card, #ffffff); border-radius: 12px; width: 100%; max-width: 840px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid var(--border, #e2e8f0);">
         <!-- Header Modal -->
-        <div style="padding: 16px 20px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i data-lucide="barcode" style="width: 22px; height: 22px;"></i>
-                <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff;">Daftar Barcode Keranjang Surat Jalan</h3>
-                    <div style="font-size: 12px; color: rgba(255,255,255,0.9); margin-top: 2px;">
-                        No. Surat Jalan: <strong id="modalSJNoText" style="font-family: 'JetBrains Mono', monospace; color: #fef08a;">-</strong>
-                    </div>
+        <div style="padding: 16px 20px; background: #ffffff; border-bottom: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--text-main, #0f172a); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="package" style="width: 18px; height: 18px; color: var(--primary, #4f46e5);"></i>
+                    <span>Daftar Box Surat Jalan</span>
+                </div>
+                <div style="font-size: 12.5px; color: var(--text-muted, #64748b); margin-top: 2px;">
+                    No. Surat Jalan: <code id="modalSJNoText" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary, #2563eb); background: #eff6ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">-</code>
                 </div>
             </div>
-            <button type="button" onclick="closeSJBarcodeListModal()" style="background: rgba(255,255,255,0.2); border: none; color: #ffffff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center;" title="Tutup">✕</button>
+            <button type="button" onclick="closeSJBarcodeListModal()" style="background: transparent; border: 1px solid var(--border, #e2e8f0); color: #64748b; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; transition: all 0.15s ease;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='transparent'; this.style.color='#64748b';" title="Tutup">✕</button>
         </div>
 
         <!-- Meta Info Bar: Produk, Pemasok & Counter -->
-        <div style="padding: 12px 20px; background: #f8fafc; border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="font-size: 13px;">
-                <span style="color: var(--text-muted);">Produk:</span> <strong id="modalSJItemText" style="color: var(--text-main);">-</strong>
-                <span style="color: #cbd5e1; margin: 0 8px;">|</span>
-                <span style="color: var(--text-muted);">Pemasok:</span> <strong id="modalSJPemasokText" style="color: var(--text-main);">-</strong>
-            </div>
-            <div style="display: flex; gap: 6px; align-items: center;">
-                <span class="badge badge-secondary" id="modalSJBadgeTotal">Total: 0 Pcs</span>
-                <span class="badge badge-warning" id="modalSJBadgeBelum" style="font-weight: 800;">⏳ Belum: 0 Pcs</span>
-                <span class="badge badge-success" id="modalSJBadgeSudah">✓ Sudah: 0 Pcs</span>
+        <div style="padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 12.5px; color: var(--text-muted, #64748b);">
+                <span>Pemasok:</span> <strong id="modalSJPemasokText" style="color: var(--text-main, #0f172a);">-</strong>
+                <span style="color: #cbd5e1; margin: 0 8px;">•</span>
+                <span>Produk:</span> <strong id="modalSJItemText" style="color: var(--text-main, #0f172a);">-</strong>
             </div>
         </div>
 
-        <!-- Filter Tab Cepat: Semua, Belum Ditimbang, Sudah Ditimbang -->
-        <div style="padding: 10px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; gap: 6px;">
-                <button type="button" class="btn btn-primary btn-sm" id="btnFilterModalAll" onclick="filterModalBarcodeView('all')" style="font-weight: 700; font-size: 12px; border-radius: 6px;">Semua Barcode</button>
-                <button type="button" class="btn btn-outline btn-sm" id="btnFilterModalUnweighed" onclick="filterModalBarcodeView('unweighed')" style="font-weight: 700; font-size: 12px; color: #d97706; border-color: #fde68a; border-radius: 6px;">⏳ Belum Ditimbang</button>
-                <button type="button" class="btn btn-outline btn-sm" id="btnFilterModalWeighed" onclick="filterModalBarcodeView('weighed')" style="font-weight: 700; font-size: 12px; color: #059669; border-color: #a7f3d0; border-radius: 6px;">✓ Sudah Ditimbang</button>
-            </div>
-            <div style="font-size: 11.5px; color: var(--text-muted);">
-                💡 Klik <strong>"⚖️ Timbang"</strong> pada keranjang untuk langsung membuka scanner timbangan
-            </div>
-        </div>
-
-        <!-- Body Modal: Container Grid Chips Barcode Keranjang -->
-        <div id="modalSJChipsContainer" style="padding: 18px 20px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; background: #fafafa; max-height: 55vh;">
-            <!-- Render via JS -->
+        <!-- Body Modal: Tabel Elegan Seluruh Box -->
+        <div style="padding: 0; overflow-y: auto; flex: 1; max-height: 440px; background: #ffffff;">
+            <table class="table-custom" style="margin: 0; border: none;">
+                <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
+                    <tr>
+                        <th style="width: 45px; text-align: center;">No</th>
+                        <th>Kode Box / Barcode</th>
+                        <th>Nama Produk</th>
+                        <th style="text-align: right; width: 120px;">Netto (Kg)</th>
+                        <th style="text-align: center; width: 90px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="modalSJTableBody">
+                    <!-- Diisi via JS -->
+                </tbody>
+                <tfoot id="modalSJTableFoot" style="display: none;">
+                    <tr style="background: #f8fafc;">
+                        <td colspan="3" style="text-align: right; font-weight: 700; color: var(--text-muted, #64748b); font-size: 12.5px;">Total <span id="modalSJTotalCount">0</span> box</td>
+                        <td id="modalSJTotalNetto" style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px;">0.00 kg</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
 
         <!-- Footer Modal -->
-        <div style="padding: 12px 20px; background: #f8fafc; border-top: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <a id="btnModalCetakSuratJalan" href="#" target="_blank" class="btn btn-outline btn-sm" style="font-weight: 700; font-size: 12px; color: #047857; border-color: #a7f3d0; background: #ecfdf5;">
-                <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
-                <span>Cetak Dokumen Surat Jalan Masuk (A4)</span>
-            </a>
-            <button type="button" class="btn btn-outline btn-sm" onclick="closeSJBarcodeListModal()" style="font-weight: 700; font-size: 12px; padding: 6px 18px;">Tutup</button>
+        <div style="padding: 14px 20px; background: #f8fafc; border-top: 1px solid var(--border, #e2e8f0); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" id="btnModalPrintAllBarcodes" onclick="printAllModalBarcodes()" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px;">
+                    <i data-lucide="tag" style="width: 14px; height: 14px;"></i>
+                    <span>Cetak Semua Barcode</span>
+                </button>
+                <a id="btnModalCetakSuratJalan" href="#" target="_blank" class="btn btn-outline" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; color: #047857; border-color: #a7f3d0; background: #ecfdf5;">
+                    <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
+                    <span>Cetak Surat Jalan</span>
+                </a>
+            </div>
+            <button type="button" class="btn btn-outline" onclick="closeSJBarcodeListModal()" style="font-size: 12.5px; font-weight: 600; height: 38px; padding: 0 18px; border-radius: 6px;">Tutup</button>
         </div>
     </div>
 </div>
@@ -1661,10 +1474,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="exportTableToExcel('allPenerimaanTable', 'Daftar_Penerimaan_Barang')" style="font-size: 12px; font-weight: 700; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
-                <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px; color: #10b981;"></i>
-                <span>Ekspor Excel (.xlsx)</span>
-            </button>
+            <?php $eksporTabel = 'allPenerimaanTable'; $eksporNama = 'Daftar_Penerimaan_Barang'; include __DIR__ . '/layout/ekspor.php'; ?>
         </div>
     </div>
 
@@ -1718,14 +1528,6 @@ require_once __DIR__ . '/layout/header.php';
                 </select>
             </div>
 
-            <!-- 5. Filter Status Timbang -->
-            <div style="flex: 1.1; min-width: 145px;">
-                <select name="filter_weighed" class="form-control" style="height: 38px; font-size: 12.5px; font-weight: 700;">
-                    <option value="">-- Status Timbang --</option>
-                    <option value="SUDAH" <?= $filterWeighed === 'SUDAH' ? 'selected' : '' ?>>● Sudah Ditimbang</option>
-                    <option value="BELUM" <?= $filterWeighed === 'BELUM' ? 'selected' : '' ?>>⚠ Belum Ditimbang</option>
-                </select>
-            </div>
 
             <!-- Action Buttons Filter -->
             <div style="display: flex; gap: 6px;">
@@ -1746,15 +1548,12 @@ require_once __DIR__ . '/layout/header.php';
             <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-right: 4px;">Tampilan:</span>
             <button type="button" class="btn btn-primary btn-sm" id="btnViewModeGroup" onclick="switchTableViewMode('group')" style="font-weight: 700; border-radius: 8px;">
                 <i data-lucide="package" style="width: 14px; height: 14px;"></i>
-                <span>📦 Per Surat Jalan (10 Pcs/Lembar)</span>
+                <span>Per Surat Jalan</span>
             </button>
             <button type="button" class="btn btn-outline btn-sm" id="btnViewModeDetail" onclick="switchTableViewMode('detail')" style="font-weight: 700; border-radius: 8px;">
                 <i data-lucide="list" style="width: 14px; height: 14px;"></i>
-                <span>📋 Rincian Satuan (1 Pcs)</span>
+                <span>Rincian Satuan</span>
             </button>
-        </div>
-        <div style="font-size: 12.5px; color: var(--text-muted);">
-            💡 <em>Data barcode dikelompokkan per surat jalan. Klik No. Surat Jalan atau tombol Detail untuk melihat rincian barcode yang sudah diterima.</em>
         </div>
     </div>
 
@@ -1770,9 +1569,9 @@ require_once __DIR__ . '/layout/header.php';
                     <th>Pemasok</th>
                     <th>Nama Produk</th>
                     <th style="text-align: center;">Jumlah Barcode</th>
-                    <th style="text-align: center;">Status Timbang</th>
+                    <th style="text-align: right;">Netto</th>
                     <th>Rentang ID Barcode</th>
-                    <th style="text-align: center; width: 120px;" class="no-print">Aksi</th>
+                    <th style="text-align: center; width: 210px;" class="no-print">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -1791,12 +1590,17 @@ require_once __DIR__ . '/layout/header.php';
                         $pmsKode = $grp['kode_pemasok'] ?? ($grp['kode_mitra'] ?? 'PMS');
                         $pmsNama = $grp['nama_pemasok'] ?? ($grp['nama_mitra'] ?? 'Pemasok');
                     ?>
-                    <tr style="border-bottom: 1px solid var(--border);">
+                    <?php $sjBatal = (int)($grp['jml_void'] ?? 0) > 0 && (int)($grp['jml_void'] ?? 0) === (int)($grp['total_pcs'] ?? 0); ?>
+                    <tr style="border-bottom: 1px solid var(--border);<?= $sjBatal ? ' opacity: 0.65;' : '' ?>">
                         <td>
                             <a href="javascript:void(0)" onclick="openSJBarcodeHistoryModal('<?= htmlspecialchars(addslashes($noSj)) ?>')" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border-bottom: 1.5px dashed #93c5fd; padding-bottom: 1px; cursor: pointer;" title="Klik untuk melihat rincian barcode Surat Jalan ini">
                                 <i data-lucide="file-text" style="width: 14px; height: 14px; color: #3b82f6;"></i>
                                 <span><?= htmlspecialchars($noSj) ?></span>
                             </a>
+                            <?php if ($sjBatal): ?>
+                                <div><span class="badge badge-danger" style="font-size: 10.5px; margin-top: 3px;">Dibatalkan</span></div>
+                                <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;"><?= htmlspecialchars(preg_replace('/^Penerimaan dibatalkan: /', '', (string)($grp['alasan_void'] ?? ''))) ?></div>
+                            <?php endif; ?>
                         </td>
                         <td style="white-space: nowrap;">
                             <div style="font-size: 12px; font-weight: 700; color: #334155;"><?= date('d M Y', strtotime($grp['created_at'])) ?></div>
@@ -1817,16 +1621,8 @@ require_once __DIR__ . '/layout/header.php';
                                 <?= $totalPcs ?> Pcs
                             </span>
                         </td>
-                        <td style="text-align: center;">
-                            <?php if ($grp['belum_ditimbang'] > 0): ?>
-                                <span class="badge badge-warning" style="font-size: 11.5px; font-weight: 700;">
-                                    ⚠ <?= $grp['belum_ditimbang'] ?> Belum Ditimbang
-                                </span>
-                            <?php else: ?>
-                                <span class="badge badge-success" style="font-size: 11.5px; font-weight: 700;">
-                                    ✓ Lengkap (<?= Helper::formatKg($grp['total_berat']) ?>)
-                                </span>
-                            <?php endif; ?>
+                        <td style="text-align: right;">
+                            <strong style="color: #10b981; font-size: 13.5px; font-weight: 800; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatKg($grp['total_berat']) ?></strong>
                         </td>
                         <td>
                             <code style="font-size: 11px;"><?= htmlspecialchars($grp['min_barcode']) ?></code>
@@ -1838,6 +1634,9 @@ require_once __DIR__ . '/layout/header.php';
                                 <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
                                 <span>Detail</span>
                             </button>
+                            <?php if (!$sjBatal): ?>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_penerimaan', { no_surat_jalan: '<?= htmlspecialchars(addslashes($noSj), ENT_QUOTES) ?>' }, 'penerimaan <?= htmlspecialchars(addslashes($noSj), ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: #dc2626; border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -1858,17 +1657,14 @@ require_once __DIR__ . '/layout/header.php';
                     <th>Nama Produk</th>
                     <th style="text-align: right;">Netto (Kg)</th>
                     <th>No. Surat Jalan</th>
-                    <th>Lokasi Gudang</th>
-                    <th style="text-align: right;">Harga & Total Nilai</th>
                     <th>Waktu Penerimaan</th>
-                    <th>Status</th>
-                    <th style="text-align: center; width: 140px;" class="no-print">Aksi</th>
+                    <th style="text-align: center; width: 100px;" class="no-print">Aksi</th>
                 </tr>
             </thead>
             <tbody id="allPenerimaanTableBody">
                 <?php if (empty($penerimaanList)): ?>
                     <tr>
-                        <td colspan="10" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                        <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">
                             <i data-lucide="inbox" style="width: 40px; height: 40px; margin: 0 auto 8px auto; opacity: 0.3;"></i>
                             <div style="font-weight: 700; font-size: 15px;">Tidak ada data penerimaan yang cocok dengan filter</div>
                             <p style="font-size: 13px; margin-top: 4px;">Coba atur ulang filter pencarian atau buat barcode baru.</p>
@@ -1880,7 +1676,6 @@ require_once __DIR__ . '/layout/header.php';
                         $hPerKg = (float)($lbl['harga_per_kg'] ?? 0);
                         $totVal = (float)($lbl['total_nilai'] ?? 0);
                         $noSj = !empty($lbl['no_surat_jalan']) ? $lbl['no_surat_jalan'] : ($lbl['batch_no'] ?? '-');
-                        $lokName = $lbl['nama_lokasi'] ?? ($lbl['kode_lokasi'] ?? 'RAK-A1');
                         $isWeighed = $netto > 0;
                         $lblPmsKode = $lbl['kode_pemasok'] ?? ($lbl['kode_mitra'] ?? 'PMS');
                         $lblPmsNama = $lbl['nama_pemasok'] ?? ($lbl['nama_mitra'] ?? 'Pemasok');
@@ -1902,45 +1697,17 @@ require_once __DIR__ . '/layout/header.php';
                             <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($lbl['nama_jenis'] ?? '') ?></div>
                         </td>
                         <td style="text-align: right;">
-                            <?php if ($isWeighed): ?>
-                                <strong style="color: #10b981; font-size: 14px; font-weight: 900;"><?= Helper::formatKg($netto) ?></strong>
-                            <?php else: ?>
-                                <span class="badge badge-warning" style="font-size: 11px;">⚠ Belum Ditimbang</span>
-                            <?php endif; ?>
+                            <strong style="color: #10b981; font-size: 14px; font-weight: 900;"><?= Helper::formatKg($netto) ?></strong>
                         </td>
                         <td>
                             <code style="font-size: 11.5px; font-weight: 700; color: var(--primary);"><?= htmlspecialchars($noSj) ?></code>
                         </td>
-                        <td>
-                            <span class="badge badge-secondary"><?= htmlspecialchars($lokName) ?></span>
-                        </td>
-                        <td style="text-align: right;">
-                            <?php if ($isWeighed && $hPerKg > 0): ?>
-                                <div style="font-size: 11px; color: var(--text-muted);">Rp <?= number_format($hPerKg, 0, ',', '.') ?>/kg</div>
-                                <strong style="font-size: 13px; color: var(--text-main);">Rp <?= number_format($totVal ?: ($hPerKg * $netto), 0, ',', '.') ?></strong>
-                            <?php else: ?>
-                                <span style="color: var(--text-muted); font-size: 12px;">Menunggu Timbang</span>
-                            <?php endif; ?>
-                        </td>
                         <td style="font-size: 12px; color: var(--text-muted);"><?= Helper::formatDateTime($lbl['created_at']) ?></td>
-                        <td>
-                            <?php if ($lbl['status'] === 'AKTIF'): ?>
-                                <span class="badge badge-success">● Aktif Gudang</span>
-                            <?php else: ?>
-                                <span class="badge badge-secondary">✓ Sudah Keluar</span>
-                            <?php endif; ?>
-                        </td>
                         <td style="text-align: center;" class="no-print">
-                            <div style="display: flex; gap: 4px; justify-content: center;">
-                                <button type="button" class="btn btn-outline btn-sm" onclick="openReprintSingleModal('<?= htmlspecialchars($lbl['id_label']) ?>', '<?= htmlspecialchars($lblPmsKode) ?>', '<?= htmlspecialchars(addslashes($lbl['nama_item'])) ?>', '<?= htmlspecialchars(addslashes($noSj)) ?>', '<?= htmlspecialchars(addslashes($lokName)) ?>', <?= $netto ?>, <?= $hPerKg ?>)" title="Pilihan Cetak Barcode (1 Pcs Jadi 10 Pcs/Lembar A4)">
-                                    🖨️
-                                </button>
-                                <?php if (!$isWeighed): ?>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="goToScanWeigh('<?= htmlspecialchars($lbl['id_label']) ?>')" style="padding: 2px 8px; font-size: 11px; font-weight: 700; background: #10b981; border-color: #10b981;" title="Timbang Sekarang">
-                                        ⚖️ Timbang
-                                    </button>
-                                <?php endif; ?>
-                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="reprintBarcodeDirect('<?= htmlspecialchars($lbl['id_label']) ?>')" style="padding: 3px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer;" title="Cetak Barcode Box (Format Stiker 70x50 mm)">
+                                <i data-lucide="printer" style="width: 12px; height: 12px;"></i>
+                                <span>Cetak</span>
+                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -2014,7 +1781,7 @@ require_once __DIR__ . '/layout/header.php';
         <div style="padding: 22px;">
             <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;">
                 <div style="font-size: 13.5px; color: #991b1b; line-height: 1.5; font-weight: 600;" id="usedModalWarningText">
-                    ⚠️ Barcode ini <strong>sudah pernah discan dan ditimbang</strong>. Sistem menolak penimbangan ulang agar tidak terjadi pencatatan ganda pada stok fisik gudang.
+                    Barcode ini <strong>sudah pernah discan dan ditimbang</strong>. Sistem menolak penimbangan ulang agar tidak terjadi pencatatan ganda pada stok fisik gudang.
                 </div>
             </div>
 
@@ -2045,7 +1812,7 @@ require_once __DIR__ . '/layout/header.php';
             <!-- Tombol Tutup / Kembali -->
             <div style="margin-top: 20px;">
                 <button type="button" id="btnCloseUsedModal" class="btn btn-danger" style="width: 100%; height: 46px; font-size: 14.5px; font-weight: 800; justify-content: center; border-radius: 10px; background: #dc2626; border-color: #dc2626; cursor: pointer;">
-                    <span>Tutup & Scan Barcode Lain (Tekan Enter / Esc)</span>
+                    <span>Tutup & Scan Barcode Lain</span>
                 </button>
             </div>
         </div>
@@ -2131,10 +1898,20 @@ require_once __DIR__ . '/layout/header.php';
         const selItem = document.getElementById('onestop_item_id');
         if (!selItem) return;
 
+        if (!filterJenis) {
+            // Jika kategori belum dipilih, produk tidak bisa dipilih (disabled)
+            selItem.innerHTML = '<option value="">-- Pilih Kategori Dahulu --</option>';
+            selItem.disabled = true;
+            selItem.style.cursor = 'not-allowed';
+            return;
+        }
+
+        // Aktifkan pilihan produk sesuai kategori yang dipilih
+        selItem.disabled = false;
+        selItem.style.cursor = 'pointer';
         selItem.innerHTML = '<option value="">-- Pilih Produk --</option>';
-        const filtered = filterJenis
-            ? masterItemsList.filter(it => String(it.jenis_id) === String(filterJenis))
-            : masterItemsList;
+
+        const filtered = masterItemsList.filter(it => String(it.jenis_id) === String(filterJenis));
 
         filtered.forEach(it => {
             const opt = document.createElement('option');
@@ -2149,55 +1926,18 @@ require_once __DIR__ . '/layout/header.php';
         if (filtered.length > 0) {
             selItem.selectedIndex = 1;
             onOneStopProductChanged(selItem.value);
+        } else {
+            selItem.innerHTML = '<option value="">-- Tidak ada produk di kategori ini --</option>';
         }
-        renderQuickProductPills(filtered);
     }
 
     function onOneStopProductChanged(itemId) {
-        // Highlight pill yang sesuai
-        const pills = document.querySelectorAll('.quick-product-chip');
-        pills.forEach(p => {
-            if (p.getAttribute('data-id') === String(itemId)) {
-                p.style.background = '#7e22ce';
-                p.style.color = '#ffffff';
-                p.style.borderColor = '#7e22ce';
-            } else {
-                p.style.background = '#ffffff';
-                p.style.color = '#7e22ce';
-                p.style.borderColor = '#d8b4fe';
-            }
-        });
-
         // Autofocus ke input timbangan
         const inpNetto = document.getElementById('onestop_berat_netto');
         if (inpNetto) {
             inpNetto.focus();
             inpNetto.select();
         }
-    }
-
-    function renderQuickProductPills(itemsToRender) {
-        const container = document.getElementById('quickProductPills');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const list = (itemsToRender && itemsToRender.length) ? itemsToRender.slice(0, 8) : masterItemsList.slice(0, 8);
-        list.forEach(it => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'quick-product-chip';
-            btn.setAttribute('data-id', it.id);
-            btn.style.cssText = 'padding: 4px 10px; font-size: 11.5px; font-weight: 700; border-radius: 6px; border: 1.5px solid #d8b4fe; background: #ffffff; color: #7e22ce; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;';
-            btn.innerHTML = `<span>${it.nama_item}</span>`;
-            btn.onclick = function() {
-                const selItem = document.getElementById('onestop_item_id');
-                if (selItem) {
-                    selItem.value = it.id;
-                    onOneStopProductChanged(it.id);
-                }
-            };
-            container.appendChild(btn);
-        });
     }
 
     // Ambil Data dari Timbangan Serial (scale.js)
@@ -2237,8 +1977,14 @@ require_once __DIR__ . '/layout/header.php';
             document.getElementById('onestop_no_sj')?.focus();
             return;
         }
+        const jenisId = document.getElementById('onestop_jenis_filter')?.value;
+        if (!jenisId) {
+            alert('Silakan pilih Kategori terlebih dahulu.');
+            document.getElementById('onestop_jenis_filter')?.focus();
+            return;
+        }
         if (!itemId) {
-            alert('Silakan pilih produk / komoditas terlebih dahulu.');
+            alert('Silakan pilih Produk terlebih dahulu.');
             document.getElementById('onestop_item_id')?.focus();
             return;
         }
@@ -2251,7 +1997,7 @@ require_once __DIR__ . '/layout/header.php';
         const btnSave = document.getElementById('btnSaveWeighedBox');
         const labelBtn = document.getElementById('labelBtnSaveWeighed');
         if (btnSave) btnSave.disabled = true;
-        if (labelBtn) labelBtn.innerText = '⏳ Menyimpan & Mencetak...';
+        if (labelBtn) labelBtn.innerText = 'Menyimpan...';
 
         try {
             const fd = new FormData();
@@ -2273,10 +2019,11 @@ require_once __DIR__ . '/layout/header.php';
 
             playBeepSound();
 
-            // Cetak Thermal Label 100x50 mm yang sudah ada bobot riil
-            printThermalLabelWithWeight(data.label);
+            // Opsi B: Tidak langsung mencetak 1 per 1, melainkan menampung ke daftar di section kanan
+            // Reset status cetak barcode sesi ini karena ada box baru
+            if (noSj) sessionStorage.removeItem('barcode_printed_' + noSj);
 
-            // Update UI Ringkasan Sesi
+            // Update UI Ringkasan Sesi & Daftar Box di kanan
             if (data.session_summary) {
                 renderInboundSessionSummary(data.session_summary);
             }
@@ -2291,13 +2038,96 @@ require_once __DIR__ . '/layout/header.php';
             alert('Kesalahan koneksi / sistem: ' + e.message);
         } finally {
             if (btnSave) btnSave.disabled = false;
-            if (labelBtn) labelBtn.innerText = '💾 SIMPAN & CETAK STIKER BARCODE (ENTER)';
+            if (labelBtn) labelBtn.innerText = 'Tambah Box';
         }
     }
 
-    // Cetak Stiker Thermal 100x50 mm dengan Highlight Berat Tebal
-    function printThermalLabelWithWeight(lbl) {
+    // Helper Render Stiker Barcode (Sticker 70mm x 50mm Sesuai Format Thermal Roll)
+    function renderSquareBarcodeCardHtml(lbl, boxIdx = 1, totalBoxes = 1) {
+        const padIndex = String(boxIdx).padStart(2, '0');
+        const skuCode = (lbl.nama_item || lbl.kode_item || lbl.sku || '-').trim();
+        const noSj = (lbl.no_surat_jalan || '').trim();
+        const weightVal = parseFloat(lbl.berat_netto || 0).toFixed(2);
+        const labelDateStr = lbl.created_at ? new Date(lbl.created_at).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID');
+        const barcodeText = lbl.id_label || '';
+        const barcodeSvg = lbl.barcode_svg || '';
+        const lembarStr = totalBoxes > 1 ? `${boxIdx}/${totalBoxes}` : `${boxIdx}`;
+
+        // Sembunyikan seri pemasok (misal: BH / BH-01) dari No Surat Jalan agar anonim di pasar
+        let displaySj = noSj;
+        if (noSj) {
+            const sjParts = noSj.split('-');
+            if (sjParts.length >= 4 && sjParts[0].toUpperCase() === 'SJ') {
+                // Format SJ-[Pemasok]-[YYMMDD]-[Urut] -> sembunyikan pemasok, ambil hanya SJ-[YYMMDD]-[Urut]
+                const dateAndSeq = sjParts.slice(-2).join('-');
+                displaySj = `SJ-${dateAndSeq}`;
+            }
+        }
+
+        // Sembunyikan prefix pemasok & jenis produk (contoh: BH01-PRD01) agar anonim di pasar
+        let displayBarcodeNo = barcodeText;
+        if (barcodeText.includes('-')) {
+            const parts = barcodeText.split('-');
+            if (parts.length >= 4) {
+                // Sembunyikan 2 segmen awal (pemasok & item), tampilkan hanya [YYMMDD]-[Urut]
+                displayBarcodeNo = parts.slice(2).join('-');
+            } else if (parts.length === 3) {
+                displayBarcodeNo = parts.slice(1).join('-');
+            }
+        }
+
+        return `
+            <div class="square-sheet-card" style="box-sizing: border-box; width: 64mm; height: 46mm; border: 2px solid #000; background: #fff; color: #000; font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; page-break-inside: avoid; margin: 0; padding: 0;">
+                <div style="padding: 1.2mm 2.2mm; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; flex-shrink: 0; box-sizing: border-box;">
+                    <span style="font-size: 13.5px; font-weight: 800; letter-spacing: -0.2px; color: #000; line-height: 1; white-space: nowrap;">AR_BAROKAH</span>
+                    <div style="border: 1.8px solid #000; border-radius: 2px; display: inline-flex; align-items: stretch; height: 20px; box-sizing: border-box;">
+                        <span style="padding: 0 6px; font-weight: 800; font-size: 12.5px; border-right: 1.8px solid #000; display: flex; align-items: center; justify-content: center; line-height: 1;">#${padIndex}</span>
+                        <span style="padding: 0 7px; font-weight: 800; font-size: 12.5px; display: flex; align-items: center; justify-content: center; line-height: 1; text-transform: uppercase;">${skuCode}</span>
+                    </div>
+                </div>
+                <div style="flex: 1; padding: 1.2mm 2.5mm 1mm 2.5mm; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        ${displaySj ? `
+                        <div style="display: flex; align-items: baseline;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: #000; letter-spacing: 0.1px;">${displaySj}</span>
+                        </div>` : '<div></div>'}
+                        <div style="display: flex; align-items: baseline; gap: 3px;">
+                            <span style="font-size: 12px; font-weight: 800; color: #000;">Netto :</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14.5px; font-weight: 900; color: #000;">${weightVal} Kg</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0.5mm 0;">
+                        <div class="square-barcode-svg" style="width: 100%; height: 17mm; max-height: 17mm; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #ffffff;">
+                            ${barcodeSvg}
+                        </div>
+                        <div style="font-size: 12px; font-weight: 800; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.8px; color: #000; margin-top: 0.5mm; text-align: center; line-height: 1;">
+                            ${displayBarcodeNo}
+                        </div>
+                    </div>
+                    <!-- Ruang kosong (pengganti Tgl./Lembar) agar tata letak & ukuran stiker tetap sama -->
+                    <div style="height: 9px; padding-bottom: 0.5mm; flex-shrink: 0;"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Cetak Stiker Thermal (70x50 mm) Satuan dengan Mockup Format Client
+    async function printThermalLabelWithWeight(lbl, boxIdx = 1, totalBoxes = 1) {
         if (!lbl) return;
+
+        // Ambil data barcode_svg jika belum terlampir
+        if (!lbl.barcode_svg && lbl.id_label) {
+            try {
+                const resp = await fetch('index.php?action=get_labels_for_reprint&type=selected_ids&barcodes=' + encodeURIComponent(lbl.id_label) + '&ids=' + encodeURIComponent(lbl.id_label));
+                const data = await resp.json();
+                if (data && data.success && data.labels && data.labels.length) {
+                    lbl = data.labels[0];
+                }
+            } catch (e) {
+                console.error('Gagal mengambil barcode SVG:', e);
+            }
+        }
+
         const printContainer = document.getElementById('bulkPrintContainer');
         if (!printContainer) return;
         printContainer.removeAttribute('style');
@@ -2305,52 +2135,9 @@ require_once __DIR__ . '/layout/header.php';
 
         const sheetDiv = document.createElement('div');
         sheetDiv.className = 'bulk-print-sheet single-thermal-sheet';
-        sheetDiv.style.gridTemplateColumns = '1fr';
-        sheetDiv.style.width = '100mm';
-        sheetDiv.style.height = '50mm';
+        sheetDiv.style.cssText = 'width: 70mm; height: 50mm; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 0 0 1.0mm; margin: 0 auto; box-sizing: border-box;';
 
-        const labelDateStr = lbl.created_at ? new Date(lbl.created_at).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID');
-        const weightVal = parseFloat(lbl.berat_netto || 0).toFixed(2);
-
-        const cardDiv = document.createElement('div');
-        cardDiv.className = 'bulk-sheet-card';
-        cardDiv.style.width = '100mm';
-        cardDiv.style.height = '50mm';
-        cardDiv.innerHTML = `
-            <div class="sheet-card-header" style="border-bottom: 1.5px solid #000; padding-bottom: 2px; margin-bottom: 2px; display: flex; justify-content: space-between; align-items: center;">
-                <span class="sheet-card-company" style="font-weight: 800; font-size: 11px;">LOGISTIK BERSAMA GUDANG</span>
-                <span style="font-weight: 800; font-size: 9.5px; background: #000; color: #fff; padding: 1px 6px; border-radius: 3px; text-transform: uppercase;">
-                    ${lbl.nama_jenis || 'BARANG MASUK'}
-                </span>
-            </div>
-            <div class="sheet-card-item" style="margin-bottom: 2px;">
-                <div class="sheet-card-name" style="font-size: 14px; font-weight: 900; line-height: 1.2; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    ${lbl.nama_item}
-                </div>
-                <div class="sheet-card-meta" style="font-size: 10px; display: flex; justify-content: space-between;">
-                    <span>SJ: <strong>${lbl.no_surat_jalan}</strong></span>
-                    <span>Pemasok: <strong>${lbl.nama_pemasok || lbl.kode_pemasok || '-'}</strong></span>
-                </div>
-            </div>
-            <div class="sheet-card-barcode-area" style="margin: 2px 0;">
-                <div class="sheet-card-bars" style="text-align: center;">
-                    <div class="sheet-barcode-svg" style="height: 38px; width: 100%;">${lbl.barcode_svg || ''}</div>
-                    <div class="sheet-barcode-text" style="font-family: monospace; font-size: 12px; font-weight: 900; letter-spacing: 1px;">${lbl.id_label}</div>
-                </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1.5px solid #000; padding-top: 2px; margin-top: 2px;">
-                <div style="font-size: 9.5px; line-height: 1.2;">
-                    <div>Tgl: <strong>${labelDateStr}</strong></div>
-                    <div>SKU: <strong>${lbl.kode_item || '-'}</strong></div>
-                </div>
-                <div style="text-align: right; background: #000; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 900;">
-                    <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;">BERAT NETTO</div>
-                    <div style="font-size: 19px; font-family: monospace; line-height: 1;">${weightVal} KG</div>
-                </div>
-            </div>
-        `;
-
-        sheetDiv.appendChild(cardDiv);
+        sheetDiv.innerHTML = renderSquareBarcodeCardHtml(lbl, boxIdx, totalBoxes);
         printContainer.appendChild(sheetDiv);
 
         setPrintPageFormat('single');
@@ -2359,63 +2146,194 @@ require_once __DIR__ . '/layout/header.php';
         }, 150);
     }
 
+    // Update status disabled/enabled tombol Cetak Surat Jalan
+    function updateFinishButtonState(totalBox = 0) {
+        const btnFinish = document.getElementById('btnFinishSession');
+        if (!btnFinish) return;
+
+        const inpSj = document.getElementById('onestop_no_sj');
+        const noSj = inpSj ? inpSj.value.trim() : '';
+
+        const printedCount = parseInt(sessionStorage.getItem('barcode_printed_' + noSj) || '0', 10);
+        const canFinish = totalBox > 0 && printedCount >= totalBox;
+
+        if (canFinish) {
+            btnFinish.disabled = false;
+            btnFinish.style.opacity = '1';
+            btnFinish.style.cursor = 'pointer';
+            btnFinish.removeAttribute('title');
+        } else {
+            btnFinish.disabled = true;
+            btnFinish.style.opacity = '0.5';
+            btnFinish.style.cursor = 'not-allowed';
+            btnFinish.title = totalBox === 0 
+                ? 'Belum ada box yang ditimbang' 
+                : 'Silakan cetak barcode terlebih dahulu sebelum mencetak surat jalan';
+        }
+    }
+
     // Render Ringkasan Sesi Surat Jalan
     function renderInboundSessionSummary(summary) {
         if (!summary) return;
 
-        const statBox = document.getElementById('statTotalBox');
-        const statBerat = document.getElementById('statTotalBerat');
-        const badgeHeader = document.getElementById('badgeTotalBoxHeader');
-        if (statBox) statBox.innerText = (summary.total_box || 0) + ' Pcs';
-        if (statBerat) statBerat.innerText = parseFloat(summary.total_berat || 0).toFixed(2) + ' KG';
-        if (badgeHeader) badgeHeader.innerText = (summary.total_box || 0) + ' Box Masuk';
+        const badgePrint = document.getElementById('badgePrintCount');
 
-        // Breakdown per produk
-        const breakdownDiv = document.getElementById('containerProductBreakdown');
-        if (breakdownDiv) {
-            if (!summary.products || !summary.products.length) {
-                breakdownDiv.innerHTML = '<div style="padding: 12px; text-align: center; font-size: 12px; color: #94a3b8;">Belum ada keranjang yang ditimbang untuk sesi Surat Jalan ini.</div>';
-            } else {
-                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
-                summary.products.forEach((p, idx) => {
-                    const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-                    html += `
-                        <tr style="background: ${bg}; border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 8px 10px; font-weight: 800; color: #1e293b;">• ${p.nama_item}</td>
-                            <td style="padding: 8px 10px; text-align: center; font-weight: 700; color: #475569;">${p.box_count} Box</td>
-                            <td style="padding: 8px 10px; text-align: right; font-weight: 900; color: #059669; font-family: monospace;">${parseFloat(p.total_berat).toFixed(2)} KG</td>
-                        </tr>
-                    `;
-                });
-                html += '</table>';
-                breakdownDiv.innerHTML = html;
-            }
+        const totalBox = summary.total_box || 0;
+        window.inboundTotalBox = totalBox;
+        if (badgePrint) badgePrint.innerText = totalBox + ' Barcode';
+
+        // Baris total di tabel (hanya bila lebih dari 1 box, agar tidak mengulang angka baris tunggal)
+        const foot = document.getElementById('inboundTotalFoot');
+        if (foot) {
+            foot.style.display = totalBox >= 2 ? '' : 'none';
+            const cnt = document.getElementById('inboundTotalBoxCount');
+            const brt = document.getElementById('inboundTotalBerat');
+            if (cnt) cnt.innerText = totalBox;
+            if (brt) brt.innerText = parseFloat(summary.total_berat || 0).toFixed(2) + ' kg';
         }
 
-        // Live Feed Recent Boxes
-        const recentDiv = document.getElementById('containerRecentBoxes');
-        if (recentDiv) {
+        // Update enable/disable tombol Cetak Surat Jalan
+        updateFinishButtonState(totalBox);
+
+        // Breakdown per produk (tersembunyi karena sudah digabung)
+        const breakdownDiv = document.getElementById('containerProductBreakdown');
+        if (breakdownDiv) {
+            breakdownDiv.innerHTML = '';
+        }
+
+        // Live Feed Rincian Produk (Sama Persis seperti Tabel Scan Pengeluaran)
+        const tbody = document.getElementById('containerRecentBoxes');
+        if (tbody) {
             if (!summary.recent_boxes || !summary.recent_boxes.length) {
-                recentDiv.innerHTML = '<div style="padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">Data keranjang yang baru ditimbang akan muncul di sini.</div>';
+                tbody.innerHTML = `
+                    <tr id="emptyInboundRow">
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+                            <div style="font-weight: 700; font-size: 13.5px; color: var(--text-main);">Belum ada box ditimbang</div>
+                            <div style="font-size: 11.5px; margin-top: 3px;">Timbang box pada formulir di sebelah kiri untuk memasukkan ke sesi ini.</div>
+                        </td>
+                    </tr>
+                `;
             } else {
-                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">';
-                summary.recent_boxes.forEach((b, idx) => {
-                    html += `
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 6px 8px; font-family: monospace; font-weight: 800; color: #2563eb;">${b.id_label}</td>
-                            <td style="padding: 6px 8px; font-weight: 700; color: #1e293b;">${b.nama_item}</td>
-                            <td style="padding: 6px 8px; text-align: right; font-weight: 900; color: #059669; font-family: monospace;">${parseFloat(b.berat_netto).toFixed(2)} KG</td>
-                            <td style="padding: 6px 8px; text-align: center;">
-                                <button type="button" class="btn btn-outline btn-sm" onclick="printThermalLabelWithWeight({id_label:'${b.id_label}', nama_item:'${(b.nama_item || '').replace(/'/g, "\\'")}', berat_netto:${b.berat_netto}, no_surat_jalan:'${b.no_surat_jalan || ''}', kode_item:'${b.kode_item || ''}'})" style="padding: 2px 6px; font-size: 11px;" title="Cetak Ulang Stiker Barcode Ini">
-                                    🖨️
-                                </button>
-                            </td>
-                        </tr>
+                tbody.innerHTML = '';
+                let index = 1;
+                summary.recent_boxes.forEach((b) => {
+                    const netto = parseFloat(b.berat_netto || 0);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="color: var(--text-muted); font-size: 12px; text-align: center;">${index++}</td>
+                        <td>
+                            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--primary);">
+                                ${b.id_label}
+                            </strong>
+                        </td>
+                        <td>
+                            <strong style="color: var(--text-main); font-size: 13px;">${b.nama_item}</strong>
+                        </td>
+                        <td>
+                            <span class="badge badge-outline" style="font-size: 11px;">${b.nama_jenis || '-'}</span>
+                        </td>
+                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #10b981;">
+                            ${netto.toFixed(2)} kg
+                        </td>
+                        <td style="text-align: center; position: sticky; right: 0; background: var(--bg-card, #ffffff); z-index: 5; box-shadow: -2px 0 4px rgba(0,0,0,0.04);">
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; color: var(--danger); cursor: pointer;" onclick="handleDeleteInboundBox(${b.id}, '${b.id_label}')" title="Hapus dari sesi">
+                                ✕
+                            </button>
+                        </td>
                     `;
+                    tbody.appendChild(row);
                 });
-                html += '</table>';
-                recentDiv.innerHTML = html;
             }
+        }
+    }
+
+    // Hapus Box dari Sesi Penerimaan Aktif
+    async function handleDeleteInboundBox(labelId, barcode) {
+        const inpSj = document.getElementById('onestop_no_sj');
+        const noSj = inpSj ? inpSj.value.trim() : '';
+
+        const confirmed = confirm(`Hapus box barcode ${barcode} dari daftar sesi ini?`);
+        if (!confirmed) return;
+
+        try {
+            const fd = new FormData();
+            fd.append('label_id', labelId);
+            fd.append('barcode', barcode);
+            fd.append('no_surat_jalan', noSj);
+
+            const resp = await fetch('index.php?action=delete_inbound_box', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await resp.json();
+
+            if (data && data.success) {
+                if (noSj) sessionStorage.removeItem('barcode_printed_' + noSj);
+                if (data.session_summary) {
+                    renderInboundSessionSummary(data.session_summary);
+                } else {
+                    fetchInboundSessionSummary();
+                }
+            } else {
+                alert('Gagal menghapus box: ' + (data.message || 'Error'));
+            }
+        } catch (e) {
+            alert('Kesalahan jaringan: ' + e.message);
+        }
+    }
+
+    // Opsi B: Cetak Semua Barcode di Surat Jalan Ini (Thermal Roll)
+    async function printAllBarcodesInSession(format = 'thermal') {
+        const inpSj = document.getElementById('onestop_no_sj');
+        const noSj = inpSj ? inpSj.value.trim() : '';
+
+        if (!noSj) {
+            alert('Nomor Surat Jalan tidak valid.');
+            return;
+        }
+
+        try {
+            const resp = await fetch('index.php?action=get_labels_for_reprint&type=group_sj&no_surat_jalan=' + encodeURIComponent(noSj) + '&status=all');
+            const data = await resp.json();
+
+            if (!data || !data.success || !data.labels || !data.labels.length) {
+                alert('Belum ada box yang ditambahkan untuk Surat Jalan ini.');
+                return;
+            }
+
+            const labels = data.labels;
+            const printContainer = document.getElementById('bulkPrintContainer');
+            if (!printContainer) return;
+            printContainer.removeAttribute('style');
+            printContainer.innerHTML = '';
+
+            // Seluruh pencetakan barcode menggunakan Format Stiker 70x50 mm (Urutan Terbesar ke Terkecil)
+            const totalBoxes = labels.length;
+            const indexedLabels = labels.map((lbl, idx) => ({
+                lbl: lbl,
+                boxIdx: idx + 1
+            })).reverse();
+
+            indexedLabels.forEach(item => {
+                const sheetDiv = document.createElement('div');
+                sheetDiv.className = 'bulk-print-sheet single-thermal-sheet';
+                sheetDiv.style.cssText = 'width: 70mm; height: 50mm; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 0 0 1.0mm; margin: 0 auto; box-sizing: border-box;';
+
+                sheetDiv.innerHTML = renderSquareBarcodeCardHtml(item.lbl, item.boxIdx, totalBoxes);
+                printContainer.appendChild(sheetDiv);
+            });
+            setPrintPageFormat('single');
+
+            // Tandai bahwa barcode untuk sesi ini telah dicetak
+            sessionStorage.setItem('barcode_printed_' + noSj, labels.length);
+            updateFinishButtonState(labels.length);
+
+            setTimeout(() => {
+                window.print();
+            }, 200);
+
+        } catch (e) {
+            alert('Kesalahan cetak barcode: ' + e.message);
         }
     }
 
@@ -2423,15 +2341,22 @@ require_once __DIR__ . '/layout/header.php';
     async function fetchInboundSessionSummary() {
         const inpSj = document.getElementById('onestop_no_sj');
         const noSj = inpSj ? inpSj.value.trim() : '';
-        if (!noSj) return;
+        if (!noSj) {
+            renderInboundSessionSummary({ total_box: 0, total_berat: 0, products: [], recent_boxes: [] });
+            return;
+        }
 
         try {
             const resp = await fetch('index.php?action=get_inbound_session_summary&no_surat_jalan=' + encodeURIComponent(noSj));
             const data = await resp.json();
             if (data && data.success && data.summary) {
                 renderInboundSessionSummary(data.summary);
+            } else {
+                renderInboundSessionSummary({ total_box: 0, total_berat: 0, products: [], recent_boxes: [] });
             }
-        } catch (e) {}
+        } catch (e) {
+            renderInboundSessionSummary({ total_box: 0, total_berat: 0, products: [], recent_boxes: [] });
+        }
     }
 
     // Selesaikan Sesi Surat Jalan Truk Ini
@@ -2439,20 +2364,25 @@ require_once __DIR__ . '/layout/header.php';
         const inpSj = document.getElementById('onestop_no_sj');
         const noSj = inpSj ? inpSj.value.trim() : '';
         const pemasokId = document.getElementById('onestop_pemasok_id')?.value;
-        const statBox = document.getElementById('statTotalBox')?.innerText || '0';
-
+        
         if (!noSj) {
             alert('Nomor Surat Jalan tidak valid.');
             return;
         }
 
-        const boxCount = parseInt(statBox) || 0;
+        const boxCount = parseInt(window.inboundTotalBox) || 0;
         if (boxCount <= 0) {
             alert('Belum ada keranjang yang ditimbang untuk Surat Jalan ini.');
             return;
         }
 
-        const confirmed = confirm(`Apakah seluruh pembongkaran & penimbangan truk untuk Surat Jalan ${noSj} telah selesai?\n\nTotal: ${statBox} keranjang.`);
+        const printedCount = parseInt(sessionStorage.getItem('barcode_printed_' + noSj) || '0', 10);
+        if (printedCount < boxCount) {
+            alert('Silakan cetak barcode terlebih dahulu sebelum mencetak Surat Jalan.');
+            return;
+        }
+
+        const confirmed = confirm(`Selesaikan sesi Surat Jalan ${noSj} (${boxCount} box) dan cetak dokumen penerimaan?`);
         if (!confirmed) return;
 
         try {
@@ -2467,9 +2397,10 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
 
             if (data && data.success) {
-                // Tanyakan cetak BAST
-                const openBast = confirm(`Surat Jalan ${noSj} Berhasil Diselesaikan!\n\nBuka dokumen Surat Jalan Penerimaan / BAST untuk tanda tangan sekarang?`);
-                if (openBast && data.print_bast_url) {
+                sessionStorage.removeItem('barcode_printed_' + noSj);
+
+                // Otomatis buka dokumen Surat Jalan Penerimaan / BAST untuk tanda tangan & cetak
+                if (data.print_bast_url) {
                     window.open(data.print_bast_url, '_blank');
                 }
 
@@ -2660,29 +2591,73 @@ require_once __DIR__ . '/layout/header.php';
             document.body.classList.add('print-mode-single-thermal');
             styleEl.innerHTML = `
                 @page {
-                    size: 100mm 50mm !important;
+                    size: 70mm 50mm !important;
                     margin: 0 !important;
                 }
                 @media print {
+                    html, body {
+                        width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: #ffffff !important;
+                    }
                     .app-layout, .app-main-container, .main-wrapper {
                         display: block !important;
                         visibility: visible !important;
-                        margin: 0 !important;
-                        margin-left: 0 !important;
+                        margin: 0 auto !important;
                         padding: 0 !important;
-                        width: 100mm !important;
+                        width: 100% !important;
+                        max-width: 70mm !important;
                         min-height: 0 !important;
                         height: auto !important;
                         position: static !important;
                     }
                     #bulkPrintContainer, .print-area {
-                        display: block !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
                         visibility: visible !important;
                         height: auto !important;
                         position: static !important;
                         left: auto !important;
                         top: auto !important;
-                        width: 100mm !important;
+                        width: 100% !important;
+                        max-width: 70mm !important;
+                        margin: 0 auto !important;
+                        padding: 0 !important;
+                    }
+                    .bulk-print-sheet.single-thermal-sheet {
+                        width: 70mm !important;
+                        height: 50mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: center !important;
+                        align-items: flex-start !important;
+                        margin: 0 auto !important;
+                        padding: 0 0 0 1.0mm !important;
+                        box-sizing: border-box !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                    }
+                    .bulk-print-sheet.single-thermal-sheet:last-child {
+                        page-break-after: avoid !important;
+                        break-after: avoid !important;
+                    }
+                    .square-sheet-card {
+                        width: 64mm !important;
+                        height: 46mm !important;
+                        max-width: 64mm !important;
+                        max-height: 46mm !important;
+                        margin: 0 !important;
+                        box-sizing: border-box !important;
+                        border: 2px solid #000000 !important;
+                        background: #ffffff !important;
+                    }
+                    .square-barcode-svg svg {
+                        width: 100% !important;
+                        height: 17mm !important;
+                        max-height: 17mm !important;
                     }
                 }
             `;
@@ -2697,13 +2672,13 @@ require_once __DIR__ . '/layout/header.php';
             return;
         }
         container.removeAttribute('style');
-        setPrintPageFormat('bulk');
+        setPrintPageFormat('single');
         setTimeout(() => {
             window.print();
         }, 200);
     }
 
-    // Pratinjau Lembar A4 di Modal Layar
+    // Pratinjau Stiker Kotak di Modal Layar
     function openSheetPreviewModal() {
         const modal = document.getElementById('modalSheetPreview');
         const body = document.getElementById('sheetPreviewBody');
@@ -2717,18 +2692,18 @@ require_once __DIR__ . '/layout/header.php';
         const sheets = container.querySelectorAll('.bulk-print-sheet');
         const totalSheets = sheets.length;
 
-        document.getElementById('sheetPreviewTitle').innerText = `Pratinjau Cetak: ${totalSheets} Lembar PDF A4`;
+        document.getElementById('sheetPreviewTitle').innerText = `Pratinjau Cetak: ${totalSheets} Stiker Barcode (70×50 mm)`;
 
         sheets.forEach((sheet, idx) => {
-            const isHalf = sheet.classList.contains('sheet-half');
             const pageWrapper = document.createElement('div');
-            pageWrapper.className = 'sheet-preview-page' + (isHalf ? ' page-half' : '');
+            pageWrapper.className = 'sheet-preview-page';
+            pageWrapper.style.cssText = 'background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;';
             
             const pageHeader = document.createElement('div');
-            pageHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8b5cf6; padding-bottom: 4px; margin-bottom: 4mm; font-size: 11px; font-weight: 800; color: #8b5cf6;';
+            pageHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; width: 64mm; padding-bottom: 4px; margin-bottom: 8px; font-size: 11px; font-weight: 800; color: #4f46e5;';
             pageHeader.innerHTML = `
-                <span>📄 LEMBAR ${idx + 1} DARI ${totalSheets} ${isHalf ? '(SETENGAH LEMBAR / 5 PCS PROPORSIONAL)' : '(1 LEMBAR PENUH / 10 PCS)'}</span>
-                <span>STANDAR: A4 PORTRAIT (210 × 297 MM)</span>
+                <span>🏷️ STIKER #${idx + 1} DARI ${totalSheets}</span>
+                <span>FORMAT: 70 × 50 MM</span>
             `;
             pageWrapper.appendChild(pageHeader);
 
@@ -2789,28 +2764,21 @@ require_once __DIR__ . '/layout/header.php';
                         listContainer.innerHTML = '';
 
                         data.labels.forEach((item, i) => {
-                            const isW = parseFloat(item.berat_netto || 0) > 0;
+                            const beratNetto = parseFloat(item.berat_netto || 0);
                             const itemCard = document.createElement('div');
                             itemCard.style.cssText = 'background: var(--bg-muted); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;';
                             itemCard.innerHTML = `
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span class="badge badge-purple" style="font-size: 10.5px;">#${i+1}</span>
                                     <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--primary);">${item.id_label}</strong>
-                                    <span class="badge ${isW ? 'badge-success' : 'badge-warning'}" style="font-size: 10.5px;">
-                                        ${isW ? '✓ ' + parseFloat(item.berat_netto).toFixed(2) + ' KG' : '⚠ Belum Ditimbang'}
+                                    <span class="badge badge-success" style="font-size: 10.5px;">
+                                        ✓ ${beratNetto.toFixed(2)} KG
                                     </span>
                                 </div>
                                 <div style="display: flex; gap: 6px; align-items: center;">
-                                    ${!isW ? `
-                                        <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 2px 8px; font-size: 11px; opacity: 0.55; cursor: not-allowed; color: #64748b; border-color: #cbd5e1; background: #f8fafc;" title="Barcode belum ditimbang tidak dapat dicetak kembali karena tanggal cetakan awal berfungsi sebagai tanda pengingat penerimaan barang fisik di gudang.">
-                                            🔒 Terkunci
-                                        </button>
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="goToScanWeigh('${item.id_label}')" style="padding: 2px 8px; font-size: 11px; font-weight: 700; background: #10b981; border-color: #10b981;" title="Timbang">⚖️ Timbang</button>
-                                    ` : `
-                                        <button type="button" class="btn btn-outline btn-sm" onclick="openReprintSingleModal('${item.id_label}', '${item.kode_mitra || ''}', '${item.nama_item.replace(/'/g, "\\'")}', '${noSj.replace(/'/g, "\\'")}', '${item.nama_lokasi || 'Gudang'}', ${parseFloat(item.berat_netto || 0)}, ${parseFloat(item.harga_per_kg || 0)})" style="padding: 2px 8px; font-size: 11px; font-weight: 700;" title="Pilihan Cetak Barcode">
-                                            🖨️ Cetak
-                                        </button>
-                                    `}
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="openReprintSingleModal('${item.id_label}', '${item.kode_mitra || ''}', '${item.nama_item.replace(/'/g, "\\'")}', '${noSj.replace(/'/g, "\\'")}', '${item.nama_lokasi || 'Gudang'}', ${beratNetto}, ${parseFloat(item.harga_per_kg || 0)})" style="padding: 2px 8px; font-size: 11px; font-weight: 700;" title="Pilihan Cetak Barcode">
+                                        🖨️ Cetak
+                                    </button>
                                 </div>
                             `;
                             listContainer.appendChild(itemCard);
@@ -2846,11 +2814,33 @@ require_once __DIR__ . '/layout/header.php';
         document.getElementById('reprintTargetBarcode').innerText = barcode;
         document.getElementById('reprintTargetMitra').innerText = kodeMitra;
         document.getElementById('reprintTargetMeta').innerText = `${namaItem} • SJ: ${noSj} • Lok: ${lokasiName}`;
-        document.getElementById('reprintGroupDesc').innerText = `Mencetak seluruh barcode kelompok surat jalan ${noSj} (10 pcs per lembar A4)`;
+        document.getElementById('reprintGroupDesc').innerText = `Mencetak seluruh barcode kelompok surat jalan ${noSj} (format stiker 70×50 mm)`;
+
+        const qtyInput = document.getElementById('reprintQtyInput');
+        if (qtyInput) qtyInput.value = 1;
 
         const modal = document.getElementById('modalReprintChoice');
         if (modal) modal.style.display = 'flex';
         if (window.lucide) window.lucide.createIcons();
+    }
+
+    function setReprintQty(val) {
+        const input = document.getElementById('reprintQtyInput');
+        if (input) input.value = val;
+    }
+
+    function stepReprintQty(delta) {
+        const input = document.getElementById('reprintQtyInput');
+        if (!input) return;
+        let val = parseInt(input.value) || 1;
+        val = Math.max(1, Math.min(100, val + delta));
+        input.value = val;
+    }
+
+    function validateReprintQty(input) {
+        let val = parseInt(input.value) || 1;
+        val = Math.max(1, Math.min(100, val));
+        input.value = val;
     }
 
     function closeReprintChoiceModal() {
@@ -2859,14 +2849,16 @@ require_once __DIR__ . '/layout/header.php';
         currentReprintData = null;
     }
 
-    // Eksekusi Cetak 1 Pcs Jadi 1 Lembar Penuh (10 Pcs Barcode Ini)
-    async function executeReprintSingle10() {
+    // Eksekusi Cetak Duplikat Barcode Ini (Bisa Tentukan Jumlah Pcs)
+    async function executeReprintCustomQty() {
         if (!currentReprintData) return;
         const barcode = currentReprintData.barcode;
+        const input = document.getElementById('reprintQtyInput');
+        const qty = Math.max(1, Math.min(100, parseInt(input ? input.value : 10) || 10));
         closeReprintChoiceModal();
 
         try {
-            const resp = await fetch('index.php?action=get_labels_for_reprint&type=single_duplicate_10&barcode=' + encodeURIComponent(barcode));
+            const resp = await fetch('index.php?action=get_labels_for_reprint&type=single_duplicate&qty=' + qty + '&barcode=' + encodeURIComponent(barcode));
             const data = await resp.json();
             if (data.success && data.labels && data.labels.length) {
                 renderAndPrintSheetLabels(data.labels);
@@ -2876,6 +2868,12 @@ require_once __DIR__ . '/layout/header.php';
         } catch (e) {
             alert('Kesalahan jaringan: ' + e.message);
         }
+    }
+
+    // Eksekusi Cetak 10 Pcs (Backward compatibility)
+    function executeReprintSingle10() {
+        setReprintQty(10);
+        executeReprintCustomQty();
     }
 
     // Eksekusi Cetak Seluruh Barcode di Surat Jalan Tersebut
@@ -2894,12 +2892,8 @@ require_once __DIR__ . '/layout/header.php';
         reprintBarcodeDirect(d.barcode, d.kodeMitra, d.namaItem, d.beratKg, d.noSj, d.lokasiName, d.hrgPerKg);
     }
 
-    // Cetak Kelompok Surat Jalan (Hanya untuk barcode yang sudah ditimbang lengkap)
+    // Cetak Kelompok Surat Jalan
     async function reprintGroupSJ(noSj, status = 'all') {
-        if (status === 'unweighed') {
-            alert('Sisa barcode yang belum ditimbang tidak dapat dicetak kembali karena tanggal cetakan awal berfungsi sebagai tanda pengingat penerimaan barang fisik di gudang.');
-            return;
-        }
         try {
             const resp = await fetch('index.php?action=get_labels_for_reprint&type=group_sj&no_surat_jalan=' + encodeURIComponent(noSj) + '&status=' + encodeURIComponent(status));
             const data = await resp.json();
@@ -2913,86 +2907,35 @@ require_once __DIR__ . '/layout/header.php';
         }
     }
 
-    // Render Data Barcode ke Sheet A4 dan Kirim ke Printer Tanpa Blank Page
+    // Render Data Barcode ke Format Stiker 70x50 mm (Urutan Terbesar ke Terkecil)
     function renderAndPrintSheetLabels(labels) {
         const printContainer = document.getElementById('bulkPrintContainer');
+        if (!printContainer) return;
         printContainer.removeAttribute('style');
         printContainer.innerHTML = '';
 
-        const LABELS_PER_SHEET = 10;
-        const totalSheets = Math.ceil(labels.length / LABELS_PER_SHEET);
+        const totalBoxes = labels.length;
+        const indexedLabels = labels.map((lbl, idx) => ({
+            lbl: lbl,
+            boxIdx: idx + 1
+        })).reverse();
 
-        for (let s = 0; s < totalSheets; s++) {
-            const startIdx = s * LABELS_PER_SHEET;
-            const endIdx = Math.min(startIdx + LABELS_PER_SHEET, labels.length);
-            const sheetLabels = labels.slice(startIdx, endIdx);
-            const countInSheet = sheetLabels.length;
-            const isHalfSheet = countInSheet <= 5;
-
+        indexedLabels.forEach(item => {
             const sheetDiv = document.createElement('div');
-            sheetDiv.className = 'bulk-print-sheet' + (isHalfSheet ? ' sheet-half' : '');
-            sheetDiv.setAttribute('data-sheet-number', s + 1);
+            sheetDiv.className = 'bulk-print-sheet single-thermal-sheet';
+            sheetDiv.style.cssText = 'width: 70mm; height: 50mm; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 0 0 1.0mm; margin: 0 auto; box-sizing: border-box;';
 
-            sheetLabels.forEach((lbl, localIdx) => {
-                const globalIdx = startIdx + localIdx;
-                const isWeighed = parseFloat(lbl.berat_netto || 0) > 0;
-                const labelDateStr = lbl.created_at ? new Date(lbl.created_at).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID');
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'bulk-sheet-card';
-                cardDiv.innerHTML = `
-                    <div class="sheet-card-header">
-                        <span class="sheet-card-company">LOGISTIK BERSAMA GUDANG</span>
-                        <div class="sheet-card-badges">
-                            <span class="sheet-badge-idx">#${globalIdx + 1}</span>
-                            <span class="sheet-badge-mitra">${lbl.kode_item || 'KEMASAN'}</span>
-                        </div>
-                    </div>
-                    <div class="sheet-card-item">
-                        <div class="sheet-card-name" title="${lbl.nama_item}">${lbl.nama_item}</div>
-                        <div class="sheet-card-meta">
-                            <span>SJ: <strong>${lbl.no_surat_jalan}</strong></span>
-                            <span style="font-size: 11px; color: #475569;">SKU: <strong>${lbl.kode_item || '-'}</strong></span>
-                        </div>
-                    </div>
-                    ${isWeighed ? `
-                    <div class="sheet-card-status">
-                        <span>[ ${parseFloat(lbl.berat_netto).toFixed(2)} KG ]</span>
-                    </div>` : ''}
-                    <div class="sheet-card-barcode-area">
-                        <div class="sheet-card-bars">
-                            <div class="sheet-barcode-svg">${lbl.barcode_svg}</div>
-                            <div class="sheet-barcode-text">${lbl.id_label}</div>
-                        </div>
-                    </div>
-                    <div class="sheet-card-footer">
-                        <span>Tgl: ${labelDateStr}</span>
-                        <span>Lembar ${s + 1}/${totalSheets}</span>
-                    </div>
-                `;
-                sheetDiv.appendChild(cardDiv);
-            });
-
-            if (isHalfSheet) {
-                const cutLine = document.createElement('div');
-                cutLine.className = 'half-page-cut-line';
-                cutLine.innerHTML = `
-                    <span class="cut-scissors">✂</span>
-                    <span class="cut-text">GARIS BATAS POTONG 1/2 LEMBAR A4 (${countInSheet} PCS PROPORSIONAL)</span>
-                    <span class="cut-scissors">✂</span>
-                `;
-                sheetDiv.appendChild(cutLine);
-            }
-
+            sheetDiv.innerHTML = renderSquareBarcodeCardHtml(item.lbl, item.boxIdx, totalBoxes);
             printContainer.appendChild(sheetDiv);
-        }
+        });
 
-        setPrintPageFormat('bulk');
+        setPrintPageFormat('single');
         setTimeout(() => {
             window.print();
         }, 200);
     }
 
-    // Cetak Satuan Langsung (Thermal Roll 100x50 mm)
+    // Cetak Satuan Langsung (Thermal Roll 70x50 mm)
     async function reprintBarcodeDirect(barcodeOrObj, kodeMitra, namaItem, beratKg, noSj, lokasiName, hrgPerKg) {
         try {
             let lbl = null;
@@ -3024,45 +2967,9 @@ require_once __DIR__ . '/layout/header.php';
             
             const sheetDiv = document.createElement('div');
             sheetDiv.className = 'bulk-print-sheet single-thermal-sheet';
-            sheetDiv.style.gridTemplateColumns = '1fr';
-            sheetDiv.style.width = '100mm';
-            sheetDiv.style.height = '50mm';
+            sheetDiv.style.cssText = 'width: 70mm; height: 50mm; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 0 0 1.0mm; margin: 0 auto; box-sizing: border-box;';
             
-            const isWeighed = parseFloat(lbl.berat_netto || 0) > 0;
-            const labelDateStr = lbl.created_at ? new Date(lbl.created_at).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID');
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'bulk-sheet-card';
-            cardDiv.style.width = '100mm';
-            cardDiv.style.height = '50mm';
-            cardDiv.innerHTML = `
-                <div class="sheet-card-header">
-                    <span class="sheet-card-company">LOGISTIK BERSAMA GUDANG</span>
-                    <div class="sheet-card-badges">
-                        <span class="sheet-badge-mitra">${lbl.kode_item || 'KEMASAN'}</span>
-                    </div>
-                </div>
-                <div class="sheet-card-item">
-                    <div class="sheet-card-name" title="${lbl.nama_item}">${lbl.nama_item}</div>
-                    <div class="sheet-card-meta">
-                        <span>SJ: <strong>${lbl.no_surat_jalan}</strong></span>
-                        <span style="font-size: 11px; color: #475569;">SKU: <strong>${lbl.kode_item || '-'}</strong></span>
-                    </div>
-                </div>
-                ${isWeighed ? `
-                <div class="sheet-card-status">
-                    <span>[ ${parseFloat(lbl.berat_netto).toFixed(2)} KG ]</span>
-                </div>` : ''}
-                <div class="sheet-card-barcode-area">
-                    <div class="sheet-card-bars">
-                        <div class="sheet-barcode-svg">${lbl.barcode_svg}</div>
-                        <div class="sheet-barcode-text">${lbl.id_label}</div>
-                    </div>
-                </div>
-                <div class="sheet-card-footer">
-                    <span>Tgl: ${labelDateStr}</span>
-                </div>
-            `;
-            sheetDiv.appendChild(cardDiv);
+            sheetDiv.innerHTML = renderSquareBarcodeCardHtml(lbl, 1, 1);
             printContainer.appendChild(sheetDiv);
 
             setPrintPageFormat('single');
@@ -3075,8 +2982,137 @@ require_once __DIR__ . '/layout/header.php';
         }
     }
 
+    // Custom Floating Shadcn-style Dropdown Enhancer (Menggantikan menu select OS bawaan)
+    function makeShadcnSelect(selectEl) {
+        if (window.enhanceSelect) { window.enhanceSelect(selectEl); return; }
+        if (!selectEl || selectEl.dataset.shadcnEnhanced) return;
+        selectEl.dataset.shadcnEnhanced = "true";
+        selectEl.style.display = "none";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "shadcn-select-wrapper";
+
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "shadcn-select-trigger";
+        trigger.id = selectEl.id + "_trigger";
+
+        const popup = document.createElement("div");
+        popup.className = "shadcn-select-content";
+        popup.style.display = "none";
+
+        function updateTriggerText() {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            const text = selectedOpt ? selectedOpt.textContent.trim() : "-- Pilih --";
+            const isPlaceholder = !selectEl.value || selectEl.value === "";
+
+            trigger.innerHTML = `
+                <span style="${isPlaceholder ? 'color: #94a3b8; font-weight: 500;' : 'color: #0f172a; font-weight: 700;'} overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>
+                <i data-lucide="chevron-down" class="shadcn-select-chevron" style="width: 16px; height: 16px; color: #64748b; flex-shrink: 0; transition: transform 0.2s;"></i>
+            `;
+            if (window.lucide) window.lucide.createIcons({ root: trigger });
+
+            if (selectEl.disabled) {
+                trigger.disabled = true;
+                trigger.classList.add("disabled");
+            } else {
+                trigger.disabled = false;
+                trigger.classList.remove("disabled");
+            }
+        }
+
+        function renderOptions() {
+            popup.innerHTML = "";
+            Array.from(selectEl.options).forEach((opt) => {
+                const item = document.createElement("div");
+                const isSelected = opt.value === selectEl.value;
+                item.className = "shadcn-select-item" + (isSelected ? " selected" : "");
+                const isPlaceholder = !opt.value || opt.value === "";
+
+                item.innerHTML = `
+                    <span style="${isPlaceholder ? 'color: #94a3b8;' : ''}">${opt.textContent.trim()}</span>
+                    ${isSelected && !isPlaceholder ? '<i data-lucide="check" style="width: 14px; height: 14px; color: #2563eb; flex-shrink: 0;"></i>' : ''}
+                `;
+                if (window.lucide) window.lucide.createIcons({ root: item });
+
+                item.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectEl.value = opt.value;
+                    updateTriggerText();
+                    closePopup();
+                    selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+                });
+                popup.appendChild(item);
+            });
+        }
+
+        function openPopup() {
+            if (selectEl.disabled) return;
+            document.querySelectorAll(".shadcn-select-content").forEach(p => {
+                if (p !== popup) p.style.display = "none";
+            });
+            document.querySelectorAll(".shadcn-select-chevron").forEach(c => {
+                c.style.transform = "rotate(0deg)";
+            });
+
+            renderOptions();
+            popup.style.display = "block";
+            const chevron = trigger.querySelector(".shadcn-select-chevron");
+            if (chevron) chevron.style.transform = "rotate(180deg)";
+            trigger.classList.add("open");
+        }
+
+        function closePopup() {
+            popup.style.display = "none";
+            const chevron = trigger.querySelector(".shadcn-select-chevron");
+            if (chevron) chevron.style.transform = "rotate(0deg)";
+            trigger.classList.remove("open");
+        }
+
+        trigger.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (popup.style.display === "block") {
+                closePopup();
+            } else {
+                openPopup();
+            }
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!wrapper.contains(e.target)) {
+                closePopup();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closePopup();
+        });
+
+        const observer = new MutationObserver(() => {
+            updateTriggerText();
+        });
+        observer.observe(selectEl, { attributes: true, childList: true, subtree: true });
+
+        selectEl.addEventListener("change", () => {
+            updateTriggerText();
+        });
+
+        selectEl.parentNode.insertBefore(wrapper, selectEl);
+        wrapper.appendChild(selectEl);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(popup);
+
+        updateTriggerText();
+    }
+
     // Eksekusi utama setelah DOM siap
     document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi dropdown bergaya shadcn (menggantikan menu select OS default)
+        makeShadcnSelect(document.getElementById('onestop_pemasok_id'));
+        makeShadcnSelect(document.getElementById('onestop_jenis_filter'));
+        makeShadcnSelect(document.getElementById('onestop_item_id'));
         // Inisialisasi Modul Penerimaan & Timbang Satu Pintu
         if (typeof onOneStopJenisChanged === 'function') {
             onOneStopJenisChanged();
@@ -3309,14 +3345,8 @@ require_once __DIR__ . '/layout/header.php';
                                 <td><strong>${data.label.nama_item}</strong></td>
                                 <td style="text-align: right; font-weight: 800; color: #10b981;">${parseFloat(data.label.berat_netto).toFixed(2)} kg</td>
                                 <td><code style="font-size: 11.5px; font-weight: 700; color: var(--primary);">${sj}</code></td>
-                                <td><span class="badge badge-secondary">${lokName}</span></td>
-                                <td style="text-align: right;">
-                                    <div style="font-size: 11px; color: var(--text-muted);">Rp ${formatRupiah(hrg)}/kg</div>
-                                    <strong style="font-size: 13px; color: var(--text-main);">Rp ${formatRupiah(tot)}</strong>
-                                </td>
                                 <td style="font-size: 12px; color: var(--text-muted);">Baru Saja</td>
-                                <td><span class="badge badge-success">● Aktif</span></td>
-                                <td style="text-align: center;"><button type="button" class="btn btn-outline btn-sm" onclick="reprintBarcodeDirect('${data.label.id_label}', '${data.label.kode_mitra}', '${data.label.nama_item}', ${data.label.berat_netto}, '${sj}', '${lokName}', ${hrg})">🖨️</button></td>
+                                <td style="text-align: center;"><button type="button" class="btn btn-outline btn-sm" onclick="reprintBarcodeDirect('${data.label.id_label}')" style="padding: 3px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer;" title="Cetak Barcode Thermal 70x50 mm"><i data-lucide="printer" style="width: 12px; height: 12px;"></i><span>Cetak</span></button></td>
                             `;
                             tbody.insertBefore(row, tbody.firstChild);
                         }
@@ -3551,7 +3581,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <span class="badge badge-purple" style="font-size: 11px;">#${idx+1}</span>
                                         <strong style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary);">${lbl.id_label}</strong>
                                         <span class="badge badge-secondary" style="font-size: 11px;">${lbl.kode_pemasok || lbl.kode_mitra || 'PMS'}</span>
-                                        <span class="badge badge-warning" style="font-size: 11px;">Belum Ditimbang</span>
+                                        <span class="badge badge-success" style="font-size: 11px;">${parseFloat(lbl.berat_netto || 0) > 0 ? parseFloat(lbl.berat_netto).toFixed(2) + ' KG' : 'Siap Alokasi'}</span>
                                     </div>
                                     <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px;">
                                         ${lbl.nama_item} • SJ: ${lbl.no_surat_jalan} • Lok: ${lbl.nama_lokasi || 'Gudang'}
@@ -3571,69 +3601,22 @@ require_once __DIR__ . '/layout/header.php';
                     if (printContainer) {
                         printContainer.innerHTML = '';
 
-                        // 2. Susun container cetak: 10 Pcs per lembar A4 (Grid 2x5), 5 Pcs proporsional 1/2 lembar
-                        const LABELS_PER_SHEET = 10;
-                        const totalSheets = Math.ceil(data.labels.length / LABELS_PER_SHEET);
+                        // 2. Susun container cetak: Format Stiker 70x50 mm (Urutan Terbesar ke Terkecil)
+                        const totalBoxes = data.labels.length;
+                        const indexedLabels = data.labels.map((lbl, idx) => ({
+                            lbl: lbl,
+                            boxIdx: idx + 1
+                        })).reverse();
 
-                        for (let s = 0; s < totalSheets; s++) {
-                            const startIdx = s * LABELS_PER_SHEET;
-                            const endIdx = Math.min(startIdx + LABELS_PER_SHEET, data.labels.length);
-                            const sheetLabels = data.labels.slice(startIdx, endIdx);
-                            const countInSheet = sheetLabels.length;
-                            const isHalfSheet = countInSheet <= 5;
-
+                        indexedLabels.forEach(item => {
                             const sheetDiv = document.createElement('div');
-                            sheetDiv.className = 'bulk-print-sheet' + (isHalfSheet ? ' sheet-half' : '');
-                            sheetDiv.setAttribute('data-sheet-number', s + 1);
+                            sheetDiv.className = 'bulk-print-sheet single-thermal-sheet';
+                            sheetDiv.style.cssText = 'width: 70mm; height: 50mm; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 0 0 1.0mm; margin: 0 auto; box-sizing: border-box;';
 
-                            sheetLabels.forEach((lbl, localIdx) => {
-                                const globalIdx = startIdx + localIdx;
-                                const labelDateStr = lbl.created_at ? new Date(lbl.created_at).toLocaleDateString('id-ID') : new Date().toLocaleDateString('id-ID');
-                                const cardDiv = document.createElement('div');
-                                cardDiv.className = 'bulk-sheet-card';
-                                cardDiv.innerHTML = `
-                                    <div class="sheet-card-header">
-                                        <span class="sheet-card-company">LOGISTIK BERSAMA GUDANG</span>
-                                        <div class="sheet-card-badges">
-                                            <span class="sheet-badge-idx">#${globalIdx + 1}</span>
-                                            <span class="sheet-badge-mitra">${lbl.kode_item || 'KEMASAN'}</span>
-                                        </div>
-                                    </div>
-                                    <div class="sheet-card-item">
-                                        <div class="sheet-card-name" title="${lbl.nama_item}">${lbl.nama_item}</div>
-                                        <div class="sheet-card-meta">
-                                            <span>SJ: <strong>${lbl.no_surat_jalan}</strong></span>
-                                            <span style="font-size: 11px; color: #475569;">SKU: <strong>${lbl.kode_item || '-'}</strong></span>
-                                        </div>
-                                    </div>
-                                    <div class="sheet-card-barcode-area">
-                                        <div class="sheet-card-bars">
-                                            <div class="sheet-barcode-svg">${lbl.barcode_svg}</div>
-                                            <div class="sheet-barcode-text">${lbl.id_label}</div>
-                                        </div>
-                                    </div>
-                                    <div class="sheet-card-footer">
-                                        <span>Tgl: ${labelDateStr}</span>
-                                        <span>Lembar ${s + 1}/${totalSheets}</span>
-                                    </div>
-                                `;
-                                sheetDiv.appendChild(cardDiv);
-                            });
-
-                            // Jika sisa stiker adalah 5 pcs (atau kurang), sertakan garis batas potong 1/2 lembar
-                            if (isHalfSheet) {
-                                const cutLine = document.createElement('div');
-                                cutLine.className = 'half-page-cut-line';
-                                cutLine.innerHTML = `
-                                    <span class="cut-scissors">✂</span>
-                                    <span class="cut-text">GARIS BATAS POTONG 1/2 LEMBAR A4 (${countInSheet} PCS PROPORSIONAL)</span>
-                                    <span class="cut-scissors">✂</span>
-                                `;
-                                sheetDiv.appendChild(cutLine);
-                            }
-
+                            sheetDiv.innerHTML = renderSquareBarcodeCardHtml(item.lbl, item.boxIdx, totalBoxes);
                             printContainer.appendChild(sheetDiv);
-                        }
+                        });
+                        setPrintPageFormat('single');
 
                         // Tampilkan tombol Pratinjau & Cetak di UI
                         const btnPreview = document.getElementById('btnPreviewSheet');
@@ -3642,12 +3625,12 @@ require_once __DIR__ . '/layout/header.php';
                         const btnCetakAll = document.getElementById('btnCetakSemuaBulk');
                         if (btnCetakAll) {
                             btnCetakAll.style.display = 'inline-flex';
-                            btnCetakAll.innerHTML = `<i data-lucide="printer" style="width: 15px; height: 15px;"></i><span>Cetak PDF (${totalSheets} Lembar)</span>`;
+                            btnCetakAll.innerHTML = `<i data-lucide="printer" style="width: 15px; height: 15px;"></i><span>Cetak Barcode (${totalBoxes} Pcs)</span>`;
                         }
 
                         const descEl = document.getElementById('bulkResultDesc');
                         if (descEl) {
-                            descEl.innerHTML = `Total <strong>${data.labels.length} barcode</strong> siap cetak dalam <strong>${totalSheets} lembar PDF</strong> (10 pcs per lembar A4). Silakan klik tombol <strong>"Cetak PDF"</strong> di bawah untuk mencetak.`;
+                            descEl.innerHTML = `Total <strong>${data.labels.length} barcode</strong> siap cetak dalam format stiker 70×50 mm. Silakan klik tombol <strong>"Cetak Barcode"</strong> di bawah untuk mencetak.`;
                         }
 
                         if (window.lucide) window.lucide.createIcons();
@@ -3744,7 +3727,7 @@ require_once __DIR__ . '/layout/header.php';
                     btnSelesaiTimbangSJ.style.cursor = 'not-allowed';
                     btnSelesaiTimbangSJ.style.boxShadow = 'none';
                     btnSelesaiTimbangSJ.title = 'Pilih Surat Jalan terlebih dahulu';
-                    btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> <span>✓ Selesai Timbang</span>';
+                    btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> <span>Selesai Timbang</span>';
                 }
                 if (btnNoticeSelesaiTimbang) {
                     btnNoticeSelesaiTimbang.style.display = 'none';
@@ -3777,7 +3760,7 @@ require_once __DIR__ . '/layout/header.php';
                     btnSelesaiTimbangSJ.style.cursor = 'default';
                     btnSelesaiTimbangSJ.style.boxShadow = 'none';
                     btnSelesaiTimbangSJ.title = 'Penimbangan Surat Jalan ini telah dinyatakan selesai';
-                    btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-check" style="width: 14px; height: 14px; color: #6ee7b7;"></i> <span>✓ Timbangan Selesai</span>';
+                    btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-check" style="width: 14px; height: 14px; color: #6ee7b7;"></i> <span>Timbangan Selesai</span>';
                 }
                 if (btnNoticeSelesaiTimbang) {
                     btnNoticeSelesaiTimbang.style.display = 'none';
@@ -3812,7 +3795,7 @@ require_once __DIR__ . '/layout/header.php';
                         btnSelesaiTimbangSJ.style.cursor = 'pointer';
                         btnSelesaiTimbangSJ.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.4)';
                         btnSelesaiTimbangSJ.title = 'Klik di sini untuk menyelesaikan proses timbang agar tombol cetak dapat digunakan';
-                        btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> <span>✓ Selesai Timbang</span>';
+                        btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> <span>Selesai Timbang</span>';
                     }
                     if (btnNoticeSelesaiTimbang) {
                         btnNoticeSelesaiTimbang.style.display = 'inline-flex';
@@ -3827,7 +3810,7 @@ require_once __DIR__ . '/layout/header.php';
                         btnSelesaiTimbangSJ.style.cursor = 'not-allowed';
                         btnSelesaiTimbangSJ.style.boxShadow = 'none';
                         btnSelesaiTimbangSJ.title = 'Scan barcode dan isi berat timbangan terlebih dahulu';
-                        btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> <span>✓ Selesai Timbang</span>';
+                        btnSelesaiTimbangSJ.innerHTML = '<i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> <span>Selesai Timbang</span>';
                     }
                     if (btnNoticeSelesaiTimbang) {
                         btnNoticeSelesaiTimbang.style.display = 'none';
@@ -4045,7 +4028,6 @@ require_once __DIR__ . '/layout/header.php';
         // MODAL DAFTAR BARCODE KERANJANG SURAT JALAN (RIWAYAT PENERIMAAN)
         // =============================================================
         let currentModalSJData = null;
-        let currentModalFilter = 'all';
 
         window.openSJBarcodeHistoryModal = async function(noSj) {
             const targetSJ = (noSj || (activeWeighSJData ? activeWeighSJData.no_surat_jalan : '')).trim();
@@ -4055,9 +4037,9 @@ require_once __DIR__ . '/layout/header.php';
             }
 
             const modal = document.getElementById('modalSJBarcodeList');
-            const chipsCont = document.getElementById('modalSJChipsContainer');
+            const tbody = document.getElementById('modalSJTableBody');
             if (modal) modal.style.display = 'flex';
-            if (chipsCont) chipsCont.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px;">Memuat seluruh data barcode keranjang Surat Jalan...</div>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 36px; color: var(--text-muted); font-size: 13px;">Memuat data box Surat Jalan...</td></tr>';
 
             try {
                 const resp = await fetch('index.php?action=get_sj_weigh_detail&no_surat_jalan=' + encodeURIComponent(targetSJ));
@@ -4070,28 +4052,20 @@ require_once __DIR__ . '/layout/header.php';
                     const pmsEl = document.getElementById('modalSJPemasokText');
                     
                     if (noEl) noEl.innerText = res.data.no_surat_jalan;
-                    if (itemEl) itemEl.innerText = `${res.data.nama_item} (${res.data.kode_item || '-'})`;
-                    if (pmsEl) pmsEl.innerText = `${res.data.kode_pemasok} - ${res.data.nama_pemasok}`;
+                    if (itemEl) itemEl.innerText = `${res.data.nama_item || '-'} (${res.data.kode_item || '-'})`;
+                    if (pmsEl) pmsEl.innerText = `${res.data.kode_pemasok || 'PMS'} - ${res.data.nama_pemasok || '-'}`;
                     
-                    const bTot = document.getElementById('modalSJBadgeTotal');
-                    const bBel = document.getElementById('modalSJBadgeBelum');
-                    const bSud = document.getElementById('modalSJBadgeSudah');
-                    
-                    if (bTot) bTot.innerText = `Total: ${res.data.total_pcs} Pcs`;
-                    if (bBel) bBel.innerText = `⏳ Belum: ${res.data.belum_ditimbang} Pcs`;
-                    if (bSud) bSud.innerText = `✓ Sudah: ${res.data.sudah_ditimbang} Pcs (${parseFloat(res.data.total_berat).toFixed(2)} KG)`;
-
                     const btnCetakSJ = document.getElementById('btnModalCetakSuratJalan');
                     if (btnCetakSJ) {
                         btnCetakSJ.href = 'index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=' + encodeURIComponent(res.data.no_surat_jalan);
                     }
 
-                    filterModalBarcodeView('all');
+                    renderModalBoxesTable(res.data.all_labels || []);
                 } else {
-                    if (chipsCont) chipsCont.innerHTML = '<div style="grid-column: 1/-1; color: red; padding: 20px; text-align: center;">Gagal memuat: ' + (res.message || 'Data tidak ditemukan') + '</div>';
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 30px;">Gagal memuat: ${res.message || 'Data tidak ditemukan'}</td></tr>`;
                 }
             } catch (err) {
-                if (chipsCont) chipsCont.innerHTML = '<div style="grid-column: 1/-1; color: red; padding: 20px; text-align: center;">Kesalahan jaringan: ' + err.message + '</div>';
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 30px;">Kesalahan jaringan: ${err.message}</td></tr>`;
             }
 
             if (window.lucide) window.lucide.createIcons();
@@ -4102,76 +4076,71 @@ require_once __DIR__ . '/layout/header.php';
             if (modal) modal.style.display = 'none';
         };
 
-        window.filterModalBarcodeView = function(filterType) {
-            currentModalFilter = filterType;
-            const chipsCont = document.getElementById('modalSJChipsContainer');
-            if (!chipsCont || !currentModalSJData) return;
+        window.renderModalBoxesTable = function(labels) {
+            const tbody = document.getElementById('modalSJTableBody');
+            if (!tbody) return;
 
-            const btnAll = document.getElementById('btnFilterModalAll');
-            const btnUnw = document.getElementById('btnFilterModalUnweighed');
-            const btnWeighed = document.getElementById('btnFilterModalWeighed');
+            // Baris total: hanya bila lebih dari 1 box (1 box = baris itu sendiri)
+            const foot = document.getElementById('modalSJTableFoot');
+            if (foot) {
+                const n = (labels || []).length;
+                const sum = (labels || []).reduce((a, l) => a + parseFloat(l.berat_netto || 0), 0);
+                foot.style.display = n >= 2 ? '' : 'none';
+                const c = document.getElementById('modalSJTotalCount');
+                const v = document.getElementById('modalSJTotalNetto');
+                if (c) c.innerText = n;
+                if (v) v.innerText = sum.toFixed(2) + ' kg';
+            }
 
-            if (btnAll) btnAll.className = filterType === 'all' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
-            if (btnUnw) btnUnw.className = filterType === 'unweighed' ? 'btn btn-warning btn-sm' : 'btn btn-outline btn-sm';
-            if (btnWeighed) btnWeighed.className = filterType === 'weighed' ? 'btn btn-success btn-sm' : 'btn btn-outline btn-sm';
-
-            const allList = currentModalSJData.all_labels || [];
-            const filtered = allList.filter(lbl => {
-                const isW = parseFloat(lbl.berat_netto || 0) > 0;
-                if (filterType === 'unweighed') return !isW;
-                if (filterType === 'weighed') return isW;
-                return true;
-            });
-
-            if (filtered.length === 0) {
-                chipsCont.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 36px 20px; color: var(--text-muted);">
-                        <div style="font-size: 28px; margin-bottom: 6px;">📦</div>
-                        <div style="font-weight: 700; font-size: 13.5px;">Tidak ada barcode pada kategori ini</div>
-                    </div>
+            if (!labels || !labels.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 36px 20px; color: var(--text-muted);">
+                            <div style="font-weight: 700; font-size: 13.5px;">Belum ada box pada Surat Jalan ini</div>
+                        </td>
+                    </tr>
                 `;
                 return;
             }
 
-            chipsCont.innerHTML = '';
-            filtered.forEach((lbl, idx) => {
-                const isW = parseFloat(lbl.berat_netto || 0) > 0;
-                const card = document.createElement('div');
-                card.style.cssText = `background: #ffffff; border: 1.5px solid ${isW ? '#86efac' : '#fed7aa'}; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);`;
-
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #1e293b;">
-                            📦 ${lbl.id_label}
-                        </span>
-                        <span class="badge ${isW ? 'badge-success' : 'badge-warning'}" style="font-size: 10px; font-weight: 800;">
-                            #${idx + 1}
-                        </span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #f1f5f9; padding-top: 6px;">
-                        <div>
-                            ${isW ? `
-                                <span style="font-weight: 800; font-size: 13px; color: #059669;">✓ ${parseFloat(lbl.berat_netto).toFixed(2)} KG</span>
-                            ` : `
-                                <span style="font-size: 11.5px; font-weight: 700; color: #d97706;">⏳ Belum Ditimbang</span>
-                            `}
-                        </div>
-                        <div>
-                            ${!isW ? `
-                                <button type="button" class="btn btn-success btn-sm" onclick="quickWeighFromModal('${lbl.id_label}', '${currentModalSJData.no_surat_jalan}')" style="padding: 3px 10px; font-size: 11px; font-weight: 800; background: #059669; border-color: #059669; cursor: pointer;" title="Timbang Sekarang">
-                                    ⚖️ Timbang
-                                </button>
-                            ` : `
-                                <button type="button" class="btn btn-outline btn-sm" onclick="closeSJBarcodeListModal(); openReprintSingleModal('${lbl.id_label}', '${lbl.kode_mitra || ''}', '${currentModalSJData.nama_item.replace(/'/g, "\\'")}', '${currentModalSJData.no_surat_jalan.replace(/'/g, "\\'")}', '${lbl.nama_lokasi || 'Gudang'}', ${parseFloat(lbl.berat_netto || 0)}, ${parseFloat(lbl.harga_per_kg || 0)})" style="padding: 3px 8px; font-size: 11px; font-weight: 700; cursor: pointer;" title="Pilihan Cetak Barcode">
-                                    🖨️ Cetak
-                                </button>
-                            `}
-                        </div>
-                    </div>
+            tbody.innerHTML = '';
+            labels.forEach((lbl, idx) => {
+                const netto = parseFloat(lbl.berat_netto || 0);
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border, #e2e8f0)';
+                tr.innerHTML = `
+                    <td style="color: var(--text-muted, #64748b); font-size: 12px; text-align: center;">${idx + 1}</td>
+                    <td>
+                        <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--primary, #2563eb);">
+                            ${lbl.id_label}
+                        </strong>
+                    </td>
+                    <td>
+                        <strong style="color: var(--text-main, #0f172a); font-size: 13px;">${lbl.nama_item || currentModalSJData?.nama_item || '-'}</strong>
+                        ${lbl.nama_jenis ? `<span style="font-size: 11px; color: var(--text-muted, #64748b); margin-left: 4px;">(${lbl.nama_jenis})</span>` : ''}
+                    </td>
+                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #10b981;">
+                        ${netto.toFixed(2)} kg
+                    </td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="reprintBarcodeDirect('${lbl.id_label}')" style="padding: 3px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer;" title="Cetak Barcode Box Ini Saja (Format Stiker 70x50 mm)">
+                            <i data-lucide="printer" style="width: 12px; height: 12px;"></i>
+                            <span>Cetak</span>
+                        </button>
+                    </td>
                 `;
-                chipsCont.appendChild(card);
+                tbody.appendChild(tr);
             });
+
             if (window.lucide) window.lucide.createIcons();
+        };
+
+        window.printAllModalBarcodes = function() {
+            if (!currentModalSJData || !currentModalSJData.no_surat_jalan) {
+                alert('Data Surat Jalan tidak ditemukan.');
+                return;
+            }
+            reprintGroupSJ(currentModalSJData.no_surat_jalan, 'all');
         };
 
         window.quickWeighFromModal = function(barcode, noSj) {

@@ -54,7 +54,7 @@ class Utang {
         $stmtBayar = $pdo->query("
             SELECT 
                 COALESCE(SUM(jumlah_bayar), 0) as total_kas_keluar,
-                COUNT(id) as total_transaksi_bayar
+                COUNT(CASE WHEN status = 'AKTIF' THEN 1 END) as total_transaksi_bayar
             FROM ap_pembayaran
         ");
         $resBayar = $stmtBayar->fetch(PDO::FETCH_ASSOC);
@@ -169,7 +169,7 @@ class Utang {
     public static function getSuratJalanList(array $filters = []): array {
         $pdo = Database::getConnection();
 
-        $where = ["l.no_surat_jalan IS NOT NULL AND l.no_surat_jalan != ''"];
+        $where = ["l.no_surat_jalan IS NOT NULL AND l.no_surat_jalan != '' AND l.status <> 'VOID'"];
         $params = [];
 
         if (!empty($filters['pemasok_id'])) {
@@ -205,7 +205,7 @@ class Utang {
                 p.alamat as alamat_pemasok,
                 COUNT(l.id) as total_box,
                 COALESCE(SUM(l.berat_netto), 0) as total_kg,
-                COALESCE(SUM(l.berat_netto * COALESCE(mhp.harga_per_kg, l.harga_per_kg, 50000)), 0) as total_nilai_beli,
+                COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) as total_nilai_beli,
                 MIN(l.created_at) as tanggal_masuk,
                 DATEDIFF(CURRENT_DATE, DATE(MIN(l.created_at))) as umur_hari,
                 COALESCE((
@@ -220,7 +220,6 @@ class Utang {
                 ) as jml_kali_bayar
             FROM labels l
             JOIN pemasok p ON l.pemasok_id = p.id
-            LEFT JOIN master_harga_pemasok mhp ON mhp.pemasok_id = l.pemasok_id AND mhp.item_id = l.item_id
             WHERE {$whereSql}
             GROUP BY l.no_surat_jalan, l.pemasok_id, p.kode_pemasok, p.nama_pemasok, p.pic_nama, p.telepon, p.alamat
             ORDER BY MIN(l.created_at) DESC, l.no_surat_jalan DESC
@@ -288,15 +287,14 @@ class Utang {
 
         $stmt = $pdo->prepare("
             SELECT 
-                COALESCE(SUM(l.berat_netto * COALESCE(mhp.harga_per_kg, l.harga_per_kg, 50000)), 0) as total_nilai_beli,
+                COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) as total_nilai_beli,
                 COALESCE((
                     SELECT SUM(nominal_alokasi)
                     FROM ap_alokasi_pembayaran
                     WHERE no_surat_jalan = :sj_nomor
                 ), 0) as total_bayar
             FROM labels l
-            LEFT JOIN master_harga_pemasok mhp ON mhp.pemasok_id = l.pemasok_id AND mhp.item_id = l.item_id
-            WHERE l.no_surat_jalan = :sj
+            WHERE l.no_surat_jalan = :sj AND l.status <> 'VOID'
             GROUP BY l.no_surat_jalan
         ");
         $stmt->execute([':sj' => $noSuratJalan, ':sj_nomor' => $noSuratJalan]);
@@ -329,6 +327,32 @@ class Utang {
         }
         if (!in_array($metodeBayar, ['TUNAI', 'TRANSFER_BANK'])) {
             $metodeBayar = 'TRANSFER_BANK';
+        }
+
+        // Aturan bisnis: pemasok selalu dibayar penuh per surat jalan / faktur (tidak ada cicilan)
+        if (!empty($data['invoice_id'])) {
+            $invCek = PurchaseInvoice::findById((int)$data['invoice_id']);
+            if ($invCek && abs($jumlahBayar - (float)$invCek['sisa_utang']) > 0.01) {
+                throw new Exception("Pembayaran ke pemasok harus lunas penuh (Rp " . number_format((float)$invCek['sisa_utang'], 0, ',', '.') . ").");
+            }
+        } else {
+            $alokCek = $data['alokasi_manual'] ?? [];
+            if (!is_array($alokCek) || !$alokCek) {
+                throw new Exception("Pilih minimal satu surat jalan yang dibayar.");
+            }
+            $totalCek = 0.0;
+            foreach ($alokCek as $noSjCek => $nomCek) {
+                if ((float)$nomCek <= 0) continue;
+                $sisaCek = self::getSisaUtangSj(trim((string)$noSjCek));
+                if (abs((float)$nomCek - $sisaCek) > 0.01) {
+                    throw new Exception("Surat jalan {$noSjCek} harus dibayar lunas penuh (Rp " . number_format($sisaCek, 0, ',', '.') . ").");
+                }
+                $totalCek += $sisaCek;
+            }
+            if (abs($totalCek - $jumlahBayar) > 0.01) {
+                throw new Exception("Total pembayaran tidak sama dengan jumlah surat jalan yang dipilih.");
+            }
+            $modeAlokasi = 'MANUAL';
         }
 
         // Generate No Bukti Pengeluaran Unik: CD-YYYYMMDD-XXXX (Cash Disbursement)
@@ -366,11 +390,44 @@ class Utang {
             ]);
             $pembayaranId = (int)$pdo->lastInsertId();
 
-            // 2. Alokasikan ke Surat Jalan Penerimaan
+            // 2. Alokasikan ke Surat Jalan Penerimaan atau Purchase Invoice
             $allocatedSj = [];
             $sisaUangBayar = $jumlahBayar;
 
-            if ($modeAlokasi === 'MANUAL' && !empty($data['alokasi_manual']) && is_array($data['alokasi_manual'])) {
+            if (!empty($data['invoice_id'])) {
+                // ALOKASI SPESIFIK KE 1 PURCHASE INVOICE
+                $targetInvId = (int)$data['invoice_id'];
+                $inv = PurchaseInvoice::findById($targetInvId);
+                if ($inv) {
+                    $sisaReal = (float)$inv['sisa_utang'];
+                    $alokasiNominal = min($jumlahBayar, $sisaReal);
+                    $sisaSetelah = round($sisaReal - $alokasiNominal, 2);
+
+                    $stmtAlok = $pdo->prepare("
+                        INSERT INTO ap_alokasi_pembayaran 
+                        (pembayaran_id, no_surat_jalan, invoice_id, nominal_alokasi, sisa_utang_setelah)
+                        VALUES 
+                        (:pid, :sj, :inv_id, :nom, :sisa)
+                    ");
+                    $stmtAlok->execute([
+                        ':pid'    => $pembayaranId,
+                        ':sj'     => $inv['no_surat_jalan'] ?: '',
+                        ':inv_id' => $targetInvId,
+                        ':nom'    => $alokasiNominal,
+                        ':sisa'   => $sisaSetelah
+                    ]);
+
+                    $allocatedSj[] = [
+                        'no_surat_jalan'  => $inv['no_surat_jalan'] ?: $inv['no_invoice'],
+                        'invoice_id'      => $targetInvId,
+                        'nominal_alokasi' => $alokasiNominal,
+                        'sisa_setelah'    => $sisaSetelah
+                    ];
+
+                    $sisaUangBayar -= $alokasiNominal;
+                    PurchaseInvoice::syncPaymentStatus($targetInvId);
+                }
+            } elseif ($modeAlokasi === 'MANUAL' && !empty($data['alokasi_manual']) && is_array($data['alokasi_manual'])) {
                 // ALOKASI MANUAL
                 $totalAlokasiReq = 0.0;
                 foreach ($data['alokasi_manual'] as $noSj => $nom) {
@@ -394,18 +451,26 @@ class Utang {
                     $alokasiNominal = min($nom, $sisaReal);
                     $sisaSetelah = round($sisaReal - $alokasiNominal, 2);
 
+                    $inv = PurchaseInvoice::findBySuratJalan($noSj);
+                    $invId = $inv ? (int)$inv['id'] : null;
+
                     $stmtAlok = $pdo->prepare("
                         INSERT INTO ap_alokasi_pembayaran 
-                        (pembayaran_id, no_surat_jalan, nominal_alokasi, sisa_utang_setelah)
+                        (pembayaran_id, no_surat_jalan, invoice_id, nominal_alokasi, sisa_utang_setelah)
                         VALUES 
-                        (:pid, :sj, :nom, :sisa)
+                        (:pid, :sj, :inv_id, :nom, :sisa)
                     ");
                     $stmtAlok->execute([
-                        ':pid'  => $pembayaranId,
-                        ':sj'   => $noSj,
-                        ':nom'  => $alokasiNominal,
-                        ':sisa' => $sisaSetelah
+                        ':pid'    => $pembayaranId,
+                        ':sj'     => $noSj,
+                        ':inv_id' => $invId,
+                        ':nom'    => $alokasiNominal,
+                        ':sisa'   => $sisaSetelah
                     ]);
+
+                    if ($invId) {
+                        PurchaseInvoice::syncPaymentStatus($invId);
+                    }
 
                     $allocatedSj[] = [
                         'no_surat_jalan'  => $noSj,
@@ -426,18 +491,26 @@ class Utang {
                     $potong = min($sisaUangBayar, $sisaSj);
                     $sisaSetelah = round($sisaSj - $potong, 2);
 
+                    $inv = PurchaseInvoice::findBySuratJalan($sj['no_surat_jalan']);
+                    $invId = $inv ? (int)$inv['id'] : null;
+
                     $stmtAlok = $pdo->prepare("
                         INSERT INTO ap_alokasi_pembayaran 
-                        (pembayaran_id, no_surat_jalan, nominal_alokasi, sisa_utang_setelah)
+                        (pembayaran_id, no_surat_jalan, invoice_id, nominal_alokasi, sisa_utang_setelah)
                         VALUES 
-                        (:pid, :sj, :nom, :sisa)
+                        (:pid, :sj, :inv_id, :nom, :sisa)
                     ");
                     $stmtAlok->execute([
-                        ':pid'  => $pembayaranId,
-                        ':sj'   => $sj['no_surat_jalan'],
-                        ':nom'  => $potong,
-                        ':sisa' => $sisaSetelah
+                        ':pid'    => $pembayaranId,
+                        ':sj'     => $sj['no_surat_jalan'],
+                        ':inv_id' => $invId,
+                        ':nom'    => $potong,
+                        ':sisa'   => $sisaSetelah
                     ]);
+
+                    if ($invId) {
+                        PurchaseInvoice::syncPaymentStatus($invId);
+                    }
 
                     $allocatedSj[] = [
                         'no_surat_jalan'  => $sj['no_surat_jalan'],
@@ -448,6 +521,8 @@ class Utang {
                     $sisaUangBayar -= $potong;
                 }
             }
+
+            \App\Services\JurnalService::postApPayment((int)$pembayaranId);
 
             $pdo->commit();
 
@@ -540,6 +615,9 @@ class Utang {
                 p.bank_sumber,
                 p.no_rekening_tujuan,
                 p.jumlah_bayar,
+                p.status,
+                p.jumlah_asal,
+                p.alasan_batal,
                 p.keterangan,
                 p.created_at,
                 pm.kode_pemasok,
