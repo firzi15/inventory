@@ -755,11 +755,11 @@ require_once __DIR__ . '/layout/header.php';
         <!-- Card 3: Status Penimbangan -->
         <div class="kpi-card">
             <div class="kpi-body">
-                <div class="kpi-label">Status Penimbangan</div>
-                <div class="kpi-value"><?= number_format($gudangSummary['total_barcode']) ?> <span class="kpi-unit">Keranjang</span></div>
-                <div class="kpi-sub">100% Ditimbang di Awal</div>
+                <div class="kpi-label">Nilai Persediaan (HPP)</div>
+                <div class="kpi-value"><?= \App\Core\Helper::formatRupiah($gudangSummary['total_nilai_hpp']) ?></div>
+                <div class="kpi-sub">Harga beli saat diterima &bull; cocokkan di Saldo Stok Mitra</div>
             </div>
-            <div class="kpi-icon-pod"><i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i></div>
+            <div class="kpi-icon-pod"><i data-lucide="wallet" style="width: 18px; height: 18px;"></i></div>
         </div>
 
         <!-- Card 4: Asal Pemasok & Produk -->

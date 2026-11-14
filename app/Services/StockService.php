@@ -145,8 +145,10 @@ class StockService {
                 COUNT(l.id) AS total_label,
                 COALESCE(SUM(l.berat_netto), 0) AS total_kg,
                 AVG(l.berat_netto) AS rata_rata_kg,
-                COALESCE(mh.harga_per_kg, 0) AS harga_per_kg,
-                (COALESCE(SUM(l.berat_netto), 0) * COALESCE(mh.harga_per_kg, 0)) AS total_nilai
+                COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) / NULLIF(SUM(l.berat_netto), 0) AS harga_per_kg,
+                COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) AS total_nilai,
+                COALESCE(mh.harga_per_kg, 0) AS harga_jual_per_kg,
+                (COALESCE(SUM(l.berat_netto), 0) * COALESCE(mh.harga_per_kg, 0)) AS total_nilai_jual
             FROM labels l
             JOIN items i ON l.item_id = i.id
             JOIN jenis_barang j ON i.jenis_id = j.id
@@ -159,6 +161,59 @@ class StockService {
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Nilai persediaan dihitung dari harga beli yang dibekukan pada tiap label (bukan harga master saat ini),
+     * lalu dicocokkan dengan saldo akun 1200 Inventory di jurnal.
+     * Selisih berarti ada label atau faktur yang tidak sejalan; daftar Surat Jalan yang berbeda ikut dikembalikan.
+     */
+    public static function rekonsiliasiPersediaan(): array {
+        $db = Database::getConnection();
+        JurnalService::ensureTables();
+
+        $fisik = (float)$db->query("SELECT COALESCE(SUM(berat_netto * harga_beli_per_kg), 0) FROM labels WHERE status = 'AKTIF'")->fetchColumn();
+        $fisikMitra = (float)$db->query("SELECT COALESCE(SUM(berat_netto * harga_beli_per_kg), 0) FROM labels WHERE status = 'AKTIF' AND mitra_id IS NOT NULL")->fetchColumn();
+
+        // Mutasi akun 1200 per kelompok dokumen (jurnal pembalik ikut dihitung ke dokumen asalnya)
+        $mut = ['masuk' => 0.0, 'keluar' => 0.0, 'lain' => 0.0];
+        $q = $db->query("
+            SELECT REPLACE(j.sumber_tipe, '_BALIK', '') AS tipe, COALESCE(SUM(jb.debit - jb.kredit), 0) AS net
+            FROM jurnal_baris jb JOIN jurnal j ON j.id = jb.jurnal_id
+            WHERE jb.kode_akun = '1200'
+            GROUP BY REPLACE(j.sumber_tipe, '_BALIK', '')
+        ");
+        foreach ($q->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+            if ($r['tipe'] === 'PURCHASE_INV') $mut['masuk'] += (float)$r['net'];
+            elseif ($r['tipe'] === 'PENGELUARAN') $mut['keluar'] += (float)$r['net'];
+            else $mut['lain'] += (float)$r['net'];
+        }
+        $coa = $mut['masuk'] + $mut['keluar'] + $mut['lain'];
+
+        $sj = $db->query("
+            SELECT l.no_surat_jalan,
+                   COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) AS nilai_label,
+                   (SELECT COALESCE(SUM(pi.total_nominal), 0) FROM purchase_invoices pi
+                     WHERE pi.no_surat_jalan = l.no_surat_jalan AND pi.tipe_invoice = 'STOK' AND pi.status_bayar <> 'BATAL') AS nilai_faktur
+            FROM labels l
+            WHERE l.status <> 'VOID' AND l.no_surat_jalan IS NOT NULL AND l.no_surat_jalan <> ''
+            GROUP BY l.no_surat_jalan
+            HAVING ABS(nilai_label - nilai_faktur) > 0.5
+            ORDER BY l.no_surat_jalan
+        ")->fetchAll(\PDO::FETCH_ASSOC);
+
+        return [
+            'fisik'    => $fisik,
+            'fisik_mitra'  => $fisikMitra,
+            'fisik_gudang' => $fisik - $fisikMitra,
+            'coa'      => $coa,
+            'selisih'  => round($coa - $fisik, 2),
+            'masuk'    => $mut['masuk'],
+            'keluar'   => $mut['keluar'],
+            'lain'     => $mut['lain'],
+            'sj_beda'  => $sj,
+            'cocok'    => abs($coa - $fisik) < 0.5,
+        ];
     }
 
     /**
@@ -176,7 +231,8 @@ class StockService {
                 COUNT(DISTINCT l.item_id) AS total_sku,
                 COUNT(l.id) AS total_kemasan,
                 COALESCE(SUM(l.berat_netto), 0) AS total_kg,
-                COALESCE(SUM(l.berat_netto * COALESCE(mh.harga_per_kg, 0)), 0) AS total_nilai_stok
+                COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) AS total_nilai_stok,
+                COALESCE(SUM(l.berat_netto * COALESCE(mh.harga_per_kg, 0)), 0) AS total_nilai_jual
             FROM mitra m
             LEFT JOIN labels l ON m.id = l.mitra_id AND l.status = 'AKTIF'
             LEFT JOIN master_harga mh ON mh.mitra_id = l.mitra_id AND mh.item_id = l.item_id
@@ -504,6 +560,7 @@ class StockService {
             SELECT 
                 COUNT(l.id) AS total_barcode,
                 COALESCE(SUM(l.berat_netto), 0) AS total_kg,
+                COALESCE(SUM(l.berat_netto * l.harga_beli_per_kg), 0) AS total_nilai_hpp,
                 COUNT(DISTINCT l.pemasok_id) AS total_pemasok,
                 COUNT(DISTINCT l.item_id) AS total_item,
                 SUM(CASE WHEN l.berat_netto > 0 THEN 1 ELSE 0 END) AS sudah_ditimbang,
@@ -528,6 +585,7 @@ class StockService {
         return [
             'total_barcode'        => $totalBarcode,
             'total_kg'             => $totalKg,
+            'total_nilai_hpp'      => (float)($row['total_nilai_hpp'] ?? 0),
             'total_pemasok'        => (int)($row['total_pemasok'] ?? 0),
             'total_item'           => (int)($row['total_item'] ?? 0),
             'sudah_ditimbang'      => (int)($row['sudah_ditimbang'] ?? 0),

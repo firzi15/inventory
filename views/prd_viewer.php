@@ -202,7 +202,7 @@ require_once __DIR__ . '/layout/header.php';
     <tr><th>Menu</th><th>Fungsi</th></tr>
     <tr><td>Stok Barang Gudang &gt; Sisa Stok Gudang</td><td>Barang yang masih ada di gudang, difilter per tanggal, pemasok, dan artikel.</td></tr>
     <tr><td>Stok Barang Gudang &gt; Stock Opname</td><td>Mencocokkan barang fisik dengan data sistem. Kemasan yang belum di-scan berstatus Menunggu Scan Barcode.</td></tr>
-    <tr><td>Saldo Stok Gudang</td><td>Rincian stok per mitra, matriks per kategori, dan valuasi. Nilai di sini adalah estimasi memakai harga master, bukan nilai buku. Nilai buku ada di COA akun 1200.</td></tr>
+    <tr><td>Saldo Stok Gudang</td><td>Rincian stok per mitra, matriks per kategori, dan nilai persediaan. Nilai dihitung dari harga beli yang dibekukan saat barang diterima (HPP), jadi tidak ikut berubah bila harga master diubah; estimasi nilai jual ditampilkan terpisah. Panel Kecocokan dengan Jurnal membandingkan nilai barang aktif dengan saldo akun 1200 dan menampilkan Surat Jalan yang nilainya tidak sama dengan fakturnya. Kartu Nilai Persediaan di Penerimaan &amp; Timbang menunjukkan nilai barang yang masih di gudang utama.</td></tr>
 </table>
 
 <h2 id="pengeluaran">Pengeluaran ke mitra</h2>

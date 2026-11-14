@@ -51,7 +51,7 @@ $pageInfoMap = [
     'sales_book'           => ['title' => 'Sales Book', 'desc' => 'Riwayat harga jual per artikel ke mitra'],
     'coa'                  => ['title' => 'COA', 'desc' => 'Daftar akun dan saldo dari data sumber'],
     'profit_loss'          => ['title' => 'Laba Rugi', 'desc' => 'Penjualan, HPP, dan biaya dari jurnal'],
-    'stok_mitra'           => ['title' => 'Saldo Stok Mitra', 'desc' => 'Rekap stok per mitra dan estimasi nilai persediaan'],
+    'stok_mitra'           => ['title' => 'Saldo Stok Mitra', 'desc' => 'Stok per mitra dan nilai persediaan sebesar harga beli, dicocokkan dengan jurnal'],
     'stok_opname'          => ['title' => 'Stock Opname Fisik', 'desc' => 'Pencocokan stok fisik di gudang dengan data sistem'],
     'master'               => ['title' => 'Master Data', 'desc' => 'Kelola pemasok, harga pemasok, harga mitra, produk, dan API'],
     'master_mitra'         => ['title' => 'Master Mitra', 'desc' => 'Kelola data 7 perusahaan mitra bisnis'],

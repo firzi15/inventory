@@ -30,7 +30,9 @@ $mitraSummaryMap = [];
 $grandTotalKg = 0;
 $grandTotalLabel = 0;
 $grandTotalValuasi = 0;
+$grandTotalJual = 0;
 $mitraWithStockCount = 0;
+$rekonPersediaan = StockService::rekonsiliasiPersediaan();
 
 foreach ($mitraSummaryList as $ms) {
     $mId = (int)$ms['id'];
@@ -38,6 +40,7 @@ foreach ($mitraSummaryList as $ms) {
     $grandTotalKg += (float)$ms['total_kg'];
     $grandTotalLabel += (int)$ms['total_kemasan'];
     $grandTotalValuasi += (float)$ms['total_nilai_stok'];
+    $grandTotalJual += (float)$ms['total_nilai_jual'];
     if ((float)$ms['total_kg'] > 0) {
         $mitraWithStockCount++;
     }
@@ -111,7 +114,7 @@ require_once __DIR__ . '/layout/header.php';
 <div class="page-header">
     <div>
         <h1 class="page-title">Saldo Stok Mitra Bisnis</h1>
-        <p class="page-subtitle">Segregasi stok catch-weight fisik terpilah per mitra dengan valuasi finansial otomatis sesuai Master Harga Mitra</p>
+        <p class="page-subtitle">Stok catch-weight fisik per mitra, dinilai dengan harga beli saat barang diterima dan dicocokkan dengan akun Inventory di jurnal</p>
     </div>
 </div>
 
@@ -128,9 +131,9 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="kpi-card">
         <div class="kpi-body">
-            <div class="kpi-label">Total Valuasi Stok</div>
+            <div class="kpi-label">Nilai Stok di Mitra (HPP)</div>
             <div class="kpi-value"><?= Helper::formatRupiah($grandTotalValuasi) ?></div>
-            <div class="kpi-sub">Sesuai Master Harga Mitra</div>
+            <div class="kpi-sub">Harga beli saat barang diterima &bull; Estimasi jual <?= Helper::formatRupiah($grandTotalJual) ?></div>
         </div>
         <div class="kpi-icon-pod"><i data-lucide="wallet" style="width: 18px; height: 18px;"></i></div>
     </div>
@@ -146,12 +149,53 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="kpi-card">
         <div class="kpi-body">
-            <div class="kpi-label">Rata-rata Nilai per Kg</div>
+            <div class="kpi-label">Rata-rata HPP per Kg</div>
             <div class="kpi-value"><?= Helper::formatRupiah($avgValuasiPerKg) ?><span class="kpi-unit">/kg</span></div>
             <div class="kpi-sub">Dihitung tertimbang</div>
         </div>
         <div class="kpi-icon-pod"><i data-lucide="tag" style="width: 18px; height: 18px;"></i></div>
     </div>
+</div>
+
+<!-- Kecocokan nilai persediaan dengan jurnal (akun 1200 Inventory) -->
+<div class="card" style="padding: 16px 20px; margin-bottom: 22px; border-left: 4px solid <?= $rekonPersediaan['cocok'] ? '#16a34a' : '#dc2626' ?>;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+        <div style="font-weight: 800; font-size: 14px;">Kecocokan dengan Jurnal (akun 1200 Inventory)</div>
+        <span class="badge" style="<?= $rekonPersediaan['cocok'] ? 'background: #dcfce7; color: #15803d;' : 'background: #fee2e2; color: #b91c1c;' ?> font-weight: 800;">
+            <?= $rekonPersediaan['cocok'] ? 'Cocok' : 'Selisih ' . Helper::formatRupiah(abs($rekonPersediaan['selisih'])) ?>
+        </span>
+    </div>
+    <div class="grid grid-cols-4" style="gap: 14px; font-size: 13px;">
+        <div><div style="color: var(--text-muted); font-size: 11.5px;">Nilai barang aktif (HPP)</div><strong><?= Helper::formatRupiah($rekonPersediaan['fisik']) ?></strong>
+            <div style="font-size: 11px; color: var(--text-muted);">gudang utama <?= Helper::formatRupiah($rekonPersediaan['fisik_gudang']) ?> &bull; di mitra <?= Helper::formatRupiah($rekonPersediaan['fisik_mitra']) ?></div></div>
+        <div><div style="color: var(--text-muted); font-size: 11.5px;">Saldo Inventory di jurnal</div><strong><?= Helper::formatRupiah($rekonPersediaan['coa']) ?></strong></div>
+        <div><div style="color: var(--text-muted); font-size: 11.5px;">Masuk dari faktur penerimaan</div><strong><?= Helper::formatRupiah($rekonPersediaan['masuk']) ?></strong></div>
+        <div><div style="color: var(--text-muted); font-size: 11.5px;">Keluar (HPP pengeluaran)</div><strong><?= Helper::formatRupiah(abs($rekonPersediaan['keluar'])) ?></strong></div>
+    </div>
+    <?php if (!$rekonPersediaan['cocok']): ?>
+        <div style="margin-top: 12px; font-size: 12.5px; color: #b91c1c;">
+            Nilai barang di gudang berbeda dari saldo jurnal.
+            <?php if (abs($rekonPersediaan['lain']) > 0.5): ?>Ada mutasi akun 1200 dari dokumen lain sebesar <?= Helper::formatRupiah($rekonPersediaan['lain']) ?>.<?php endif; ?>
+            <?php if ($rekonPersediaan['sj_beda']): ?>Surat Jalan berikut nilai barangnya tidak sama dengan fakturnya:<?php endif; ?>
+        </div>
+        <?php if ($rekonPersediaan['sj_beda']): ?>
+        <div class="table-responsive" style="margin-top: 8px;">
+            <table class="table-custom" data-no-tools>
+                <thead><tr><th>Surat Jalan</th><th style="text-align: right;">Nilai Barang</th><th style="text-align: right;">Nilai Faktur</th><th style="text-align: right;">Selisih</th></tr></thead>
+                <tbody>
+                <?php foreach ($rekonPersediaan['sj_beda'] as $b): ?>
+                    <tr>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;"><?= htmlspecialchars($b['no_surat_jalan']) ?></td>
+                        <td style="text-align: right;"><?= Helper::formatRupiah($b['nilai_label']) ?></td>
+                        <td style="text-align: right;"><?= Helper::formatRupiah($b['nilai_faktur']) ?></td>
+                        <td style="text-align: right; color: #b91c1c;"><?= Helper::formatRupiah($b['nilai_label'] - $b['nilai_faktur']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
+    <?php endif; ?>
 </div>
 
 <?php if ($activeTab === 'ringkasan' || $activeTab === 'semua'): ?>
@@ -161,7 +205,7 @@ require_once __DIR__ . '/layout/header.php';
         <div>
             <h2 style="font-size: 16px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0;">
                 <i data-lucide="layout-grid" style="width: 20px; height: 20px; color: var(--primary);"></i>
-                <span>Ringkasan Stok Data & Nilai Master Harga per Mitra</span>
+                <span>Ringkasan Stok dan Nilai Persediaan per Mitra</span>
             </h2>
             <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px;">
                 Pilih kartu mitra untuk memfilter rincian produk fisik dan harga master yang berlaku
@@ -214,7 +258,7 @@ require_once __DIR__ . '/layout/header.php';
                 <!-- Nilai Valuasi Finansial & Bobot Fisik -->
                 <div style="background: rgba(0, 0, 0, 0.025); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px;">Nilai Stok Master Harga</span>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px;">Nilai Persediaan (HPP)</span>
                         <span style="font-size: 11px; font-weight: 800; color: <?= htmlspecialchars($warna) ?>;"><?= $pctMitra ?>%</span>
                     </div>
                     <div style="font-size: 18px; font-weight: 900; color: <?= $hasStock ? '#059669' : 'var(--text-muted)' ?>; margin-bottom: 8px;">
@@ -432,8 +476,8 @@ require_once __DIR__ . '/layout/header.php';
                     <th style="text-align: right; min-width: 120px;">Jumlah Kemasan</th>
                     <th style="text-align: right; min-width: 130px;">Rata-rata/Pcs</th>
                     <th style="text-align: right; min-width: 140px; background: rgba(2, 132, 199, 0.05);">Total Netto (Kg)</th>
-                    <th style="text-align: right; min-width: 160px; background: rgba(16, 185, 129, 0.08);">Harga Master Mitra</th>
-                    <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.16); color: #047857; font-weight: 800;">Total Nilai Stok (Rp)</th>
+                    <th style="text-align: right; min-width: 160px; background: rgba(16, 185, 129, 0.08);">HPP Rata-rata</th>
+                    <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.16); color: #047857; font-weight: 800;">Nilai Persediaan (Rp)</th>
                 </tr>
             </thead>
             <tbody id="detailTableBody">
@@ -494,7 +538,7 @@ require_once __DIR__ . '/layout/header.php';
                                     <?= Helper::formatRupiah($hargaPerKg) ?> <span style="font-size: 11px; font-weight: 600; color: var(--text-muted);">/kg</span>
                                 </div>
                                 <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">
-                                    Master <?= htmlspecialchars($row['kode_mitra']) ?>
+                                    harga beli terbobot
                                 </div>
                             <?php else: ?>
                                 <span class="badge badge-warning" style="font-size: 10.5px;" title="Harga belum diset di menu Master Harga">
@@ -505,6 +549,9 @@ require_once __DIR__ . '/layout/header.php';
                         <!-- KOLOM TOTAL NILAI STOK -->
                         <td style="text-align: right; font-weight: 900; font-size: 15px; color: #047857; background: rgba(16, 185, 129, 0.1);">
                             <?= Helper::formatRupiah($totalNilai) ?>
+                            <?php if ((float)($row['total_nilai_jual'] ?? 0) > 0): ?>
+                                <div style="font-size: 10.5px; font-weight: 600; color: var(--text-muted);">estimasi jual <?= Helper::formatRupiah($row['total_nilai_jual']) ?></div>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -523,7 +570,7 @@ require_once __DIR__ . '/layout/header.php';
                         <?= Helper::formatKg($subtotalDetailKg) ?>
                     </td>
                     <td style="text-align: right; font-size: 11.5px; color: var(--text-muted);">
-                        Nilai Valuasi:
+                        Nilai Persediaan:
                     </td>
                     <td style="text-align: right; font-size: 16px; font-weight: 900; color: #047857; background: rgba(16, 185, 129, 0.2);">
                         <?= Helper::formatRupiah($subtotalDetailNilai) ?>
