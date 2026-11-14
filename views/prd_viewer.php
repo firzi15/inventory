@@ -247,11 +247,11 @@ require_once __DIR__ . '/layout/header.php';
 <h2 id="ap-aging">AP Aging</h2>
 <p>Menu: <span class="pj-menu">AP Aging</span>. Hanya laporan, tidak ada input.</p>
 <ul>
-    <li><strong>Ringkasan per Pemasok:</strong> total tagihan, dibayar, sisa utang, dan pembagiannya menurut jatuh tempo: belum jatuh tempo, telat 1-7, 8-14, 15-30, dan lebih dari 30 hari.</li>
-    <li><strong>Surat Jalan Masuk:</strong> tiap Surat Jalan dengan tanggal jatuh tempo dan keterangan sisa hari atau hari terlambat.</li>
+    <li><strong>Ringkasan per Pemasok:</strong> jumlah Surat Jalan yang masih terbuka, total tagihan, total dibayar, dan sisa utang tiap pemasok. Pemasok dibayar penuh per Surat Jalan, jadi tidak ada pembagian umur utang.</li>
+    <li><strong>Surat Jalan Masuk:</strong> tiap Surat Jalan dengan total tagihan, dibayar, sisa utang, dan tanggal jatuh tempo fakturnya.</li>
     <li><strong>Riwayat Pembayaran:</strong> semua pembayaran ke pemasok. Pembayaran yang dibatalkan ditandai dan nominal aslinya dicoret.</li>
 </ul>
-<p>Semua input pembayaran dilakukan dari Purchase Invoice. Umur dihitung dari jatuh tempo, bukan dari tanggal barang masuk. Dokumen yang tidak punya jatuh tempo dianggap jatuh tempo di tanggal dokumennya.</p>
+<p>Semua input pembayaran dilakukan dari Purchase Invoice. Pembagian umur menurut jatuh tempo (belum jatuh tempo, telat 1-7, 8-14, 15-30, lebih dari 30 hari) hanya ada di AR Aging untuk piutang mitra. Dokumen yang tidak punya jatuh tempo dianggap jatuh tempo di tanggal dokumennya.</p>
 
 <h2 id="sales-invoice">Sales Invoice</h2>
 <p>Menu: <span class="pj-menu">Sales Invoice &gt; Daftar Nota</span>. Nota terbit otomatis dari Pengeluaran.</p>

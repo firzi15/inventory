@@ -32,6 +32,8 @@ $agingPemasok = Utang::getAgingSummaryPerPemasok();
 // Satu sumber angka: utang stok dari surat jalan + faktur operasional (faktur STOK hanya cerminan surat jalan)
 $totalTagihan = (float)$kpi['total_utang_terbit'] + (float)$kpiInvoice['total_operasional'];
 $sisaUtang    = (float)$kpi['sisa_utang_aktif'] + (float)$kpiInvoice['sisa_operasional'];
+$sjBelumLunas = array_sum(array_column($agingPemasok, 'sj_terbuka'));
+$pemasokBerutang = count(array_filter($agingPemasok, fn($x) => (float)$x['sisa_utang'] > 0.01));
 
 // Filter Umum (Pemasok, Status, Keyword, Tipe)
 $selectedPemasokId = (int)($_GET['pemasok_id'] ?? 0);
@@ -73,7 +75,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="page-header no-print">
         <div>
             <h1 class="page-title"><?= $activeTab === 'invoices' ? 'Purchase Invoice' : 'AP Aging' ?></h1>
-            <p class="page-subtitle"><?= $activeTab === 'invoices' ? 'Faktur pembelian dan biaya operasional' : 'Umur utang dan pembayaran ke pemasok' ?></p>
+            <p class="page-subtitle"><?= $activeTab === 'invoices' ? 'Faktur pembelian dan biaya operasional' : 'Utang dan pembayaran ke pemasok' ?></p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <?php if ($activeTab === 'invoices'): ?>
@@ -113,19 +115,19 @@ require_once __DIR__ . '/layout/header.php';
             <div class="kpi-body">
                 <div class="kpi-label">Sisa Utang</div>
                 <div class="kpi-value"><?= Helper::formatRupiah($sisaUtang) ?></div>
-                <div class="kpi-sub">Belum jatuh tempo: <?= Helper::formatRupiah($kpi['aging_belum']) ?></div>
+                <div class="kpi-sub"><?= number_format($sjBelumLunas) ?> surat jalan belum lunas</div>
             </div>
             <div class="kpi-icon-pod"><i data-lucide="hourglass" style="width: 18px; height: 18px;"></i></div>
         </div>
 
-        <!-- Card 4: Utang Lewat Tempo (>14 Hari) -->
+        <!-- Card 4: Pemasok yang masih berutang -->
         <div class="kpi-card">
             <div class="kpi-body">
-                <div class="kpi-label">Lewat Jatuh Tempo</div>
-                <div class="kpi-value"><?= Helper::formatRupiah($kpi['total_overdue']) ?></div>
-                <div class="kpi-sub">Telat &gt;30 hr: <?= Helper::formatRupiah($kpi['aging_gt_30']) ?></div>
+                <div class="kpi-label">Pemasok Berutang</div>
+                <div class="kpi-value"><?= number_format($pemasokBerutang) ?></div>
+                <div class="kpi-sub">dari <?= number_format(count($agingPemasok)) ?> pemasok aktif</div>
             </div>
-            <div class="kpi-icon-pod"><i data-lucide="alert-circle" style="width: 18px; height: 18px;"></i></div>
+            <div class="kpi-icon-pod"><i data-lucide="users" style="width: 18px; height: 18px;"></i></div>
         </div>
     </div>
 
@@ -341,7 +343,7 @@ require_once __DIR__ . '/layout/header.php';
     <?php endif; ?>
 
     <!-- ========================================================================= -->
-    <!-- TAB 2: MATRIKS UMUR UTANG PER PEMASOK                                    -->
+    <!-- TAB 2: RINGKASAN UTANG PER PEMASOK                                    -->
     <!-- ========================================================================= -->
     <?php if ($activeTab === 'matriks'): ?>
         <div class="card" style="padding: 20px;">
@@ -355,11 +357,6 @@ require_once __DIR__ . '/layout/header.php';
                             <th style="text-align: right; min-width: 130px;">Total Tagihan</th>
                             <th style="text-align: right; min-width: 130px;">Total Dibayar</th>
                             <th style="text-align: right; min-width: 135px; background: #fffbeb;">Sisa Utang</th>
-                            <th style="text-align: right; min-width: 120px; color: #0369a1;">Belum Jatuh Tempo</th>
-                            <th style="text-align: right; min-width: 110px; color: #15803d;">Telat 1 - 7 Hari</th>
-                            <th style="text-align: right; min-width: 110px; color: #b45309;">Telat 8 - 14 Hari</th>
-                            <th style="text-align: right; min-width: 110px; color: #c2410c;">Telat 15 - 30 Hari</th>
-                            <th style="text-align: right; min-width: 110px; color: #b91c1c;">Telat &gt; 30 Hari</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -368,21 +365,11 @@ require_once __DIR__ . '/layout/header.php';
                         $totTagihan = 0.0;
                         $totBayar   = 0.0;
                         $totSisa    = 0.0;
-                        $totBelum   = 0.0;
-                        $tot0to7    = 0.0;
-                        $tot8to14   = 0.0;
-                        $tot15to30  = 0.0;
-                        $totGt30    = 0.0;
 
                         foreach ($agingPemasok as $p): 
                             $totTagihan += $p['total_tagihan'];
                             $totBayar   += $p['total_dibayar'];
                             $totSisa    += $p['sisa_utang'];
-                            $totBelum   += $p['aging_belum'];
-                            $tot0to7    += $p['aging_1_7'];
-                            $tot8to14   += $p['aging_8_14'];
-                            $tot15to30  += $p['aging_15_30'];
-                            $totGt30    += $p['aging_gt_30'];
                         ?>
                         <tr>
                             <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
@@ -408,21 +395,6 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; background: #fffbeb; color: <?= $p['sisa_utang'] > 0 ? '#b45309' : '#047857' ?>;">
                                 <?= Helper::formatRupiah($p['sisa_utang']) ?>
                             </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: <?= $p['aging_belum'] > 0 ? '#0369a1' : '#94a3b8' ?>;">
-                                <?= $p['aging_belum'] > 0 ? Helper::formatRupiah($p['aging_belum']) : '-' ?>
-                            </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: <?= $p['aging_1_7'] > 0 ? '#15803d' : '#94a3b8' ?>;">
-                                <?= $p['aging_1_7'] > 0 ? Helper::formatRupiah($p['aging_1_7']) : '-' ?>
-                            </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: <?= $p['aging_8_14'] > 0 ? '#b45309' : '#94a3b8' ?>;">
-                                <?= $p['aging_8_14'] > 0 ? Helper::formatRupiah($p['aging_8_14']) : '-' ?>
-                            </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: <?= $p['aging_15_30'] > 0 ? '#c2410c' : '#94a3b8' ?>;">
-                                <?= $p['aging_15_30'] > 0 ? Helper::formatRupiah($p['aging_15_30']) : '-' ?>
-                            </td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: <?= $p['aging_gt_30'] > 0 ? '800' : 'normal' ?>; color: <?= $p['aging_gt_30'] > 0 ? '#b91c1c' : '#94a3b8' ?>;">
-                                <?= $p['aging_gt_30'] > 0 ? Helper::formatRupiah($p['aging_gt_30']) : '-' ?>
-                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -432,11 +404,6 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($totTagihan) ?></td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #047857;"><?= Helper::formatRupiah($totBayar) ?></td>
                             <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: #fef3c7; color: #b45309;"><?= Helper::formatRupiah($totSisa) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #0369a1;"><?= Helper::formatRupiah($totBelum) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #15803d;"><?= Helper::formatRupiah($tot0to7) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b45309;"><?= Helper::formatRupiah($tot8to14) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #c2410c;"><?= Helper::formatRupiah($tot15to30) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: #b91c1c;"><?= Helper::formatRupiah($totGt30) ?></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -520,7 +487,6 @@ require_once __DIR__ . '/layout/header.php';
                             <?php 
                             $no = 1;
                             foreach ($sjList as $sj): 
-                                $telat = (int)$sj['hari_telat'];
                                 $bolehTempo = in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
                             ?>
                             <tr>
@@ -554,9 +520,8 @@ require_once __DIR__ . '/layout/header.php';
                                     <?= Helper::formatRupiah($sj['sisa_utang']) ?>
                                 </td>
                                 <td style="text-align: center;">
-                                    <?php if ($sj['sisa_utang'] > 0): [$stLbl, $stCss] = \App\Services\AgingService::status($telat); ?>
+                                    <?php if ($sj['sisa_utang'] > 0): ?>
                                         <div style="font-size: 12px; font-weight: 700;"><?= date('d/m/Y', strtotime($sj['jatuh_tempo'])) ?></div>
-                                        <span class="badge" style="<?= $stCss ?> font-size: 10.5px; font-weight: 700;"><?= $stLbl ?></span>
                                         <?php if ($bolehTempo && !empty($sj['invoice_id'])): ?>
                                             <div class="no-print"><a href="javascript:void(0)" style="font-size: 11px;" onclick='ubahJatuhTempo("FAKTUR", <?= (int)$sj['invoice_id'] ?>, <?= json_encode(substr($sj['jatuh_tempo'], 0, 10)) ?>, <?= json_encode($sj['no_surat_jalan']) ?>)'>ubah</a></div>
                                         <?php endif; ?>
@@ -1265,7 +1230,6 @@ function renderUnpaidTable(list) {
                     <th style="padding: 6px 8px; width: 34px;"><input type="checkbox" id="chkPayAll" onchange="togglePayAll(this.checked)"></th>
                     <th style="padding: 6px 8px;">No. SJ</th>
                     <th style="padding: 6px 8px;">Tgl Terima</th>
-                    <th style="text-align: center; padding: 6px 8px; width: 80px;">Umur</th>
                     <th style="text-align: right; padding: 6px 8px;">Dibayar</th>
                 </tr>
             </thead>
@@ -1281,7 +1245,6 @@ function renderUnpaidTable(list) {
                 </td>
                 <td style="padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">${sj.no_surat_jalan}</td>
                 <td style="padding: 6px 8px; color: var(--text-muted);">${sj.tanggal_masuk.substring(0, 10)}</td>
-                <td style="text-align: center; padding: 6px 8px; font-weight: 700; color: ${sj.umur_hari > 14 ? '#b91c1c' : '#15803d'};">${sj.umur_hari} Hari</td>
                 <td style="text-align: right; padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #b45309;">Rp ${new Intl.NumberFormat('id-ID').format(sj.sisa_utang)}</td>
             </tr>`;
     });

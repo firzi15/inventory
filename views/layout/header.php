@@ -43,7 +43,7 @@ $pageInfoMap = [
     'timbang_cetak'        => ['title' => 'Penerimaan Barang', 'desc' => 'Buat barcode keranjang dan timbang barang masuk dari pemasok'],
     'pengeluaran'          => ['title' => 'Pengeluaran Barang ke Mitra', 'desc' => 'Keluarkan stok fisik pemasok dari gudang ke mitra bisnis'],
     'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
-    'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
+    'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Utang surat jalan masuk dan pembayaran kas keluar ke pemasok'],
     'tutup_periode'        => ['title' => 'Tutup Harian', 'desc' => 'Kunci angka tiap hari setelah dicek; hari yang ditutup tidak menerima transaksi atau pembatalan'],
     'surat_jalan'          => ['title' => 'Surat Jalan', 'desc' => 'Cetak surat jalan rangkap 3 tanpa harga dan versi internal dengan harga'],
     'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
@@ -447,7 +447,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             </div>
                             <div class="nav-item-text">
                                 <span class="nav-item-title" style="font-weight: 700;">AP Aging</span>
-                                <span class="nav-item-desc">Umur utang & bayar pemasok</span>
+                                <span class="nav-item-desc">Utang & bayar pemasok</span>
                             </div>
                             <div class="nav-item-chevron">
                                 <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
