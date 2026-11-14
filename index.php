@@ -473,6 +473,27 @@ if ($action) {
                 header('Location: index.php?page=master&tab=vendor_non_pemasok&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
                 exit;
 
+            // G6b. Master Rekening Bank: simpan / aktif-nonaktif / hapus
+            case 'save_rekening_bank':
+            case 'toggle_rekening_bank':
+            case 'delete_rekening_bank':
+                try {
+                    if ($action === 'save_rekening_bank') {
+                        if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                        $msg = \App\Models\RekeningBank::simpan($_POST);
+                    } elseif ($action === 'toggle_rekening_bank') {
+                        $msg = \App\Models\RekeningBank::ubahStatus((int)($_GET['id'] ?? 0));
+                    } else {
+                        $msg = \App\Models\RekeningBank::hapus((int)($_GET['id'] ?? 0));
+                    }
+                    $msgType = 'success';
+                } catch (\Exception $e) {
+                    $msg = $e->getMessage();
+                    $msgType = 'danger';
+                }
+                header('Location: index.php?page=master&tab=rekening_bank&msg=' . urlencode($msg) . '&msg_type=' . $msgType);
+                exit;
+
             // G6c. Master COA: simpan / aktif-nonaktif / hapus
             case 'save_coa':
             case 'toggle_coa':
@@ -814,16 +835,20 @@ if ($action) {
             case 'batal_purchase_invoice':
             case 'batal_bayar_ap':
             case 'batal_setoran_ar':
+            case 'batal_kas':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $roleBatal = strtoupper($_SESSION['user_login']['role'] ?? '');
                 $boleh = ['ADMIN', 'SUPERVISOR'];
-                if (in_array($action, ['batal_purchase_invoice', 'batal_bayar_ap', 'batal_setoran_ar'], true)) $boleh[] = 'FINANCE';
+                if (in_array($action, ['batal_purchase_invoice', 'batal_bayar_ap', 'batal_setoran_ar', 'batal_kas'], true)) $boleh[] = 'FINANCE';
                 if (!in_array($roleBatal, $boleh, true)) {
                     throw new Exception("Akun Anda tidak memiliki izin untuk membatalkan dokumen ini.");
                 }
                 $uidBatal = (int)($_SESSION['user_login']['id'] ?? 0);
                 $alasanBatal = trim($_POST['alasan'] ?? '');
-                if ($action === 'batal_pengeluaran') {
+                if ($action === 'batal_kas') {
+                    $hasilBatal = \App\Services\PembatalanService::batalKas((int)($_POST['id'] ?? 0), $alasanBatal, $uidBatal);
+                    $pesanBatal = "Transaksi kas {$hasilBatal['no_bukti']} dibatalkan dan saldo kas dikoreksi.";
+                } elseif ($action === 'batal_pengeluaran') {
                     $hasilBatal = \App\Services\PembatalanService::batalPengeluaran((int)($_POST['id'] ?? 0), $alasanBatal, $uidBatal);
                     $pesanBatal = "Surat jalan keluar {$hasilBatal['no_transaksi']} dibatalkan. Barang kembali ke stok gudang dan piutang mitra dikoreksi.";
                 } elseif ($action === 'batal_penerimaan') {
@@ -1116,6 +1141,18 @@ if ($action) {
                 ]);
                 exit;
 
+            // K. Transaksi Kas & Bank: catat biaya / setoran modal / prive (ADMIN, SUPERVISOR, FINANCE)
+            case 'simpan_kas':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $roleKas = strtoupper($_SESSION['user_login']['role'] ?? '');
+                if (!in_array($roleKas, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)) {
+                    Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin, Supervisor, atau Finance yang dapat mencatat transaksi kas.'], 403);
+                    exit;
+                }
+                $hasilKas = \App\Services\KasService::catat($_POST, (int)($_SESSION['user_login']['id'] ?? 0));
+                Helper::jsonResponse(['success' => true, 'message' => "Transaksi {$hasilKas['no_bukti']} tersimpan dan jurnalnya terbit."]);
+                exit;
+
             // Z. Rekonsiliasi Bank Harian: total setoran satu hari dicocokkan dengan uang masuk di bank + lampiran screenshot
             case 'simpan_rekonsiliasi_harian':
             case 'buka_rekonsiliasi_harian':
@@ -1222,6 +1259,7 @@ $allowedPages = [
     'ar_aging'                     => __DIR__ . '/views/ar_aging.php',
     'ap_aging'                     => __DIR__ . '/views/ap_aging.php',
     'rekonsiliasi_bank'            => __DIR__ . '/views/rekonsiliasi_bank.php',
+    'kas_bank'                     => __DIR__ . '/views/kas_bank.php',
     'profit_loss'                  => __DIR__ . '/views/profit_loss.php',
     'coa'                          => __DIR__ . '/views/coa.php',
     'purchase_book'                => __DIR__ . '/views/book.php',

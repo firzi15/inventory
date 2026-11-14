@@ -28,6 +28,7 @@ if ($activeTab === 'profit_loss') {
 
 $pemasokList = Pemasok::getAll();
 $vendorNonPemasokList = VendorNonPemasok::getAll();
+$rekeningList = $activeTab === 'rekening_bank' ? \App\Models\RekeningBank::getAll() : [];
 $tipeBiayaList = TipeBiaya::getAll();
 $coaList = TipeBiaya::getCoaAccounts();
 $coaMaster = \App\Services\CoaService::accounts();
@@ -84,6 +85,8 @@ require_once __DIR__ . '/layout/header.php';
         <div style="display: flex; gap: 10px; align-items: center;">
             <?php if ($activeTab === 'pemasok'): ?>
                 <?php $eksporTabel = 'tableMasterPemasok'; $eksporNama = 'Master_Pemasok'; include __DIR__ . '/layout/ekspor.php'; ?>
+            <?php elseif ($activeTab === 'rekening_bank'): ?>
+                <?php $eksporTabel = 'tableMasterRekeningBank'; $eksporNama = 'Master_Rekening_Bank'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'vendor_non_pemasok'): ?>
                 <?php $eksporTabel = 'tableMasterVendorNonPemasok'; $eksporNama = 'Master_Vendor_Non_Pemasok'; include __DIR__ . '/layout/ekspor.php'; ?>
             <?php elseif ($activeTab === 'log_harga'):
@@ -184,6 +187,67 @@ require_once __DIR__ . '/layout/header.php';
                         <td style="font-size: 12.5px; color: var(--text-muted);"><?= htmlspecialchars((string)($lg['alasan'] ?? '')) ?></td>
                     </tr>
                 <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<?php elseif ($activeTab === 'rekening_bank'): ?>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h2 class="card-title">
+                <i data-lucide="landmark" style="width: 20px; height: 20px; color: #0ea5e9;"></i>
+                <span>Rekening Bank</span>
+            </h2>
+            <div class="card-description">Rekening bank perusahaan. Tampil di Transaksi Kas &amp; Bank dan Rekonsiliasi Bank.</div>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openModalRekening()">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+            <span>Tambah Rekening</span>
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table-custom" id="tableMasterRekeningBank">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Kode</th>
+                    <th>Bank</th>
+                    <th>Nomor Rekening</th>
+                    <th>Atas Nama</th>
+                    <th>Keterangan</th>
+                    <th>Status</th>
+                    <th style="text-align: center; width: 150px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($rekeningList)): ?>
+                <tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">Belum ada rekening. Klik "Tambah Rekening".</td></tr>
+                <?php else: foreach ($rekeningList as $rk): ?>
+                <tr>
+                    <td><span class="badge" style="background: rgba(14, 165, 233, 0.12); color: #0369a1; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= htmlspecialchars($rk['kode_rekening']) ?></span></td>
+                    <td><strong><?= htmlspecialchars($rk['nama_bank']) ?></strong></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;"><?= htmlspecialchars($rk['no_rekening']) ?></td>
+                    <td><?= htmlspecialchars($rk['atas_nama'] ?: '-') ?></td>
+                    <td style="font-size: 12.5px;"><?= htmlspecialchars($rk['keterangan'] ?: '-') ?></td>
+                    <td>
+                        <a href="index.php?action=toggle_rekening_bank&id=<?= (int)$rk['id'] ?>" class="btn btn-sm"
+                           style="<?= $rk['is_active'] ? 'background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0;' : 'background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;' ?> border-radius: 20px; font-weight: 800; font-size: 11.5px; padding: 4px 12px; text-decoration: none;"
+                           title="Klik untuk mengubah status"><?= $rk['is_active'] ? 'Aktif' : 'Nonaktif' ?></a>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; justify-content: center; gap: 6px;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick='editRekening(<?= json_encode($rk) ?>)'>
+                                <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i><span>Edit</span>
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"
+                                    onclick='hapusMaster("delete_rekening_bank", <?= (int)$rk['id'] ?>, <?= json_encode('rekening ' . $rk['kode_rekening']) ?>)' title="Hapus">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; endif; ?>
             </tbody>
         </table>
     </div>
@@ -1490,6 +1554,38 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <!-- MODAL TAMBAH / EDIT AKUN COA                                              -->
 <!-- ========================================================================= -->
+<div id="modalRekening" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); width: 100%; max-width: 480px; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="modalRekeningTitle" style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0;">Tambah Rekening</h3>
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('modalRekening').style.display='none'">&#10005;</button>
+        </div>
+        <form action="index.php?action=save_rekening_bank" method="POST" style="padding: 20px;">
+            <input type="hidden" name="id" id="rek_id" value="">
+            <div class="form-group">
+                <label class="form-label">Nama Bank <span style="color:red;">*</span></label>
+                <input type="text" name="nama_bank" id="rek_bank" class="form-control" required placeholder="Contoh: BCA">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nomor Rekening <span style="color:red;">*</span></label>
+                <input type="text" name="no_rekening" id="rek_no" class="form-control" required inputmode="numeric" style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Atas Nama</label>
+                <input type="text" name="atas_nama" id="rek_atas" class="form-control" placeholder="Nama pemilik rekening">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Keterangan</label>
+                <input type="text" name="keterangan" id="rek_ket" class="form-control" placeholder="Opsional">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('modalRekening').style.display='none'">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Rekening</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="modalCoa" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
     <div style="background: var(--bg-card); width: 100%; max-width: 500px; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden;">
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
@@ -1793,6 +1889,20 @@ require_once __DIR__ . '/layout/header.php';
         if (!s) return;
         document.getElementById('coa_kode').value = s[0];
         document.getElementById('coa_normal').value = s[1];
+    }
+    function openModalRekening() {
+        document.getElementById('modalRekeningTitle').innerText = 'Tambah Rekening';
+        ['rek_id', 'rek_bank', 'rek_no', 'rek_atas', 'rek_ket'].forEach(i => document.getElementById(i).value = '');
+        document.getElementById('modalRekening').style.display = 'flex';
+    }
+    function editRekening(r) {
+        document.getElementById('modalRekeningTitle').innerText = 'Edit Rekening ' + r.kode_rekening;
+        document.getElementById('rek_id').value = r.id;
+        document.getElementById('rek_bank').value = r.nama_bank || '';
+        document.getElementById('rek_no').value = r.no_rekening || '';
+        document.getElementById('rek_atas').value = r.atas_nama || '';
+        document.getElementById('rek_ket').value = r.keterangan || '';
+        document.getElementById('modalRekening').style.display = 'flex';
     }
     function openModalCoa(induk) {
         document.getElementById('modalCoaTitle').innerText = induk ? 'Tambah Sub-akun' : 'Tambah Akun';

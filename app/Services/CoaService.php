@@ -160,11 +160,11 @@ class CoaService
     public static function sources(): array
     {
         $inti = [
-            '1000' => 'Setoran mitra (masuk) dan pembayaran ke pemasok (keluar)',
+            '1000' => 'Setoran mitra, pembayaran ke pemasok, dan Transaksi Kas & Bank (biaya, modal, prive)',
             '1100' => 'Nota Pengeluaran, setoran mitra, dan faktur aset',
             '1200' => 'Faktur Penerimaan (masuk) dan Pengeluaran (keluar)',
             '2000' => 'Purchase Invoice dan pembayaran ke pemasok',
-            '3000' => 'Belum ada sumber data. Menunggu menu Transaksi Kas.',
+            '3000' => 'Setoran modal dan prive dari Transaksi Kas & Bank',
             '4000' => 'Nilai jual Pengeluaran ke mitra',
             '5000' => 'Nilai beli barang pada Pengeluaran ke mitra',
             '6000' => 'Faktur Operasional dan Lainnya',

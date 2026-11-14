@@ -47,6 +47,16 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </div>
 
+    <?php $rekAktif = \App\Models\RekeningBank::getAktif(); ?>
+    <div class="no-print" style="margin: -6px 0 16px; font-size: 13px; color: var(--text-muted);">
+        <?php if ($rekAktif): ?>
+            Rekening yang diaudit:
+            <?php foreach ($rekAktif as $i => $rk): ?><?= $i ? ', ' : '' ?><strong style="color: var(--text-main);"><?= htmlspecialchars(\App\Models\RekeningBank::label($rk)) ?></strong><?php endforeach; ?>
+        <?php else: ?>
+            Belum ada rekening bank terdaftar. Tambahkan di Master &gt; Rekening Bank.
+        <?php endif; ?>
+    </div>
+
     <div class="grid grid-cols-4 no-print" style="gap: 16px; margin-bottom: 20px;">
         <div class="kpi-card"><div class="kpi-body">
             <div class="kpi-label">Hari Belum Direkonsiliasi</div>

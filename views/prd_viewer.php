@@ -67,6 +67,7 @@ require_once __DIR__ . '/layout/header.php';
     <a href="#ap-aging">AP Aging</a>
     <a href="#sales-invoice">Sales Invoice</a>
     <a href="#ar-aging">AR Aging</a>
+    <a href="#kas-bank">Transaksi Kas &amp; Bank</a>
     <a href="#rekonsiliasi">Rekonsiliasi Bank</a>
     <a href="#laba-rugi">Laba Rugi</a>
     <a href="#coa">COA</a>
@@ -150,6 +151,7 @@ require_once __DIR__ . '/layout/header.php';
     <tr><td>Harga Mitra</td><td>Harga jual per kg untuk tiap artikel ke tiap mitra.</td></tr>
     <tr><td>Mitra Bisnis</td><td>Daftar mitra pembeli.</td></tr>
     <tr><td>Master Produk</td><td>Artikel dan kategorinya (cumi, ikan, teri, udang, dan seterusnya).</td></tr>
+    <tr><td>Rekening Bank</td><td>Nama bank, nomor rekening, dan atas nama. Kode dibuat otomatis (RB-01, RB-02). Dipilih pada Transaksi Kas &amp; Bank. Rekening yang sudah dipakai tidak bisa dihapus, hanya dinonaktifkan.</td></tr>
     <tr><td>Akun COA</td><td>Daftar akun buku besar. Lihat bagian COA.</td></tr>
     <tr><td>Log Harga</td><td>Riwayat setiap perubahan harga beli dan harga jual.</td></tr>
     <tr><td>Settingan API Accurate</td><td>Koneksi ke Accurate Online dan antrean pengirimannya.</td></tr>
@@ -264,6 +266,23 @@ require_once __DIR__ . '/layout/header.php';
     <li><strong>Ringkasan per Mitra:</strong> total belanja, total setoran, sisa piutang, dan umur piutang.</li>
     <li><strong>Riwayat Setoran:</strong> semua setoran mitra, termasuk yang dibatalkan.</li>
 </ul>
+
+<h2 id="kas-bank">Transaksi Kas &amp; Bank</h2>
+<p>Menu: <span class="pj-menu">Transaksi Kas &amp; Bank</span>. Dipakai untuk uang yang keluar atau masuk di luar faktur pemasok dan nota mitra. Pembayaran faktur pemasok dan setoran mitra tetap dicatat di menu masing-masing, jangan dicatat lagi di sini.</p>
+<table>
+    <tr><th>Jenis</th><th>Kas</th><th>Akun lawan</th><th>Masuk Laba Rugi</th></tr>
+    <tr><td>Biaya</td><td>Berkurang</td><td>Akun biaya (kelompok 6000 ke atas)</td><td>Ya, sebagai biaya operasional</td></tr>
+    <tr><td>Setoran Modal</td><td>Bertambah</td><td>Akun modal (3000)</td><td>Tidak</td></tr>
+    <tr><td>Prive</td><td>Berkurang</td><td>Prive / Penarikan Pemilik (3200)</td><td>Tidak</td></tr>
+</table>
+<ol>
+    <li>Klik <strong>Catat Transaksi</strong>, pilih jenis dan tanggal (tidak boleh di masa depan).</li>
+    <li>Pilih akun lawan, isi nominal dan keterangan. No. referensi boleh diisi dengan nomor nota atau bukti transfer.</li>
+    <li>Pilih cara: tunai, atau transfer bank. Untuk transfer, pilih rekening yang sudah ada di Master &gt; Rekening Bank.</li>
+    <li>Simpan. Nomor bukti dibuat otomatis (KAS-tanggal-nomor) dan jurnal terbit saat itu juga.</li>
+</ol>
+<p>Kartu <strong>Saldo Kas &amp; Bank</strong> menunjukkan saldo akun 1000 menurut jurnal. Sistem mulai dari nol, jadi saldonya hanya mencerminkan transaksi sejak sistem dipakai. Untuk menyamakannya dengan saldo bank sebenarnya, catat selisih awalnya sebagai Setoran Modal.</p>
+<p>Transaksi salah tidak dihapus. Klik <strong>Batalkan</strong>, isi alasan, dan jurnalnya dibalik. Baris tetap tampil dengan status Dibatalkan. Yang boleh mencatat dan membatalkan: Admin, Supervisor, dan Finance.</p>
 
 <h2 id="rekonsiliasi">Rekonsiliasi Bank</h2>
 <p>Menu: <span class="pj-menu">Rekonsiliasi Bank</span>. Dilakukan sekali sehari untuk mengaudit uang masuk pada hari itu.</p>

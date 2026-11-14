@@ -44,6 +44,7 @@ $pageInfoMap = [
     'pengeluaran'          => ['title' => 'Pengeluaran Barang ke Mitra', 'desc' => 'Keluarkan stok fisik pemasok dari gudang ke mitra bisnis'],
     'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
     'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
+    'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
     'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
     'barang_datang'        => ['title' => 'Barang Datang', 'desc' => 'Barang yang diterima gudang dari pemasok dan total nilai pembelian'],
     'purchase_book'        => ['title' => 'Purchase Book', 'desc' => 'Riwayat harga beli per artikel dari pemasok'],
@@ -292,6 +293,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $isApAgingActive = ($currentPage === 'ap_aging' && $currentTab !== 'invoices');
             $isPurchInvActive = ($currentPage === 'ap_aging' && $currentTab === 'invoices');
             $isRekonActive   = ($currentPage === 'rekonsiliasi_bank');
+            $isKasActive     = ($currentPage === 'kas_bank');
             $isPurchGroupActive = ($isPurchInvActive || $currentPage === 'purchase_book');
             $isSalesGroupActive = ($isSalesInvActive || $currentPage === 'sales_book');
             $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit', 'coa']);
@@ -575,6 +577,19 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         </ul>
                     </li>
 
+                    <!-- TRANSAKSI KAS & BANK -->
+                    <li>
+                        <a href="index.php?page=kas_bank" class="nav-item <?= $isKasActive ? 'active' : '' ?>" title="Biaya tunai/transfer, setoran modal, dan prive">
+                            <div class="nav-item-icon icon-teal" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+                                <i data-lucide="wallet" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title" style="font-weight: 700;">Transaksi Kas &amp; Bank</span>
+                                <span class="nav-item-desc">Biaya, modal, dan prive</span>
+                            </div>
+                        </a>
+                    </li>
+
                     <!-- REKONSILIASI BANK (HARIAN) -->
                     <li>
                         <a href="index.php?page=rekonsiliasi_bank" class="nav-item <?= $isRekonActive ? 'active' : '' ?>" title="Audit harian total setoran mitra dengan uang masuk di bank">
@@ -649,6 +664,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             ['harga_mitra',        'Harga Mitra',           'badge-dollar-sign', '#10b981'],
                             ['mitra',              'Mitra Bisnis',          'building-2',       '#3b82f6'],
                             ['produk',             'Master Produk',         'boxes',            '#8b5cf6'],
+                            ['rekening_bank',      'Rekening Bank',         'landmark',         '#0ea5e9'],
                             ['coa',                'Akun COA',              'book-open',        '#4f46e5'],
                             ['log_harga',          'Log Harga',             'history',          '#ef4444'],
                             ['accurate',           'Settingan API Accurate', 'key',             '#0284c7'],

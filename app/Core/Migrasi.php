@@ -46,6 +46,8 @@ class Migrasi
         \App\Services\CoaService::ensureTable();
         \App\Models\RekonsiliasiBank::ensureTables();
         \App\Services\LogHargaService::ensureTables();
+        \App\Models\RekeningBank::ensureTable();
+        \App\Services\KasService::ensureTable();
 
         self::$done = true;
     }

@@ -167,6 +167,32 @@ class PembatalanService
         return ['no_invoice' => $inv['no_invoice']];
     }
 
+    /** Batalkan transaksi kas: status menjadi BATAL dan jurnalnya dibalik. */
+    public static function batalKas(int $kasId, string $alasan, int $userId): array
+    {
+        $alasan = self::wajibAlasan($alasan);
+        KasService::ensureTable();
+        $db = Database::getConnection();
+        $st = $db->prepare("SELECT * FROM kas_transaksi WHERE id = ?");
+        $st->execute([$kasId]);
+        $k = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$k) throw new Exception('Transaksi kas tidak ditemukan.');
+        if ($k['status'] === 'BATAL') throw new Exception("Transaksi {$k['no_bukti']} sudah dibatalkan.");
+
+        $db->beginTransaction();
+        try {
+            $db->prepare("UPDATE kas_transaksi SET status = 'BATAL', alasan_batal = ?, dibatalkan_at = NOW(), dibatalkan_oleh = ? WHERE id = ?")
+               ->execute([$alasan, $userId, $kasId]);
+            JurnalService::reverse('KAS', $kasId, $alasan);
+            self::audit($userId, 'BATAL_KAS', 'kas_transaksi', $kasId, $alasan);
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
+        }
+        return ['no_bukti' => $k['no_bukti'], 'nominal' => (float)$k['nominal']];
+    }
+
     /** Batalkan pembayaran ke pemasok: faktur dan surat jalan kembali terutang, kas dan utang dikoreksi. */
     public static function batalPembayaranAp(int $pembayaranId, string $alasan, int $userId): array
     {
