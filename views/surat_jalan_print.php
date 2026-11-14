@@ -333,8 +333,8 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         @page {
-            size: A4 portrait;
-            margin: 10mm 12mm 10mm 12mm;
+            size: 9.5in 11in; /* kertas surat jalan 9 1/2 x 11 inci */
+            margin: 8mm 10mm 8mm 10mm;
         }
         * {
             box-sizing: border-box;
@@ -349,7 +349,7 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
             line-height: 1.45;
         }
         .sj-page {
-            max-width: 820px;
+            max-width: 9.5in;
             margin: 0 auto;
             background: #ffffff;
             padding: 28px 32px;
@@ -588,9 +588,11 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
             margin-top: 1px;
         }
 
+        .table-items tfoot td { white-space: nowrap; }
+
         /* TOMBOL NAVIGASI SCREEN */
         .btn-print-bar {
-            max-width: 820px;
+            max-width: 9.5in;
             margin: 0 auto 16px;
             display: flex;
             justify-content: space-between;
@@ -718,11 +720,7 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
         renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'mitra');
     } elseif ($mode === 'keduanya') {
         renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'admin');
-        echo '<div class="page-break-divider no-print" style="margin: 25px auto; max-width: 820px; text-align: center; border-top: 2px dashed #000000; position: relative;"><span style="position: relative; top: -11px; background: #ffffff; padding: 0 12px; font-size: 11.5px; font-weight: 700; color: #000000; border: 1px solid #000000;">PEMBATAS HALAMAN: LEMBAR MITRA (NON-HARGA) BERIKUTNYA</span></div>';
-        echo '<div style="page-break-after: always; break-after: page;"></div>';
-        renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'mitra');
-    }
-    ?>
+        echo '<div class="page-break-divider no-print" style="margin: 25px auto; max-width: 9.5in; text-align: center; border-top: 2px dashed #000000; position: relative;"><span style="position: relative; top: -11px; background: #ffffff; padding: 0 12px; font-size: 11.5px; font-weight: 700; color: #000000; border: 1px solid #000000;">PEMBATAS HALAMAN: LEMBAR MITRA (NON-HARGA) BERIKUTNYA</span></div>';
         echo '<div style="page-break-after: always; break-after: page;"></div>';
         renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'mitra');
     }
