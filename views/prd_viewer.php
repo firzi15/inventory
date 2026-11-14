@@ -368,6 +368,7 @@ require_once __DIR__ . '/layout/header.php';
 
 <h2 id="cetak-sj">Mencetak surat jalan</h2>
 <p>Menu: <span class="pj-menu">Surat Jalan</span>. Dua tab: Pengeluaran ke Mitra dan Penerimaan dari Pemasok. Daftar bisa difilter menurut tanggal, mitra atau pemasok, status, dan kata kunci, lalu dicetak atau dicetak ulang kapan saja. Surat jalan yang dibatalkan tetap tampil tetapi tidak bisa dicetak. Tombol <strong>Tabel</strong> dan <strong>Grid</strong> di kanan atas mengganti tampilan daftar menjadi baris tabel atau kartu; pilihannya diingat di browser itu. Ekspor Excel dan PDF tetap memuat semua baris di kedua tampilan.</p>
+<p>Tombol <strong>Preview PDF</strong> membuka pratinjau surat jalan seukuran kertas 8&frac12; x 11 inci, persis seperti hasil cetak. Pada pengeluaran, pratinjau bisa berpindah antara Form (tanpa harga) dan Versi Internal bagi yang berhak. Dari pratinjau, klik <strong>Cetak / Simpan PDF</strong>, lalu pilih &quot;Simpan sebagai PDF&quot; sebagai tujuan untuk mendapatkan file PDF. Pada tampilan Grid, tiap kartu menampilkan thumbnail dokumennya; klik thumbnail untuk membuka pratinjau.</p>
 <table>
     <tr><th>Tombol</th><th>Isi</th><th>Untuk</th></tr>
     <tr><td>Cetak Form (rangkap 3)</td><td>Tanpa harga: kemasan, netto, asal surat jalan, dan kolom tanda tangan. Satu halaman per dokumen pendek.</td><td>Form bersambung rangkap 3. Satu kali cetak tembus ke semua lapis, jadi cetak satu kali saja.</td></tr>

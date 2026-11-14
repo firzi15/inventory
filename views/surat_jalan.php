@@ -40,6 +40,13 @@ $rp = fn($n) => Helper::formatRupiah($n);
 $tgl = fn($d) => date('d/m/Y H:i', strtotime($d));
 $qs = fn(array $x) => http_build_query(array_merge(['page' => 'surat_jalan', 'dari' => $dari, 'sampai' => $sampai, 'tampil' => $tampil], $x));
 
+// Atribut data untuk tombol / thumbnail pratinjau
+$attrPreview = function (array $x) use ($bolehInternal) {
+    return 'data-form="' . htmlspecialchars($x['urlForm'] . '&embed=1', ENT_QUOTES) . '"'
+         . ' data-internal="' . htmlspecialchars(($bolehInternal && $x['urlInternal']) ? $x['urlInternal'] . '&embed=1' : '', ENT_QUOTES) . '"'
+         . ' data-judul="' . htmlspecialchars($x['no'] . ' - ' . $x['pihak'], ENT_QUOTES) . '"';
+};
+
 // Satu baris data untuk tabel dan kartu
 $baris = function (array $r) use ($tab) {
     if ($tab === 'pengeluaran') {
@@ -143,6 +150,9 @@ require_once __DIR__ . '/layout/header.php';
         .sj-stat div { font-size: 11px; color: var(--text-muted); }
         .sj-stat strong { display: block; font-size: 14px; color: var(--text-main); margin-top: 1px; }
         .sj-aksi { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+        .sj-thumb { position: relative; width: 100%; aspect-ratio: 8.5 / 6.2; overflow: hidden; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; cursor: zoom-in; }
+        .sj-thumb iframe { position: absolute; left: 0; top: 0; width: 816px; height: 1056px; border: 0; transform-origin: 0 0; pointer-events: none; background: #ffffff; }
+        .sj-thumb-kosong { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; background: var(--bg-muted); cursor: default; }
     </style>
     <div class="sj-grid">
         <?php if (!$rows): ?>
@@ -150,6 +160,13 @@ require_once __DIR__ . '/layout/header.php';
         <?php endif; ?>
         <?php foreach ($rows as $r): $x = $baris($r); ?>
             <div class="sj-kartu <?= $x['batal'] ? 'batal' : '' ?>">
+                <?php if (!$x['batal']): ?>
+                    <div class="sj-thumb" title="Klik untuk pratinjau" data-src="<?= htmlspecialchars($x['urlForm'] . '&embed=1', ENT_QUOTES) ?>" onclick="bukaPreview(this)" <?= $attrPreview($x) ?>>
+                        <iframe tabindex="-1" scrolling="no" aria-hidden="true"></iframe>
+                    </div>
+                <?php else: ?>
+                    <div class="sj-thumb sj-thumb-kosong">Dibatalkan</div>
+                <?php endif; ?>
                 <div class="sj-kartu-atas">
                     <div class="sj-no"><?= htmlspecialchars($x['no']) ?></div>
                     <span class="badge" style="<?= $x['batal'] ? 'background: #fee2e2; color: #b91c1c;' : 'background: #dcfce7; color: #15803d;' ?> font-weight: 700; white-space: nowrap;"><?= $x['batal'] ? 'Dibatalkan' : 'Berlaku' ?></span>
@@ -166,7 +183,8 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
                 <div class="sj-aksi no-print">
                     <?php if (!$x['batal']): ?>
-                        <a href="<?= $x['urlForm'] ?>" target="_blank" class="btn btn-primary btn-sm">Cetak Form<?= $tab === 'pengeluaran' ? ' (rangkap 3)' : '' ?></a>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="bukaPreview(this)" <?= $attrPreview($x) ?>>Preview PDF</button>
+                        <a href="<?= $x['urlForm'] ?>" target="_blank" class="btn btn-outline btn-sm">Cetak Form</a>
                         <?php if ($bolehInternal && $x['urlInternal']): ?>
                             <a href="<?= $x['urlInternal'] ?>" target="_blank" class="btn btn-outline btn-sm">Versi Internal</a>
                         <?php endif; ?>
@@ -191,7 +209,7 @@ require_once __DIR__ . '/layout/header.php';
                         <th style="text-align: right;">Netto (kg)</th>
                         <?php if ($bolehInternal): ?><th style="text-align: right;"><?= $tab === 'pengeluaran' ? 'Nilai Jual' : 'Nilai Beli' ?></th><?php endif; ?>
                         <th>Status</th>
-                        <th class="no-print" style="width: 260px;">Cetak</th>
+                        <th class="no-print" style="width: 330px;">Cetak</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -215,6 +233,7 @@ require_once __DIR__ . '/layout/header.php';
                             </td>
                             <td class="no-print">
                                 <?php if (!$batal): ?>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="bukaPreview(this)" <?= $attrPreview($x) ?>>Preview PDF</button>
                                     <a href="<?= $urlForm ?>" target="_blank" class="btn btn-outline btn-sm">Cetak Form<?= $tab === 'pengeluaran' ? ' (rangkap 3)' : '' ?></a>
                                     <?php if ($bolehInternal && $urlInternal): ?>
                                         <a href="<?= $urlInternal ?>" target="_blank" class="btn btn-outline btn-sm">Versi Internal</a>
@@ -232,7 +251,105 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 </div>
 
+<div id="pvModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(3px);" onclick="if (event.target === this) tutupPreview()">
+    <div style="background: var(--bg-card); width: min(900px, 96vw); height: 94vh; border-radius: var(--radius); border: 1.5px solid var(--border); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden;">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div id="pvJudul" style="font-weight: 800; font-size: 14px; flex: 1; min-width: 160px; word-break: break-all;"></div>
+            <div id="pvVersi" style="display: none; gap: 4px;">
+                <button type="button" class="btn btn-sm" id="pvBtnForm" onclick="pvGanti('form')">Form (tanpa harga)</button>
+                <button type="button" class="btn btn-sm" id="pvBtnInternal" onclick="pvGanti('internal')">Versi Internal</button>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="pvCetak()">Cetak / Simpan PDF</button>
+            <a id="pvTab" href="#" target="_blank" class="btn btn-outline btn-sm">Buka di tab baru</a>
+            <button type="button" class="btn btn-outline btn-sm" onclick="tutupPreview()" aria-label="Tutup">&#10005;</button>
+        </div>
+        <div id="pvArea" style="flex: 1; overflow: auto; background: #6b7280; padding: 16px;">
+            <div id="pvKertas" style="margin: 0 auto; position: relative;">
+                <iframe id="pvFrame" style="width: 816px; border: 0; background: #ffffff; box-shadow: 0 2px 12px rgba(0,0,0,.4); transform-origin: 0 0; display: block;" title="Pratinjau surat jalan"></iframe>
+            </div>
+        </div>
+        <div style="padding: 8px 16px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border);">
+            Pratinjau persis seperti hasil cetak di kertas 8&frac12; x 11 inci. Untuk menyimpan PDF, klik Cetak lalu pilih &quot;Simpan sebagai PDF&quot; sebagai tujuan.
+        </div>
+    </div>
+</div>
+
 <script>
+    // ---- Pratinjau surat jalan (iframe halaman cetak mode embed) ----
+    var PV_W = 816;
+    var pvData = { form: '', internal: '' };
+
+    function bukaPreview(el) {
+        pvData.form = el.getAttribute('data-form') || '';
+        pvData.internal = el.getAttribute('data-internal') || '';
+        document.getElementById('pvJudul').textContent = el.getAttribute('data-judul') || 'Surat Jalan';
+        document.getElementById('pvVersi').style.display = pvData.internal ? 'flex' : 'none';
+        document.getElementById('pvModal').style.display = 'flex';
+        pvGanti('form');
+    }
+
+    function pvGanti(v) {
+        var url = pvData[v] || pvData.form;
+        document.getElementById('pvBtnForm').className = 'btn btn-sm ' + (v === 'form' ? 'btn-primary' : 'btn-outline');
+        document.getElementById('pvBtnInternal').className = 'btn btn-sm ' + (v === 'internal' ? 'btn-primary' : 'btn-outline');
+        document.getElementById('pvTab').href = url.replace(/&embed=1/, '');
+        var f = document.getElementById('pvFrame');
+        f.style.height = '1056px';
+        f.onload = pvUkur;
+        f.src = url;
+    }
+
+    // Tinggi iframe mengikuti isi dokumen; kertas diperkecil bila layar lebih sempit dari 8,5 inci
+    function pvUkur() {
+        var f = document.getElementById('pvFrame');
+        try {
+            var h = Math.max(1056, f.contentDocument.documentElement.scrollHeight);
+            f.style.height = h + 'px';
+            var lebar = document.getElementById('pvArea').clientWidth - 32;
+            var k = Math.min(1, lebar / PV_W);
+            f.style.transform = 'scale(' + k + ')';
+            var kertas = document.getElementById('pvKertas');
+            kertas.style.width = (PV_W * k) + 'px';
+            kertas.style.height = (h * k) + 'px';
+        } catch (e) {}
+    }
+
+    function pvCetak() {
+        var f = document.getElementById('pvFrame');
+        try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { window.open(document.getElementById('pvTab').href, '_blank'); }
+    }
+
+    function tutupPreview() {
+        document.getElementById('pvModal').style.display = 'none';
+        document.getElementById('pvFrame').src = 'about:blank';
+    }
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tutupPreview(); });
+    window.addEventListener('resize', function () { if (document.getElementById('pvModal').style.display === 'flex') pvUkur(); });
+
+    // ---- Thumbnail di tampilan grid: dimuat saat kartu terlihat, diskalakan sesuai lebar kartu ----
+    (function () {
+        var thumbs = document.querySelectorAll('.sj-thumb[data-src]');
+        if (!thumbs.length) return;
+        function skala(t) {
+            var f = t.querySelector('iframe');
+            if (f) f.style.transform = 'scale(' + (t.clientWidth / PV_W) + ')';
+        }
+        function muat(t) {
+            var f = t.querySelector('iframe');
+            if (f && !f.getAttribute('src')) f.setAttribute('src', t.getAttribute('data-src'));
+        }
+        thumbs.forEach(skala);
+        window.addEventListener('resize', function () { thumbs.forEach(skala); });
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (es) {
+                es.forEach(function (e) { if (e.isIntersecting) { muat(e.target); io.unobserve(e.target); } });
+            }, { rootMargin: '300px' });
+            thumbs.forEach(function (t) { io.observe(t); });
+        } else {
+            thumbs.forEach(muat);
+        }
+    })();
+
     // Ingat pilihan tampilan (tabel / grid) di browser ini
     (function () {
         try {

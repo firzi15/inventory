@@ -685,6 +685,14 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
             }
         }
     </style>
+    <?php if (!empty($_GET['embed'])): // mode pratinjau (iframe di menu Surat Jalan): tanpa tombol, selebar kertas ?>
+    <style media="screen">
+        html, body { background: #ffffff !important; }
+        body { padding: 8mm 10mm !important; margin: 0 !important; width: 8.5in; box-sizing: border-box; }
+        .btn-print-bar, .print-actions { display: none !important; }
+        .sj-page { max-width: 100% !important; width: 100% !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+    </style>
+    <?php endif; ?>
 </head>
 <body>
 

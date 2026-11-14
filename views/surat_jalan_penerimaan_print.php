@@ -375,13 +375,21 @@ $isMultiItem = count($uniqueItems) > 1;
             }
         }
     </style>
+    <?php if (!empty($_GET['embed'])): // mode pratinjau (iframe di menu Surat Jalan): tanpa tombol, selebar kertas ?>
+    <style media="screen">
+        html, body { background: #ffffff !important; }
+        body { padding: 8mm 10mm !important; margin: 0 !important; width: 8.5in; box-sizing: border-box; }
+        .btn-print-bar, .print-actions { display: none !important; }
+        .sj-page { max-width: 100% !important; width: 100% !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+    </style>
+    <?php endif; ?>
 </head>
 <body>
 
     <!-- Tombol Aksi di Layar Komputer (Tidak Ikut Tercetak) -->
     <div class="print-actions">
-        <a href="index.php?page=timbang_cetak&tab=riwayat_penerimaan" class="btn-action btn-back">
-            ← Kembali ke Riwayat Penerimaan
+        <a href="index.php?page=surat_jalan&tab=penerimaan" class="btn-action btn-back">
+            ← Kembali ke Surat Jalan
         </a>
         <div style="display: flex; gap: 8px;">
             <button onclick="window.print()" class="btn-action btn-print">
