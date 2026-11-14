@@ -233,24 +233,27 @@ require_once __DIR__ . '/layout/header.php';
     <li>Klik <strong>Faktur Operasional</strong>.</li>
     <li>Pilih <strong>Akun</strong>. Pilihannya dikelompokkan Biaya dan Aset, diambil dari Akun COA yang aktif.</li>
     <li>Pilih vendor. Untuk vendor yang belum ada, pilih Vendor Lainnya dan ketik namanya.</li>
-    <li>Isi tanggal faktur dan jatuh tempo.</li>
+    <li>Isi tanggal faktur, lalu pilih termin (tunai, 7, 14, 30, 45, atau 60 hari). Jatuh tempo terisi otomatis dari tanggal faktur; bisa juga diketik sendiri.</li>
     <li>Isi baris item: deskripsi, qty, satuan, harga. Klik <strong>Tambah Baris</strong> bila ada lebih dari satu.</li>
     <li>Simpan Faktur.</li>
 </ol>
 <p>Akun yang dipilih langsung dipakai pada jurnal. Akun Kas, Persediaan, dan akun pendapatan tidak bisa dipilih di sini.</p>
+<p>Faktur penerimaan barang terbit otomatis dengan jatuh tempo 7 hari dari tanggal faktur. Untuk mengubahnya, klik <strong>ubah</strong> di samping jatuh tempo faktur (Purchase Invoice) atau pada kolom Jatuh Tempo (AP Aging &gt; Surat Jalan Masuk). Yang boleh mengubah: Admin, Supervisor, dan Finance; perubahan tercatat di log audit.</p>
 <h3>Membayar</h3>
 <p>Klik <strong>Bayar</strong> pada faktur. Pembayaran untuk Surat Jalan pemasok harus melunasi seluruh sisa Surat Jalan yang dipilih; nominal tidak diketik sendiri.</p>
 
 <h2 id="ap-aging">AP Aging</h2>
 <p>Menu: <span class="pj-menu">AP Aging</span>. Hanya laporan, tidak ada input.</p>
 <ul>
-    <li><strong>Ringkasan per Pemasok:</strong> total tagihan, dibayar, sisa utang, dan umurnya (0-7, 8-14, 15-30, di atas 30 hari).</li>
+    <li><strong>Ringkasan per Pemasok:</strong> total tagihan, dibayar, sisa utang, dan pembagiannya menurut jatuh tempo: belum jatuh tempo, telat 1-7, 8-14, 15-30, dan lebih dari 30 hari.</li>
+    <li><strong>Surat Jalan Masuk:</strong> tiap Surat Jalan dengan tanggal jatuh tempo dan keterangan sisa hari atau hari terlambat.</li>
     <li><strong>Riwayat Pembayaran:</strong> semua pembayaran ke pemasok. Pembayaran yang dibatalkan ditandai dan nominal aslinya dicoret.</li>
 </ul>
-<p>Semua input pembayaran dilakukan dari Purchase Invoice.</p>
+<p>Semua input pembayaran dilakukan dari Purchase Invoice. Umur dihitung dari jatuh tempo, bukan dari tanggal barang masuk. Dokumen yang tidak punya jatuh tempo dianggap jatuh tempo di tanggal dokumennya.</p>
 
 <h2 id="sales-invoice">Sales Invoice</h2>
 <p>Menu: <span class="pj-menu">Sales Invoice &gt; Daftar Nota</span>. Nota terbit otomatis dari Pengeluaran.</p>
+<p>Jatuh tempo nota ditentukan di layar Pengeluaran lewat pilihan <strong>Jatuh Tempo Nota</strong> (tunai, 7, 14, 30, 45, atau 60 hari dari tanggal nota; isian awal 14 hari). Nota lama yang dibuat sebelum fitur ini dianggap jatuh tempo di tanggal notanya. Untuk mengubahnya, klik <strong>ubah</strong> pada kolom Jatuh Tempo di AR Aging &gt; Nota (Admin, Supervisor, Finance).</p>
 <h3>Mencatat setoran mitra</h3>
 <ol>
     <li>Klik <strong>Catat Setoran</strong> (atau tombol setoran pada nota).</li>
@@ -263,7 +266,8 @@ require_once __DIR__ . '/layout/header.php';
 <h2 id="ar-aging">AR Aging</h2>
 <p>Menu: <span class="pj-menu">AR Aging</span>. Hanya laporan.</p>
 <ul>
-    <li><strong>Ringkasan per Mitra:</strong> total belanja, total setoran, sisa piutang, dan umur piutang.</li>
+    <li><strong>Ringkasan per Mitra:</strong> total belanja, total setoran, sisa piutang, dan pembagiannya menurut jatuh tempo (belum jatuh tempo, telat 1-7, 8-14, 15-30, lebih dari 30 hari).</li>
+    <li><strong>Nota:</strong> tiap nota dengan jatuh tempo dan keterangan sisa hari atau hari terlambat.</li>
     <li><strong>Riwayat Setoran:</strong> semua setoran mitra, termasuk yang dibatalkan.</li>
 </ul>
 

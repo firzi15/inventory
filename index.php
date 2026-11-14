@@ -296,6 +296,7 @@ if ($action) {
                 $noReferensi  = trim($payload['no_referensi'] ?? '');
                 $namaPenerima = trim($payload['nama_penerima'] ?? ($payload['tujuan'] ?? ''));
                 $keterangan   = trim($payload['keterangan'] ?? '');
+                $terminHari   = isset($payload['termin_hari']) && $payload['termin_hari'] !== '' ? max(0, (int)$payload['termin_hari']) : null;
                 $barcodes     = (array)($payload['barcodes'] ?? []);
                 $userId       = (int)($_SESSION['user_login']['id'] ?? 4);
 
@@ -306,7 +307,7 @@ if ($action) {
                     throw new Exception("Mitra penerima barang wajib dipilih!");
                 }
 
-                $result = Transaksi::processPengeluaran($pemasokId, $mitraId, $barcodes, $noReferensi, $keterangan, $userId, $namaPenerima);
+                $result = Transaksi::processPengeluaran($pemasokId, $mitraId, $barcodes, $noReferensi, $keterangan, $userId, $namaPenerima, $terminHari);
                 Helper::jsonResponse($result);
                 break;
 
@@ -1139,6 +1140,17 @@ if ($action) {
                     'setoran' => \App\Models\RekonsiliasiBank::setoranTanggal($tglDet),
                     'rekon'   => \App\Models\RekonsiliasiBank::ambil($tglDet)
                 ]);
+                exit;
+
+            // T. Ubah jatuh tempo faktur pemasok / nota mitra (ADMIN, SUPERVISOR, FINANCE)
+            case 'ubah_jatuh_tempo':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                if (!in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)) {
+                    Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin, Supervisor, atau Finance yang dapat mengubah jatuh tempo.'], 403);
+                    exit;
+                }
+                $pesanTempo = \App\Services\AgingService::ubahJatuhTempo((string)($_POST['jenis'] ?? ''), (int)($_POST['id'] ?? 0), (string)($_POST['tanggal'] ?? ''), (int)($_SESSION['user_login']['id'] ?? 0));
+                Helper::jsonResponse(['success' => true, 'message' => $pesanTempo]);
                 exit;
 
             // K. Transaksi Kas & Bank: catat biaya / setoran modal / prive (ADMIN, SUPERVISOR, FINANCE)

@@ -26,10 +26,7 @@ class Utang {
         $totalUtangTerbit = 0.0;
         $totalBayarTeralokasi = 0.0;
 
-        $aging0to7   = 0.0;
-        $aging8to14  = 0.0;
-        $aging15to30 = 0.0;
-        $agingGt30   = 0.0;
+        $ag = \App\Services\AgingService::kosong();
 
         foreach ($sjList as $sj) {
             $totalUtangTerbit += (float)$sj['total_nilai_beli'];
@@ -38,16 +35,7 @@ class Utang {
             $sisa = (float)$sj['sisa_utang'];
             if ($sisa <= 0.01) continue;
 
-            $umur = (int)$sj['umur_hari'];
-            if ($umur <= 7) {
-                $aging0to7 += $sisa;
-            } elseif ($umur <= 14) {
-                $aging8to14 += $sisa;
-            } elseif ($umur <= 30) {
-                $aging15to30 += $sisa;
-            } else {
-                $agingGt30 += $sisa;
-            }
+            \App\Services\AgingService::tambah($ag, (int)$sj['hari_telat'], $sisa);
         }
 
         // 2. Ambil Total Kas Keluar dari ap_pembayaran
@@ -68,11 +56,12 @@ class Utang {
             'total_pembayaran_keluar'=> $totalPembayaranKeluar,
             'sisa_utang_aktif'      => $sisaUtangAktif,
             'total_transaksi_bayar' => (int)$resBayar['total_transaksi_bayar'],
-            'aging_0_7'             => $aging0to7,
-            'aging_8_14'            => $aging8to14,
-            'aging_15_30'           => $aging15to30,
-            'aging_gt_30'           => $agingGt30,
-            'total_overdue'         => $aging8to14 + $aging15to30 + $agingGt30
+            'aging_belum'           => $ag['aging_belum'],
+            'aging_1_7'             => $ag['aging_1_7'],
+            'aging_8_14'            => $ag['aging_8_14'],
+            'aging_15_30'           => $ag['aging_15_30'],
+            'aging_gt_30'           => $ag['aging_gt_30'],
+            'total_overdue'         => \App\Services\AgingService::totalTelat($ag)
         ];
     }
 
@@ -105,7 +94,8 @@ class Utang {
                 'total_tagihan'   => 0.0,
                 'total_dibayar'   => 0.0,
                 'sisa_utang'      => 0.0,
-                'aging_0_7'       => 0.0,
+                'aging_belum'     => 0.0,
+                'aging_1_7'       => 0.0,
                 'aging_8_14'      => 0.0,
                 'aging_15_30'     => 0.0,
                 'aging_gt_30'     => 0.0,
@@ -140,17 +130,7 @@ class Utang {
             $sisa = (float)$sj['sisa_utang'];
             if ($sisa > 0.01) {
                 $pemasokMap[$pId]['sj_terbuka']++;
-                $umur = (int)$sj['umur_hari'];
-
-                if ($umur <= 7) {
-                    $pemasokMap[$pId]['aging_0_7'] += $sisa;
-                } elseif ($umur <= 14) {
-                    $pemasokMap[$pId]['aging_8_14'] += $sisa;
-                } elseif ($umur <= 30) {
-                    $pemasokMap[$pId]['aging_15_30'] += $sisa;
-                } else {
-                    $pemasokMap[$pId]['aging_gt_30'] += $sisa;
-                }
+                \App\Services\AgingService::tambah($pemasokMap[$pId], (int)$sj['hari_telat'], $sisa);
             }
         }
 
@@ -209,6 +189,16 @@ class Utang {
                 MIN(l.created_at) as tanggal_masuk,
                 DATEDIFF(CURRENT_DATE, DATE(MIN(l.created_at))) as umur_hari,
                 COALESCE((
+                    SELECT MIN(pi.tanggal_jatuh_tempo)
+                    FROM purchase_invoices pi
+                    WHERE pi.no_surat_jalan = l.no_surat_jalan AND pi.status_bayar <> 'BATAL'
+                ), DATE(MIN(l.created_at))) as jatuh_tempo,
+                (
+                    SELECT MIN(pi.id)
+                    FROM purchase_invoices pi
+                    WHERE pi.no_surat_jalan = l.no_surat_jalan AND pi.status_bayar <> 'BATAL'
+                ) as invoice_id,
+                COALESCE((
                     SELECT SUM(nominal_alokasi)
                     FROM ap_alokasi_pembayaran
                     WHERE no_surat_jalan = l.no_surat_jalan
@@ -257,6 +247,7 @@ class Utang {
             $r['sisa_utang']       = $sisa;
             $r['status_bayar']     = $statusBayar;
             $r['umur_hari']        = (int)$r['umur_hari'];
+            $r['hari_telat']       = \App\Services\AgingService::hariTelat($r['jatuh_tempo']);
             $r['jml_kali_bayar']   = (int)$r['jml_kali_bayar'];
 
             $result[] = $r;

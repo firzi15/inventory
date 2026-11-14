@@ -45,25 +45,12 @@ class Piutang {
         // 3. Klasifikasi Umur Piutang yang masih belum lunas
         $notasList = self::getNotaList(['status' => 'BELUM_LUNAS']);
         
-        $aging0to7   = 0.0;
-        $aging8to14  = 0.0;
-        $aging15to30 = 0.0;
-        $agingGt30   = 0.0;
+        $ag = \App\Services\AgingService::kosong();
 
         foreach ($notasList as $nota) {
             $sisa = (float)$nota['sisa_piutang'];
             if ($sisa <= 0) continue;
-
-            $umur = (int)$nota['umur_hari'];
-            if ($umur <= 7) {
-                $aging0to7 += $sisa;
-            } elseif ($umur <= 14) {
-                $aging8to14 += $sisa;
-            } elseif ($umur <= 30) {
-                $aging15to30 += $sisa;
-            } else {
-                $agingGt30 += $sisa;
-            }
+            \App\Services\AgingService::tambah($ag, (int)$nota['hari_telat'], $sisa);
         }
 
         return [
@@ -72,11 +59,12 @@ class Piutang {
             'total_setoran_masuk'  => $totalSetoranMasuk,
             'sisa_piutang_aktif'   => $sisaPiutangAktif,
             'total_transaksi_bayar'=> (int)$resSetor['total_transaksi_setor'],
-            'aging_0_7'            => $aging0to7,
-            'aging_8_14'           => $aging8to14,
-            'aging_15_30'          => $aging15to30,
-            'aging_gt_30'          => $agingGt30,
-            'total_overdue'        => $aging8to14 + $aging15to30 + $agingGt30
+            'aging_belum'          => $ag['aging_belum'],
+            'aging_1_7'            => $ag['aging_1_7'],
+            'aging_8_14'           => $ag['aging_8_14'],
+            'aging_15_30'          => $ag['aging_15_30'],
+            'aging_gt_30'          => $ag['aging_gt_30'],
+            'total_overdue'        => \App\Services\AgingService::totalTelat($ag)
         ];
     }
 
@@ -110,7 +98,8 @@ class Piutang {
                 'total_belanja' => 0.0,
                 'total_setoran' => 0.0,
                 'sisa_piutang'  => 0.0,
-                'aging_0_7'     => 0.0,
+                'aging_belum'   => 0.0,
+                'aging_1_7'     => 0.0,
                 'aging_8_14'    => 0.0,
                 'aging_15_30'   => 0.0,
                 'aging_gt_30'   => 0.0,
@@ -160,17 +149,7 @@ class Piutang {
             if ($sisa <= 0) continue;
 
             $mitraAgingMap[$mId]['nota_terbuka']++;
-            $umur = (int)$nota['umur_hari'];
-
-            if ($umur <= 7) {
-                $mitraAgingMap[$mId]['aging_0_7'] += $sisa;
-            } elseif ($umur <= 14) {
-                $mitraAgingMap[$mId]['aging_8_14'] += $sisa;
-            } elseif ($umur <= 30) {
-                $mitraAgingMap[$mId]['aging_15_30'] += $sisa;
-            } else {
-                $mitraAgingMap[$mId]['aging_gt_30'] += $sisa;
-            }
+            \App\Services\AgingService::tambah($mitraAgingMap[$mId], (int)$nota['hari_telat'], $sisa);
         }
 
         // Hitung ulang total sisa piutang
@@ -228,6 +207,8 @@ class Piutang {
                 m.pic_nama,
                 m.pic_telepon,
                 DATEDIFF(CURRENT_DATE, DATE(ts.created_at)) as umur_hari,
+                ts.termin_hari,
+                COALESCE(ts.tanggal_jatuh_tempo, DATE(ts.created_at)) as jatuh_tempo,
                 COALESCE((
                     SELECT SUM(nominal_alokasi) 
                     FROM ar_alokasi_pembayaran 
@@ -276,6 +257,7 @@ class Piutang {
             $r['sisa_piutang']      = $sisa;
             $r['status_bayar']     = $statusBayar;
             $r['umur_hari']        = (int)$r['umur_hari'];
+            $r['hari_telat']       = \App\Services\AgingService::hariTelat($r['jatuh_tempo']);
             $r['jml_kali_setor']   = (int)$r['jml_kali_setor'];
 
             $result[] = $r;
@@ -299,6 +281,7 @@ class Piutang {
                 ts.total_nilai_jual,
                 ts.created_at,
                 DATEDIFF(CURRENT_DATE, DATE(ts.created_at)) as umur_hari,
+                COALESCE(ts.tanggal_jatuh_tempo, DATE(ts.created_at)) as jatuh_tempo,
                 COALESCE((
                     SELECT SUM(nominal_alokasi) 
                     FROM ar_alokasi_pembayaran 
@@ -325,6 +308,7 @@ class Piutang {
                 $r['total_bayar']      = $totalBayar;
                 $r['sisa_piutang']      = $sisa;
                 $r['umur_hari']        = (int)$r['umur_hari'];
+                $r['hari_telat']       = \App\Services\AgingService::hariTelat($r['jatuh_tempo']);
                 $r['status_bayar']     = ($totalBayar > 0) ? 'PARSIAL' : 'BELUM_BAYAR';
                 $unpaid[] = $r;
             }

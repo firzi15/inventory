@@ -267,6 +267,17 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                 </div>
 
+                <!-- Termin pembayaran nota -->
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" for="termin_hari" style="margin: 0 0 4px; font-weight: 700;">Jatuh Tempo Nota</label>
+                    <select id="termin_hari" class="form-control">
+                        <?php foreach (\App\Services\AgingService::TERMIN as $hr => $lb): ?>
+                            <option value="<?= $hr ?>" <?= $hr === 14 ? 'selected' : '' ?>><?= $lb ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Dihitung dari tanggal nota. Bisa diubah nanti di Sales Invoice.</div>
+                </div>
+
                 <hr style="border: none; border-top: 1px solid var(--border); margin: 16px 0;">
 
                 <!-- 6. Input Scan Barcode -->
@@ -1094,6 +1105,7 @@ require_once __DIR__ . '/layout/header.php';
             no_referensi: noRef,
             nama_penerima: namaPenerima,
             keterangan: ket,
+            termin_hari: document.getElementById('termin_hari') ? document.getElementById('termin_hari').value : '',
             barcodes: Array.from(scannedLabels.keys())
         };
 

@@ -57,7 +57,7 @@ class Transaksi {
      * Dikeluarkan dari stok pemasok di gudang ke mitra bisnis penerima,
      * sekaligus mencatat harga beli pemasok, harga jual mitra, dan margin keuntungan (profit/loss).
      */
-    public static function processPengeluaran($pemasokIdOrMitraId, $mitraIdOrBarcodes, $barcodeList = [], string $noReferensi = '', string $keterangan = '', int $userId = 4, string $namaPenerima = ''): array {
+    public static function processPengeluaran($pemasokIdOrMitraId, $mitraIdOrBarcodes, $barcodeList = [], string $noReferensi = '', string $keterangan = '', int $userId = 4, string $namaPenerima = '', ?int $terminHari = null): array {
         $db = Database::getConnection();
         $db->beginTransaction();
 
@@ -201,6 +201,12 @@ class Transaksi {
                 $keterangan
             ]);
             $transaksiId = $db->lastInsertId();
+
+            // Jatuh tempo nota per dokumen (termin dalam hari, dihitung dari tanggal nota)
+            if ($terminHari !== null && $terminHari >= 0) {
+                $db->prepare("UPDATE transaksi_stok SET termin_hari = ?, tanggal_jatuh_tempo = DATE_ADD(DATE(created_at), INTERVAL ? DAY) WHERE id = ?")
+                   ->execute([$terminHari, $terminHari, $transaksiId]);
+            }
 
             // 4. Update status setiap label menjadi 'KELUAR', kaitkan ke mitra penerima, dan simpan detail transaksi
             $stmtDetail = $db->prepare("

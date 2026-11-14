@@ -47,6 +47,9 @@ class Migrasi
         \App\Models\RekonsiliasiBank::ensureTables();
         \App\Services\LogHargaService::ensureTables();
         \App\Models\RekeningBank::ensureTable();
+        // Jatuh tempo nota penjualan; NULL dianggap jatuh tempo pada tanggal nota
+        self::kolom($db, 'transaksi_stok', 'termin_hari', "INT NULL");
+        self::kolom($db, 'transaksi_stok', 'tanggal_jatuh_tempo', "DATE NULL");
         \App\Services\KasService::ensureTable();
 
         self::$done = true;

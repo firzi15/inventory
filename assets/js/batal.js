@@ -58,3 +58,37 @@ async function hapusMaster(action, id, nama) {
         window.location.href = 'index.php?action=' + action + '&id=' + id;
     }
 }
+
+/** Ubah jatuh tempo faktur pemasok (FAKTUR) atau nota mitra (NOTA). */
+async function ubahJatuhTempo(jenis, id, tanggalSekarang, nama) {
+    const r = await Swal.fire({
+        title: 'Ubah jatuh tempo',
+        html: '<div style="text-align:left;font-size:13px;color:#475569;margin-bottom:8px;">' + String(nama).replace(/</g, '&lt;') + '</div>',
+        input: 'date',
+        inputValue: tanggalSekarang,
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+        cancelButtonText: 'Batal',
+        preConfirm: (v) => {
+            if (!v) { Swal.showValidationMessage('Tanggal wajib diisi'); return false; }
+            return v;
+        }
+    });
+    if (!r.isConfirmed) return;
+    const fd = new FormData();
+    fd.append('jenis', jenis);
+    fd.append('id', id);
+    fd.append('tanggal', r.value);
+    try {
+        const resp = await fetch('index.php?action=ubah_jatuh_tempo', { method: 'POST', body: fd });
+        const res = await resp.json();
+        if (res.success) {
+            await Swal.fire({ icon: 'success', title: 'Tersimpan', text: res.message });
+            window.location.reload();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Tidak dapat diubah', text: res.message });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Kesalahan jaringan', text: 'Coba lagi beberapa saat.' });
+    }
+}
