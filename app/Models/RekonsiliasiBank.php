@@ -157,6 +157,7 @@ class RekonsiliasiBank {
         $db = Database::getConnection();
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) throw new Exception('Tanggal tidak valid.');
         if ($tanggal > date('Y-m-d')) throw new Exception('Tanggal rekonsiliasi tidak boleh di masa depan.');
+        \App\Services\PeriodeService::pastikanTerbuka($tanggal, 'merekonsiliasi tanggal itu');
         if (!$bukti) throw new Exception('Lampirkan minimal satu screenshot / slip bank sebagai bukti.');
         if ($totalBank < 0) throw new Exception('Total uang di bank tidak valid.');
         if (self::ambil($tanggal)) throw new Exception('Tanggal ini sudah direkonsiliasi. Buka kembali dulu bila perlu mengubahnya.');
@@ -202,6 +203,7 @@ class RekonsiliasiBank {
         $db = Database::getConnection();
         $alasan = trim($alasan);
         if (mb_strlen($alasan) < 3) throw new Exception('Alasan membuka kembali wajib diisi.');
+        \App\Services\PeriodeService::pastikanTerbuka($tanggal, 'membuka kembali rekonsiliasi tanggal itu');
         $r = self::ambil($tanggal);
         if (!$r) throw new Exception('Tanggal ini belum direkonsiliasi.');
 

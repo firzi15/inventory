@@ -39,6 +39,7 @@ class PembatalanService
         if (!$t) throw new Exception('Surat jalan keluar tidak ditemukan.');
         if ($t['jenis_transaksi'] === 'PENGELUARAN_BATAL') throw new Exception('Surat jalan keluar ini sudah dibatalkan.');
         if ($t['jenis_transaksi'] !== 'PENGELUARAN') throw new Exception('Dokumen ini bukan pengeluaran ke mitra.');
+        PeriodeService::pastikanTerbuka(substr((string)$t['created_at'], 0, 10), 'membatalkan dokumen ini');
 
         $bayar = $db->prepare("SELECT COUNT(*) FROM ar_alokasi_pembayaran WHERE transaksi_stok_id = ? AND nominal_alokasi > 0");
         $bayar->execute([$transaksiId]);
@@ -107,6 +108,7 @@ class PembatalanService
         $inv = $db->prepare("SELECT * FROM purchase_invoices WHERE no_surat_jalan = ? AND tipe_invoice = 'STOK' LIMIT 1");
         $inv->execute([$noSj]);
         $faktur = $inv->fetch(PDO::FETCH_ASSOC);
+        if ($faktur) PeriodeService::pastikanTerbuka((string)$faktur['tanggal_invoice'], 'membatalkan penerimaan ini');
         if ($faktur && (float)$faktur['total_bayar'] > 0) {
             throw new Exception("Surat jalan {$noSj} sudah dibayar ke pemasok (faktur {$faktur['no_invoice']}), jadi tidak dapat dibatalkan.");
         }
@@ -146,6 +148,7 @@ class PembatalanService
         $inv = $st->fetch(PDO::FETCH_ASSOC);
         if (!$inv) throw new Exception('Faktur tidak ditemukan.');
         if ($inv['status_bayar'] === 'BATAL') throw new Exception("Faktur {$inv['no_invoice']} sudah dibatalkan.");
+        PeriodeService::pastikanTerbuka((string)$inv['tanggal_invoice'], 'membatalkan faktur ini');
         if ($inv['tipe_invoice'] === 'STOK') {
             throw new Exception("Faktur {$inv['no_invoice']} berasal dari Penerimaan. Batalkan dari Riwayat Penerimaan.");
         }
@@ -178,6 +181,7 @@ class PembatalanService
         $k = $st->fetch(PDO::FETCH_ASSOC);
         if (!$k) throw new Exception('Transaksi kas tidak ditemukan.');
         if ($k['status'] === 'BATAL') throw new Exception("Transaksi {$k['no_bukti']} sudah dibatalkan.");
+        PeriodeService::pastikanTerbuka((string)$k['tanggal'], 'membatalkan transaksi kas ini');
 
         $db->beginTransaction();
         try {
@@ -204,6 +208,7 @@ class PembatalanService
         $p = $st->fetch(PDO::FETCH_ASSOC);
         if (!$p) throw new Exception('Pembayaran tidak ditemukan.');
         if ($p['status'] === 'BATAL') throw new Exception("Pembayaran {$p['no_bukti_keluar']} sudah dibatalkan.");
+        PeriodeService::pastikanTerbuka((string)$p['tanggal_bayar'], 'membatalkan pembayaran ini');
 
         $al = $db->prepare("SELECT DISTINCT invoice_id, no_surat_jalan FROM ap_alokasi_pembayaran WHERE pembayaran_id = ?");
         $al->execute([$pembayaranId]);
@@ -250,6 +255,7 @@ class PembatalanService
         $p = $st->fetch(PDO::FETCH_ASSOC);
         if (!$p) throw new Exception('Setoran tidak ditemukan.');
         if ($p['status'] === 'BATAL') throw new Exception("Setoran {$p['no_bukti_bayar']} sudah dibatalkan.");
+        PeriodeService::pastikanTerbuka((string)$p['tanggal_bayar'], 'membatalkan setoran ini');
         if (($p['status_rekonsiliasi'] ?? 'PENDING') !== 'PENDING') {
             throw new Exception("Setoran {$p['no_bukti_bayar']} tanggal {$p['tanggal_bayar']} sudah masuk Rekonsiliasi Bank, jadi tidak dapat dibatalkan. Buka kembali rekonsiliasi tanggal itu dulu.");
         }

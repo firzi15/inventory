@@ -278,6 +278,7 @@ class PurchaseInvoice {
             $noInvoice = !empty($data['no_invoice']) ? trim($data['no_invoice']) : self::generateNextInvoiceNumber($tipe);
 
             $tglInvoice = !empty($data['tanggal_invoice']) ? $data['tanggal_invoice'] : date('Y-m-d');
+            \App\Services\PeriodeService::pastikanTerbuka($tglInvoice, 'mencatat faktur');
             $tglJatuhTempo = !empty($data['tanggal_jatuh_tempo']) ? $data['tanggal_jatuh_tempo'] : date('Y-m-d', strtotime('+14 days'));
 
             // Akun debit: dipilih dari master COA; tanpa pilihan, ikuti tipe lama

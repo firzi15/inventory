@@ -64,6 +64,7 @@ class JurnalService
     public static function post(string $tanggal, string $tipe, int $id, string $ref, string $ket, array $baris): ?int
     {
         self::ensureTables();
+        PeriodeService::pastikanTerbuka($tanggal, 'mencatat jurnal');
         $db = Database::getConnection();
 
         $baris = array_values(array_filter($baris, fn($b) => round((float)$b[1], 2) > 0 || round((float)$b[2], 2) > 0));

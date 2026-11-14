@@ -326,6 +326,7 @@ class Piutang {
         $mitraId     = (int)($data['mitra_id'] ?? 0);
         $jumlahBayar = (float)($data['jumlah_bayar'] ?? 0);
         $tglBayar    = trim($data['tanggal_bayar'] ?? date('Y-m-d'));
+        \App\Services\PeriodeService::pastikanTerbuka($tglBayar, 'mencatat setoran');
         $metodeBayar = strtoupper(trim($data['metode_bayar'] ?? 'TUNAI'));
         $bankTujuan  = trim($data['bank_tujuan'] ?? '');
         $keterangan  = trim($data['keterangan'] ?? '');

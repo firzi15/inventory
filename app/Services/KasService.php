@@ -81,6 +81,7 @@ class KasService
         $tanggal = (string)($d['tanggal'] ?? '');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal) || strtotime($tanggal) === false) throw new Exception('Tanggal tidak valid.');
         if ($tanggal > date('Y-m-d')) throw new Exception('Tanggal tidak boleh di masa depan.');
+        PeriodeService::pastikanTerbuka($tanggal, 'mencatat transaksi kas');
         $nominal = round((float)($d['nominal'] ?? 0), 2);
         if ($nominal <= 0) throw new Exception('Nominal harus lebih dari 0.');
         $ket = trim((string)($d['keterangan'] ?? ''));

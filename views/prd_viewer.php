@@ -68,6 +68,7 @@ require_once __DIR__ . '/layout/header.php';
     <a href="#sales-invoice">Sales Invoice</a>
     <a href="#ar-aging">AR Aging</a>
     <a href="#kas-bank">Transaksi Kas &amp; Bank</a>
+    <a href="#tutup-periode">Tutup Periode</a>
     <a href="#rekonsiliasi">Rekonsiliasi Bank</a>
     <a href="#laba-rugi">Laba Rugi</a>
     <a href="#coa">COA</a>
@@ -288,6 +289,17 @@ require_once __DIR__ . '/layout/header.php';
 <p>Kartu <strong>Saldo Kas &amp; Bank</strong> menunjukkan saldo akun 1000 menurut jurnal. Sistem mulai dari nol, jadi saldonya hanya mencerminkan transaksi sejak sistem dipakai. Untuk menyamakannya dengan saldo bank sebenarnya, catat selisih awalnya sebagai Setoran Modal.</p>
 <p>Transaksi salah tidak dihapus. Klik <strong>Batalkan</strong>, isi alasan, dan jurnalnya dibalik. Baris tetap tampil dengan status Dibatalkan. Yang boleh mencatat dan membatalkan: Admin, Supervisor, dan Finance.</p>
 
+<h2 id="tutup-periode">Tutup Periode</h2>
+<p>Menu: <span class="pj-menu">Laba Rugi &gt; Tutup Periode</span>. Dipakai setiap akhir bulan setelah angkanya dicek, supaya laporan bulan itu tidak berubah lagi.</p>
+<ol>
+    <li>Pastikan semua hari bersetoran bulan itu sudah direkonsiliasi, dan semua faktur dan kas bulan itu sudah tercatat.</li>
+    <li>Klik <strong>Tutup periode</strong> pada bulan yang dimaksud. Sistem menampilkan hasil pemeriksaan: jurnal seimbang, rekonsiliasi harian, dan kecocokan persediaan dengan jurnal.</li>
+    <li>Pemeriksaan bertanda silang menghalangi penutupan. Yang bertanda seru hanya peringatan; sebaiknya dibereskan dulu.</li>
+    <li>Isi catatan bila perlu, lalu konfirmasi. Penjualan, HPP, biaya, laba bersih, dan saldo kas, piutang, persediaan, dan utang akhir bulan disimpan.</li>
+</ol>
+<p>Hanya bulan yang sudah lewat yang bisa ditutup, dan hanya oleh Admin atau Finance. Setelah ditutup, faktur, pembayaran, setoran, transaksi kas, dan rekonsiliasi bertanggal di bulan itu ditolak, dan dokumen bertanggal di bulan itu tidak bisa dibatalkan. Transaksi bulan berjalan tidak terpengaruh.</p>
+<p>Untuk koreksi, Admin klik <strong>Buka kembali</strong>, mengisi alasan (tercatat di log audit), melakukan koreksi, lalu menutup periodenya lagi. Pembatalan tetap dicatat pada tanggal pembatalannya, jadi koreksinya muncul di bulan berjalan dan angka bulan yang sudah ditutup tidak bergeser.</p>
+
 <h2 id="rekonsiliasi">Rekonsiliasi Bank</h2>
 <p>Menu: <span class="pj-menu">Rekonsiliasi Bank</span>. Dilakukan sekali sehari untuk mengaudit uang masuk pada hari itu.</p>
 <p>Halaman menampilkan satu baris per hari yang punya setoran: jumlah setoran, total tunai, total transfer, dan total menurut sistem.</p>
@@ -348,7 +360,9 @@ require_once __DIR__ . '/layout/header.php';
     <tr><td>Faktur operasional</td><td>Daftar Faktur</td><td>Belum ada pembayaran. Faktur stok dibatalkan lewat Riwayat Penerimaan.</td></tr>
     <tr><td>Pembayaran pemasok</td><td>Rincian faktur (daftar pembayarannya)</td><td>Tidak ada syarat tambahan.</td></tr>
     <tr><td>Setoran mitra</td><td>Riwayat setoran pada nota (Daftar Nota)</td><td>Hari setorannya belum direkonsiliasi, atau rekonsiliasinya sudah dibuka kembali.</td></tr>
+    <tr><td>Transaksi kas</td><td>Transaksi Kas &amp; Bank</td><td>Tidak ada syarat tambahan.</td></tr>
 </table>
+<p>Semua pembatalan ditolak bila tanggal dokumennya jatuh di bulan yang sudah ditutup (lihat Tutup Periode).</p>
 <p>Urutan membatalkan mengikuti arah sebaliknya: setoran atau pembayaran dibatalkan lebih dulu, baru dokumen di bawahnya (pengeluaran atau penerimaan).</p>
 
 <h2 id="ekspor">Ekspor dan filter</h2>

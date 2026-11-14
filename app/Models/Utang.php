@@ -304,6 +304,7 @@ class Utang {
         $pemasokId    = (int)($data['pemasok_id'] ?? 0);
         $jumlahBayar  = (float)($data['jumlah_bayar'] ?? 0);
         $tglBayar     = trim($data['tanggal_bayar'] ?? date('Y-m-d'));
+        \App\Services\PeriodeService::pastikanTerbuka($tglBayar, 'mencatat pembayaran');
         $metodeBayar  = strtoupper(trim($data['metode_bayar'] ?? 'TRANSFER_BANK'));
         $bankSumber   = trim($data['bank_sumber'] ?? '');
         $noRekTujuan  = trim($data['no_rekening_tujuan'] ?? '');

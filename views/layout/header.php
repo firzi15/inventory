@@ -44,6 +44,7 @@ $pageInfoMap = [
     'pengeluaran'          => ['title' => 'Pengeluaran Barang ke Mitra', 'desc' => 'Keluarkan stok fisik pemasok dari gudang ke mitra bisnis'],
     'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
     'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
+    'tutup_periode'        => ['title' => 'Tutup Periode', 'desc' => 'Kunci laporan bulanan setelah dicek; periode tertutup tidak menerima transaksi atau pembatalan'],
     'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
     'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
     'barang_datang'        => ['title' => 'Barang Datang', 'desc' => 'Barang yang diterima gudang dari pemasok dan total nilai pembelian'],
@@ -296,7 +297,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $isKasActive     = ($currentPage === 'kas_bank');
             $isPurchGroupActive = ($isPurchInvActive || $currentPage === 'purchase_book');
             $isSalesGroupActive = ($isSalesInvActive || $currentPage === 'sales_book');
-            $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit', 'coa']);
+            $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit', 'coa', 'tutup_periode']);
             $isStokMitraActive = ($currentPage === 'stok_mitra');
             $isMasterActive = in_array($currentPage, ['master', 'master_mitra', 'master_produk', 'master_harga', 'master_harga_pemasok', 'master_harga_mitra', 'accurate_sync']);
             ?>
@@ -572,6 +573,12 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                                 <a href="index.php?page=profit_loss&tab=laba_sj" class="nav-sub-item <?= ($currentPage === 'profit_loss' && ($currentTab === 'laba_sj' || $currentTab === 'riwayat_sj')) ? 'active' : '' ?>">
                                     <i data-lucide="receipt" style="width: 14px; height: 14px; color: #10b981;"></i>
                                     <span>Laba per Surat Jalan</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=tutup_periode" class="nav-sub-item <?= $currentPage === 'tutup_periode' ? 'active' : '' ?>">
+                                    <i data-lucide="lock" style="width: 14px; height: 14px; color: #64748b;"></i>
+                                    <span>Tutup Periode</span>
                                 </a>
                             </li>
                         </ul>

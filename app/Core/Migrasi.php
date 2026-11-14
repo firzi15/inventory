@@ -51,6 +51,7 @@ class Migrasi
         self::kolom($db, 'transaksi_stok', 'termin_hari', "INT NULL");
         self::kolom($db, 'transaksi_stok', 'tanggal_jatuh_tempo', "DATE NULL");
         \App\Services\KasService::ensureTable();
+        \App\Services\PeriodeService::ensureTable();
 
         self::$done = true;
     }

@@ -1153,6 +1153,28 @@ if ($action) {
                 Helper::jsonResponse(['success' => true, 'message' => $pesanTempo]);
                 exit;
 
+            // TP. Tutup periode bulanan: pemeriksaan (semua peran login), tutup (ADMIN/FINANCE), buka kembali (ADMIN)
+            case 'cek_periode':
+                $pCek = (string)($_GET['periode'] ?? '');
+                if (!preg_match('/^\d{4}-\d{2}$/', $pCek)) throw new Exception('Periode tidak valid.');
+                Helper::jsonResponse(['success' => true, 'nama' => \App\Services\PeriodeService::namaPeriode($pCek), 'cek' => \App\Services\PeriodeService::cek($pCek), 'ringkas' => \App\Services\PeriodeService::ringkas($pCek)]);
+                exit;
+            case 'tutup_periode':
+            case 'buka_periode':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $rolePer = strtoupper($_SESSION['user_login']['role'] ?? '');
+                $bolehPer = $action === 'buka_periode' ? ['ADMIN'] : ['ADMIN', 'FINANCE'];
+                if (!in_array($rolePer, $bolehPer, true)) {
+                    Helper::jsonResponse(['success' => false, 'message' => $action === 'buka_periode' ? 'Hanya Admin yang dapat membuka kembali periode.' : 'Hanya Admin atau Finance yang dapat menutup periode.'], 403);
+                    exit;
+                }
+                $uidPer = (int)($_SESSION['user_login']['id'] ?? 0);
+                $pesanPer = $action === 'buka_periode'
+                    ? \App\Services\PeriodeService::buka((string)($_POST['periode'] ?? ''), (string)($_POST['alasan'] ?? ''), $uidPer)
+                    : \App\Services\PeriodeService::tutup((string)($_POST['periode'] ?? ''), (string)($_POST['catatan'] ?? ''), $uidPer);
+                Helper::jsonResponse(['success' => true, 'message' => $pesanPer]);
+                exit;
+
             // K. Transaksi Kas & Bank: catat biaya / setoran modal / prive (ADMIN, SUPERVISOR, FINANCE)
             case 'simpan_kas':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
@@ -1272,6 +1294,7 @@ $allowedPages = [
     'ap_aging'                     => __DIR__ . '/views/ap_aging.php',
     'rekonsiliasi_bank'            => __DIR__ . '/views/rekonsiliasi_bank.php',
     'kas_bank'                     => __DIR__ . '/views/kas_bank.php',
+    'tutup_periode'                => __DIR__ . '/views/tutup_periode.php',
     'profit_loss'                  => __DIR__ . '/views/profit_loss.php',
     'coa'                          => __DIR__ . '/views/coa.php',
     'purchase_book'                => __DIR__ . '/views/book.php',
