@@ -2092,40 +2092,33 @@ select.form-control option {
 }
 
 /* ==========================================================================
-   MODE LAYAR PENUH: sidebar disembunyikan di semua ukuran layar dan dibuka
-   lewat tombol MENU di topbar sebagai laci (aturan yang sama dengan layar kecil)
+   SIDEBAR DESKTOP: tampil secara bawaan, bisa dilipat / dibuka dengan animasi halus.
+   Status lipat disimpan di browser (localStorage 'sidebarCollapsed').
+   Di layar < 1024px tetap berupa laci (aturan di atas).
    ========================================================================== */
-.app-sidebar {
-    width: 280px;
-    z-index: 1000;
-    transform: translateX(-100%);
-    box-shadow: none;
+@media (min-width: 1024px) {
+    .app-sidebar {
+        transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease, opacity 0.2s ease;
+        will-change: transform;
+    }
+    .app-main-container {
+        transition: margin-left 0.32s cubic-bezier(0.22, 1, 0.36, 1), width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .btn-hamburger {
+        display: inline-flex;
+    }
+    body.sidebar-collapsed .app-sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+        pointer-events: none;
+    }
+    body.sidebar-collapsed .app-main-container {
+        margin-left: 0;
+        width: 100%;
+    }
 }
-.app-sidebar.open {
-    transform: translateX(0);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-}
-.sidebar-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.sidebar-backdrop {
-    display: block;
-}
-.sidebar-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-}
-.app-main-container {
-    margin-left: 0;
-    width: 100%;
-}
-.btn-hamburger {
-    display: inline-flex;
-}
-body.sidebar-active {
-    overflow: hidden;
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar, .app-main-container { transition: none !important; }
 }
 
 @media (max-width: 900px) {

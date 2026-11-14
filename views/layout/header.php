@@ -264,6 +264,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
     </script>
 </head>
 <body class="has-sidebar">
+    <script>try { if (localStorage.getItem('sidebarCollapsed') === '1') document.body.classList.add('sidebar-collapsed'); } catch (e) {}</script>
     <div class="app-layout">
         <!-- Overlay Backdrop Mobile -->
         <div class="sidebar-backdrop no-print" id="sidebarBackdrop" onclick="toggleSidebar(false)" aria-label="Tutup Menu"></div>
@@ -735,7 +736,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             <header class="app-topbar no-print">
                 <div class="topbar-left">
                     <!-- Tombol Hamburger Mobile Menu -->
-                    <button type="button" class="btn-hamburger" id="btnSidebarToggle" onclick="toggleSidebar(true)" title="Buka Menu Navigasi">
+                    <button type="button" class="btn-hamburger" id="btnSidebarToggle" onclick="toggleSidebarMenu()" title="Tampilkan / sembunyikan menu" aria-controls="appSidebar">
                         <i data-lucide="menu" style="width: 18px; height: 18px;"></i>
                         <span class="btn-hamburger-text">MENU</span>
                     </button>

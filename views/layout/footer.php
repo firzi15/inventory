@@ -36,6 +36,22 @@
             }
         }
 
+        // Tombol MENU: di desktop melipat / membuka sidebar (diingat di browser), di layar kecil membuka laci
+        function toggleSidebarMenu() {
+            if (window.matchMedia('(min-width: 1024px)').matches) {
+                const lipat = document.body.classList.toggle('sidebar-collapsed');
+                try { localStorage.setItem('sidebarCollapsed', lipat ? '1' : '0'); } catch (e) {}
+                const btn = document.getElementById('btnSidebarToggle');
+                if (btn) btn.setAttribute('aria-expanded', lipat ? 'false' : 'true');
+            } else {
+                toggleSidebar();
+            }
+        }
+        (function () {
+            const btn = document.getElementById('btnSidebarToggle');
+            if (btn) btn.setAttribute('aria-expanded', document.body.classList.contains('sidebar-collapsed') ? 'false' : 'true');
+        })();
+
         // Tutup drawer jika tombol ESC ditekan
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
