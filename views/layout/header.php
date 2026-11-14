@@ -45,6 +45,7 @@ $pageInfoMap = [
     'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
     'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
     'tutup_periode'        => ['title' => 'Tutup Periode', 'desc' => 'Kunci laporan bulanan setelah dicek; periode tertutup tidak menerima transaksi atau pembatalan'],
+    'surat_jalan'          => ['title' => 'Surat Jalan', 'desc' => 'Cetak surat jalan rangkap 3 tanpa harga dan versi internal dengan harga'],
     'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
     'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
     'barang_datang'        => ['title' => 'Barang Datang', 'desc' => 'Barang yang diterima gudang dari pemasok dan total nilai pembelian'],
@@ -295,6 +296,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $isPurchInvActive = ($currentPage === 'ap_aging' && $currentTab === 'invoices');
             $isRekonActive   = ($currentPage === 'rekonsiliasi_bank');
             $isKasActive     = ($currentPage === 'kas_bank');
+            $isSuratJalanActive = in_array($currentPage, ['surat_jalan', 'surat_jalan_print', 'surat_jalan_penerimaan_print'], true);
             $isPurchGroupActive = ($isPurchInvActive || $currentPage === 'purchase_book');
             $isSalesGroupActive = ($isSalesInvActive || $currentPage === 'sales_book');
             $isProfitActive = in_array($currentPage, ['profit_loss', 'estimasi_keuntungan', 'profit', 'coa', 'tutup_periode']);
@@ -386,6 +388,18 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                                 </a>
                             </li>
                         </ul>
+                    </li>
+                    <!-- SURAT JALAN -->
+                    <li>
+                        <a href="index.php?page=surat_jalan" class="nav-item <?= $isSuratJalanActive ? 'active' : '' ?>" title="Cetak surat jalan rangkap 3 dan versi internal">
+                            <div class="nav-item-icon icon-amber">
+                                <i data-lucide="file-text" style="width: 17px; height: 17px;"></i>
+                            </div>
+                            <div class="nav-item-text">
+                                <span class="nav-item-title">Surat Jalan</span>
+                                <span class="nav-item-desc">Cetak dan cetak ulang</span>
+                            </div>
+                        </a>
                     </li>
                     <!-- MENU UTAMA 3: STOK BARANG GUDANG & STOCK OPNAME -->
                     <li class="nav-has-submenu <?= $isStokGudangActive ? 'is-open' : '' ?>" id="menuStokGudang" data-active-page="<?= $isStokGudangActive ? '1' : '' ?>">

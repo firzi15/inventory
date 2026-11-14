@@ -1294,6 +1294,7 @@ $allowedPages = [
     'ap_aging'                     => __DIR__ . '/views/ap_aging.php',
     'rekonsiliasi_bank'            => __DIR__ . '/views/rekonsiliasi_bank.php',
     'kas_bank'                     => __DIR__ . '/views/kas_bank.php',
+    'surat_jalan'                  => __DIR__ . '/views/surat_jalan.php',
     'tutup_periode'                => __DIR__ . '/views/tutup_periode.php',
     'profit_loss'                  => __DIR__ . '/views/profit_loss.php',
     'coa'                          => __DIR__ . '/views/coa.php',

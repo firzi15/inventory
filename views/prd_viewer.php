@@ -76,7 +76,7 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="pj-toc-head">Lainnya</div>
     <a href="#pembatalan">Pembatalan dan koreksi</a>
-    <a href="#cetak-sj">Mencetak surat jalan</a>
+    <a href="#cetak-sj">Surat Jalan dan cetak</a>
     <a href="#ekspor">Ekspor dan filter</a>
     <a href="#masalah">Jika ada masalah</a>
 </nav>
@@ -367,7 +367,14 @@ require_once __DIR__ . '/layout/header.php';
 <p>Urutan membatalkan mengikuti arah sebaliknya: setoran atau pembayaran dibatalkan lebih dulu, baru dokumen di bawahnya (pengeluaran atau penerimaan).</p>
 
 <h2 id="cetak-sj">Mencetak surat jalan</h2>
-<p>Surat Jalan Penerimaan dan Surat Jalan Pengeluaran dicetak di form bersambung 9&frac12; x 11 inci. Setelah strip berlubang dirobek, kertasnya 8&frac12; x 11 inci, dan itulah ukuran halaman yang dipakai sistem. Satu dokumen pendek memakai satu lembar; dokumen panjang berlanjut ke lembar berikutnya dengan judul tabel berulang.</p>
+<p>Menu: <span class="pj-menu">Surat Jalan</span>. Dua tab: Pengeluaran ke Mitra dan Penerimaan dari Pemasok. Daftar bisa difilter menurut tanggal, mitra atau pemasok, status, dan kata kunci, lalu dicetak atau dicetak ulang kapan saja. Surat jalan yang dibatalkan tetap tampil tetapi tidak bisa dicetak.</p>
+<table>
+    <tr><th>Tombol</th><th>Isi</th><th>Untuk</th></tr>
+    <tr><td>Cetak Form (rangkap 3)</td><td>Tanpa harga: kemasan, netto, asal surat jalan, dan kolom tanda tangan. Satu halaman per dokumen pendek.</td><td>Form bersambung rangkap 3. Satu kali cetak tembus ke semua lapis, jadi cetak satu kali saja.</td></tr>
+    <tr><td>Versi Internal</td><td>Lengkap dengan harga, subtotal, dan total piutang mitra.</td><td>Arsip kita di kertas biasa. Hanya tampil untuk Admin, Supervisor, dan Finance; operator tidak melihat tombol maupun kolom nilai.</td></tr>
+</table>
+<p>Layar Pengeluaran langsung membuka versi form (tanpa harga) setelah barang dikeluarkan. Surat Jalan Penerimaan tidak memuat harga dan hanya punya satu versi cetak.</p>
+<p>Kertas yang dipakai adalah form bersambung 9&frac12; x 11 inci. Setelah strip berlubang dirobek, kertasnya 8&frac12; x 11 inci, dan itulah ukuran halaman yang dipakai sistem. Dokumen panjang berlanjut ke lembar berikutnya dengan judul tabel berulang.</p>
 <h3>Dialog cetak browser (Chrome)</h3>
 <table>
     <tr><th>Pengaturan</th><th>Nilai</th></tr>
@@ -380,7 +387,6 @@ require_once __DIR__ . '/layout/header.php';
     <tr><td>Header dan footer</td><td>Tidak dicentang</td></tr>
     <tr><td>Grafis latar belakang</td><td>Tidak perlu</td></tr>
 </table>
-<p>Pada Surat Jalan Pengeluaran, mode <strong>SJ Admin</strong> dan <strong>SJ Mitra</strong> masing-masing mencetak satu halaman. Mode <strong>Keduanya</strong> mencetak dua halaman berurutan. Untuk form rangkap (karbon), cukup cetak satu mode: tulisan tembus ke semua lapisan, jadi memilih Keduanya akan memakai dua form.</p>
 <h3>Pengaturan komputer dan printer</h3>
 <ol>
     <li>Windows: Settings &gt; Printers &amp; scanners &gt; pilih printer &gt; Printing preferences. Pilih ukuran kertas <strong>Letter Fanfold 8 1/2 x 11 in</strong>, sumber kertas tractor atau continuous, orientasi Portrait.</li>

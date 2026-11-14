@@ -22,17 +22,19 @@ $items = $trx['items'] ?? [];
 $noSuratJalan = !empty($trx['no_referensi_eksternal']) ? $trx['no_referensi_eksternal'] : (!empty($trx['no_bast']) ? $trx['no_bast'] : $trx['no_transaksi']);
 $barcodeSjSvg = BarcodeService::generateCode128Svg($noSuratJalan, 60, 1.8);
 
-// Pilihan Mode Cetak: 'admin' (ada harga), 'mitra' (non-harga, hanya satuan), 'keduanya' (cetak 2 lembar)
-$mode = strtolower(trim($_GET['mode'] ?? 'admin'));
-if (!in_array($mode, ['admin', 'mitra', 'keduanya'])) {
-    $mode = 'admin';
-}
+// Mode cetak: 'form' = form rangkap 3, tanpa harga, satu kali cetak tembus semua lapis (default).
+// 'internal' = versi kita, lengkap dengan harga dan piutang, hanya untuk Admin / Supervisor / Finance.
+$mode = strtolower(trim($_GET['mode'] ?? 'form'));
+if ($mode === 'admin') $mode = 'internal';
+if (!in_array($mode, ['form', 'internal'], true)) $mode = 'form';
+$bolehInternal = in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+if ($mode === 'internal' && !$bolehInternal) $mode = 'form';
 
 /**
  * Fungsi Render Satu Lembar Halaman Surat Jalan (Admin / Mitra)
  */
 function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, string $barcodeSjSvg, string $viewType = 'admin'): void {
-    $isAdmin = ($viewType === 'admin');
+    $isAdmin = in_array($viewType, ['admin', 'internal'], true);
     $mitraId = (int)($trx['mitra_id'] ?? 0);
     $totalNetto = 0.0;
     $grandTotalJual = 0.0;
@@ -64,12 +66,12 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
         <!-- Indikator Rangkap Cetak (3-Ply Paper) -->
         <div class="ply-indicator" style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 800; font-size: 11px; color: #000000;">
-                <?= $isAdmin ? 'SALINAN INTERNAL: ADMIN & FINANCE' : 'SALINAN PENERIMA: MITRA / EKSPEDISI' ?>
+                <?= $isAdmin ? 'SALINAN INTERNAL: ADMIN & FINANCE' : 'SURAT JALAN RANGKAP 3' ?>
             </span>
             <span style="color: #444444;">
                 <?= $isAdmin 
-                    ? 'LEMBAR 1: FINANCE / PENAGIHAN (PUTIH) • LENGKAP HARGA & PIUTANG' 
-                    : 'LEMBAR 2: MITRA PEMBELI (MERAH/KUNING) • NON-HARGA (FISIK & SATUAN)' ?>
+                    ? 'VERSI INTERNAL • LENGKAP HARGA & PIUTANG' 
+                    : 'ASLI + TEMBUSAN • NON-HARGA (FISIK & SATUAN)' ?>
             </span>
         </div>
 
@@ -93,7 +95,7 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
             <div class="doc-subtitle">
                 <?= $isAdmin 
                     ? 'Delivery Order & Outbound Invoice Note (Versi Admin / Tagihan)' 
-                    : 'Delivery Order / Outbound Dispatch Note (Versi Mitra / Bukti Serah Terima)' ?>
+                    : 'Delivery Order / Outbound Dispatch Note (Bukti Serah Terima)' ?>
             </div>
         </div>
 
@@ -688,43 +690,31 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
 
     <!-- Bar Navigasi (Hanya muncul di Layar Monitor) -->
     <div class="btn-print-bar no-print">
-        <a href="index.php?page=pengeluaran" class="btn btn-outline">
-            Kembali ke Menu Pengeluaran
+        <a href="index.php?page=surat_jalan" class="btn btn-outline">
+            Kembali ke Surat Jalan
         </a>
 
-        <!-- Switcher Pilihan Versi Cetak -->
+        <!-- Pilihan versi cetak -->
         <div style="display: flex; gap: 4px; background: #ffffff; padding: 2px; border: 1px solid #000000; border-radius: 4px;">
-            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=admin" class="btn <?= $mode === 'admin' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;" title="Cetak dengan rincian harga per kg dan total tagihan piutang">
-                Versi Admin (Ada Harga)
+            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=form" class="btn <?= $mode === 'form' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;">
+                Form Rangkap 3 (tanpa harga)
             </a>
-            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=mitra" class="btn <?= $mode === 'mitra' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;" title="Cetak untuk mitra: non-harga, hanya menampilkan satuan kemasan dus & bobot kg">
-                Versi Mitra (Non-Harga, Hanya Satuan)
+            <?php if ($bolehInternal): ?>
+            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=internal" class="btn <?= $mode === 'internal' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;">
+                Versi Internal (dengan harga)
             </a>
-            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=keduanya" class="btn <?= $mode === 'keduanya' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;" title="Cetak 2 lembar sekaligus: Lembar 1 Admin + Lembar 2 Mitra">
-                Cetak Keduanya (Admin + Mitra)
-            </a>
+            <?php endif; ?>
         </div>
 
         <div style="display: flex; gap: 8px;">
             <button type="button" class="btn btn-primary" onclick="window.print()">
-                Cetak <?= $mode === 'mitra' ? 'SJ Mitra' : ($mode === 'keduanya' ? 'Keduanya' : 'SJ Admin') ?>
+                Cetak <?= $mode === 'internal' ? 'Versi Internal' : 'Form Rangkap 3' ?>
             </button>
         </div>
     </div>
 
-    <!-- Output Lembar Cetak Sesuai Mode Terpilih -->
-    <?php
-    if ($mode === 'admin') {
-        renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'admin');
-    } elseif ($mode === 'mitra') {
-        renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'mitra');
-    } elseif ($mode === 'keduanya') {
-        renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'admin');
-        echo '<div class="page-break-divider no-print" style="margin: 25px auto; max-width: 8.5in; text-align: center; border-top: 2px dashed #000000; position: relative;"><span style="position: relative; top: -11px; background: #ffffff; padding: 0 12px; font-size: 11.5px; font-weight: 700; color: #000000; border: 1px solid #000000;">PEMBATAS HALAMAN: LEMBAR MITRA (NON-HARGA) BERIKUTNYA</span></div>';
-        echo '<div style="page-break-after: always; break-after: page;"></div>';
-        renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, 'mitra');
-    }
-    ?>
+    <!-- Output: satu lembar sesuai mode -->
+    <?php renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, $mode); ?>
 
 </body>
 </html>
