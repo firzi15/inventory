@@ -2091,6 +2091,43 @@ select.form-control option {
     }
 }
 
+/* ==========================================================================
+   MODE LAYAR PENUH: sidebar disembunyikan di semua ukuran layar dan dibuka
+   lewat tombol MENU di topbar sebagai laci (aturan yang sama dengan layar kecil)
+   ========================================================================== */
+.app-sidebar {
+    width: 280px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: none;
+}
+.app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sidebar-backdrop {
+    display: block;
+}
+.sidebar-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+.app-main-container {
+    margin-left: 0;
+    width: 100%;
+}
+.btn-hamburger {
+    display: inline-flex;
+}
+body.sidebar-active {
+    overflow: hidden;
+}
+
 @media (max-width: 900px) {
     .prd-container {
         grid-template-columns: 1fr;

@@ -84,7 +84,7 @@ require_once __DIR__ . '/layout/header.php';
 <article class="pj-body">
 
 <h1>Panduan Cara Pakai</h1>
-<p class="pj-lead">Cara memakai sistem dari barang datang sampai laporan keuangan. Nama menu ditulis persis seperti di sidebar.</p>
+<p class="pj-lead">Cara memakai sistem dari barang datang sampai laporan keuangan. Nama menu ditulis persis seperti di menu navigasi. Layar dibuat penuh tanpa sidebar; klik tombol <strong>MENU</strong> di kiri atas untuk membuka daftar menu, lalu klik di luar daftar, tombol silang, atau tekan Esc untuk menutupnya.</p>
 <p class="pj-meta">Diperbarui 14 November 2026</p>
 
 <h2 id="alur" style="border-top: 0; padding-top: 0; margin-top: 0;">Alur kerja</h2>
@@ -143,7 +143,7 @@ require_once __DIR__ . '/layout/header.php';
 </ul>
 
 <h2 id="master">Master data</h2>
-<p>Buka <span class="pj-menu">Master &amp; Pengaturan</span>. Setiap tab punya menu sendiri di sidebar.</p>
+<p>Buka <span class="pj-menu">Master &amp; Pengaturan</span>. Setiap tab punya menu sendiri di daftar menu (tombol MENU).</p>
 <table>
     <tr><th>Menu</th><th>Fungsi</th></tr>
     <tr><td>Pemasok Nelayan</td><td>Daftar pemasok. Kode pemasok diisi manual dan harus unik.</td></tr>
