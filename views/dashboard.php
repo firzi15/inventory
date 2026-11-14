@@ -38,7 +38,7 @@ require_once __DIR__ . '/layout/header.php';
 
 <!-- KPI harian -->
 <div class="grid grid-cols-4" style="margin-bottom: 24px;">
-    <a class="kpi-card" href="index.php?page=timbang_cetak&tab=stok_gudang" title="Buka stok gudang utama">
+    <a class="kpi-card" href="index.php?page=barang_datang&stok=AKTIF&dari=2000-01-01" title="Buka stok gudang utama (Purchase Book, status Aktif)">
         <div class="kpi-body">
             <div class="kpi-label">Stok Gudang Utama</div>
             <div class="kpi-value"><?= Helper::formatKg($ov['gudang_kg']) ?></div>
@@ -84,7 +84,7 @@ require_once __DIR__ . '/layout/header.php';
         <?php
         $actions = [
             ['Surat jalan belum selesai ditimbang', $ov['sj_belum_timbang'], Helper::formatNumber($ov['sj_belum_timbang']) . ' surat jalan', 'index.php?page=timbang_cetak&tab=timbang_cetak'],
-            ['Stok mengendap lebih dari 3 hari', $ov['gudang_mengendap'], Helper::formatNumber($ov['gudang_mengendap']) . ' keranjang', 'index.php?page=timbang_cetak&tab=stok_gudang'],
+            ['Stok mengendap lebih dari 3 hari', $ov['gudang_mengendap'], Helper::formatNumber($ov['gudang_mengendap']) . ' keranjang', 'index.php?page=barang_datang&stok=AKTIF&dari=2000-01-01'],
             ['Piutang mitra lewat tempo', $ov['piutang_overdue'], Helper::formatRupiah($ov['piutang_overdue']), 'index.php?page=ar_aging'],
             ['Utang pemasok lewat tempo', $ov['utang_overdue'], Helper::formatRupiah($ov['utang_overdue']), 'index.php?page=ap_aging'],
         ];
@@ -155,14 +155,6 @@ require_once __DIR__ . '/layout/header.php';
                     <?php endforeach; ?>
                 </tbody>
                 <?php if (!empty($utangMitra)): ?>
-                <tfoot>
-                    <tr style="font-weight: 800; background: var(--bg-muted);">
-                        <td>Semua mitra (<?= count($utangMitra) ?>)</td>
-                        <td style="text-align: right;"><?= Helper::formatRupiah($totUtang) ?></td>
-                        <td style="text-align: right; color: var(--ok-fg);"><?= Helper::formatRupiah($totBayar) ?></td>
-                        <td style="text-align: right; color: <?= $totSisa > 0.01 ? '#b45309' : 'inherit' ?>;"><?= Helper::formatRupiah($totSisa) ?></td>
-                    </tr>
-                </tfoot>
                 <?php endif; ?>
             </table>
         </div>

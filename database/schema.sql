@@ -1920,11 +1920,6 @@ CREATE TABLE `vendor_non_pemasok` (
 
 LOCK TABLES `vendor_non_pemasok` WRITE;
 /*!40000 ALTER TABLE `vendor_non_pemasok` DISABLE KEYS */;
-INSERT INTO `vendor_non_pemasok` VALUES
-(1,'VND-01','Toko Es Balok Muara Barokah','Es Balok & Media Pendingin','Haji Rahmat','081234567891','Muara Baru Blok C No. 12','BCA','8820192837','Rahmat Hidayat','Penyedia es balok utama untuk pendinginan ikan masuk',1,'2026-11-04 18:27:56','2026-11-04 18:27:56'),
-(2,'VND-02','CV Sumber Styrofoam & Plastik','Kemasan & Packaging','Budi Santoso','081398765432','Jl. Industri No. 45 Karawang','Mandiri','1320019283746','CV Sumber Styrofoam','Penyedia box styrofoam 50kg dan plastik kemasan',1,'2026-11-04 18:27:56','2026-11-04 18:27:56'),
-(3,'VND-03','SPBU Pertamina 34-41302 Karawang','Bahan Bakar & Energi','Hendra','082111223344','Jl. Raya Karawang Timur','BRI','012301002345501','PT Pertamina Retail','Bahan bakar solar genset cadangan cold storage',1,'2026-11-04 18:27:56','2026-11-04 18:27:56'),
-(4,'VND-04','Test Vendor Ekspedisi Kilat Updated','Logistik & Ekspedisi',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,'2026-11-05 02:10:42','2026-11-05 02:10:42');
 /*!40000 ALTER TABLE `vendor_non_pemasok` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

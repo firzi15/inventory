@@ -19,11 +19,25 @@ if (!isset($accounts[$akun])) {
     $akun = '';
 }
 
-// Filter periode (dipakai saat telusur dari Laba Rugi)
-$dari = $_GET['dari'] ?? '';
-$sampai = $_GET['sampai'] ?? '';
-$adaPeriode = preg_match('/^\d{4}-\d{2}-\d{2}$/', $dari) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $sampai);
-if (!$adaPeriode) { $dari = $sampai = ''; }
+// Filter periode (hari / minggu / bulan / YTD / tanggal bebas); kosong = semua transaksi
+[$dari, $sampai] = \App\Core\Periode::baca($_GET, null);
+$adaPeriode = $dari !== '';
+
+// Dengan periode: saldo awal (sebelum $dari), mutasi debit/kredit pada periode, dan saldo akhir (sampai $sampai)
+$awalPer = $mutPer = $akhirPer = [];
+if ($adaPeriode) {
+    $totAwal  = \App\Services\JurnalService::totalsPerAkun(null, date('Y-m-d', strtotime($dari . ' -1 day')));
+    $totMut   = \App\Services\JurnalService::totalsPerAkun($dari, $sampai);
+    $totAkhir = \App\Services\JurnalService::totalsPerAkun(null, $sampai);
+    $net = fn(array $tot, string $kode, string $normal): float => ($normal === 'Debit' ? 1 : -1) * (($tot[$kode][0] ?? 0.0) - ($tot[$kode][1] ?? 0.0));
+    foreach ($accounts as $kodeA => $aA) {
+        $awalPer[$kodeA]  = $net($totAwal, $kodeA, $aA[2]);
+        $akhirPer[$kodeA] = $net($totAkhir, $kodeA, $aA[2]);
+        $mutPer[$kodeA]   = [$totMut[$kodeA][0] ?? 0.0, $totMut[$kodeA][1] ?? 0.0];
+    }
+    $seimbang = ['debit' => array_sum(array_column($totMut, 0)), 'kredit' => array_sum(array_column($totMut, 1))];
+    $seimbang['seimbang'] = abs($seimbang['debit'] - $seimbang['kredit']) < 0.01;
+}
 
 // Kelompokkan per akun induk (urutan sesuai definisi)
 $groups = [];
@@ -50,6 +64,11 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </div>
 
+    <?php
+    $fpDari = $dari; $fpSampai = $sampai; $fpHidden = ['page' => 'coa'] + ($akun !== '' ? ['akun' => $akun] : []); $fpSemua = true;
+    include __DIR__ . '/layout/filter_periode.php';
+    ?>
+
     <?php if ($akun === ''): ?>
 
     <div class="card">
@@ -62,17 +81,33 @@ require_once __DIR__ . '/layout/header.php';
                         <th>Type</th>
                         <th>Sign</th>
                         <th>Sumber Data</th>
-                        <th style="text-align: right;">Saldo</th>
+                        <?php if ($adaPeriode): ?>
+                            <th style="text-align: right;">Saldo Awal</th>
+                            <th style="text-align: right;">Debit</th>
+                            <th style="text-align: right;">Kredit</th>
+                            <th style="text-align: right;">Saldo Akhir</th>
+                        <?php else: ?>
+                            <th style="text-align: right;">Saldo</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($groups as $induk => $list):
                         $sub = 0.0;
                         $signGrup = \App\Services\CoaService::TIPE[reset($list)[6]][2];
-                        foreach ($list as $kode => $a) { $sub += ($a[2] === $signGrup ? 1 : -1) * $balances[$kode]; }
+                        $subAwal = $subD = $subK = 0.0;
+                        foreach ($list as $kode => $a) {
+                            $sub += ($a[2] === $signGrup ? 1 : -1) * ($adaPeriode ? $akhirPer[$kode] : $balances[$kode]);
+                            if ($adaPeriode) { $subAwal += ($a[2] === $signGrup ? 1 : -1) * $awalPer[$kode]; $subD += $mutPer[$kode][0]; $subK += $mutPer[$kode][1]; }
+                        }
                     ?>
                         <tr style="background: var(--bg-muted);">
                             <td colspan="5" style="font-weight: 800;"><?= htmlspecialchars($induk) ?></td>
+                            <?php if ($adaPeriode): ?>
+                                <td style="text-align: right; font-weight: 800;"><?= Helper::formatRupiah($subAwal) ?></td>
+                                <td style="text-align: right; font-weight: 800;"><?= Helper::formatRupiah($subD) ?></td>
+                                <td style="text-align: right; font-weight: 800;"><?= Helper::formatRupiah($subK) ?></td>
+                            <?php endif; ?>
                             <td style="text-align: right; font-weight: 800;"><?= Helper::formatRupiah($sub) ?></td>
                         </tr>
                         <?php foreach ($list as $kode => $a): ?>
@@ -85,7 +120,14 @@ require_once __DIR__ . '/layout/header.php';
                                 <td><?= htmlspecialchars($a[1]) ?></td>
                                 <td><?= $a[2] ?></td>
                                 <td style="font-size: 12px; color: var(--text-muted);"><?= htmlspecialchars($sources[$kode]) ?></td>
-                                <td style="text-align: right; font-weight: 700;"><?= Helper::formatRupiah($balances[$kode]) ?></td>
+                                <?php if ($adaPeriode): ?>
+                                    <td style="text-align: right;"><?= Helper::formatRupiah($awalPer[$kode]) ?></td>
+                                    <td style="text-align: right;"><?= $mutPer[$kode][0] != 0 ? Helper::formatRupiah($mutPer[$kode][0]) : '-' ?></td>
+                                    <td style="text-align: right;"><?= $mutPer[$kode][1] != 0 ? Helper::formatRupiah($mutPer[$kode][1]) : '-' ?></td>
+                                    <td style="text-align: right; font-weight: 700;"><?= Helper::formatRupiah($akhirPer[$kode]) ?></td>
+                                <?php else: ?>
+                                    <td style="text-align: right; font-weight: 700;"><?= Helper::formatRupiah($balances[$kode]) ?></td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
@@ -93,9 +135,10 @@ require_once __DIR__ . '/layout/header.php';
             </table>
         </div>
         <div style="padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 24px; flex-wrap: wrap; font-size: 12.5px;">
+            <?php if ($adaPeriode): ?><span style="color: var(--text-muted);">Periode <?= htmlspecialchars($dari) ?> s/d <?= htmlspecialchars($sampai) ?></span><?php endif; ?>
             <span>Total Debit: <strong><?= Helper::formatRupiah($seimbang['debit']) ?></strong></span>
             <span>Total Kredit: <strong><?= Helper::formatRupiah($seimbang['kredit']) ?></strong></span>
-            <span style="font-weight: 700; color: <?= $seimbang['seimbang'] ? '#15803d' : '#b91c1c' ?>;"><?= $seimbang['seimbang'] ? 'Jurnal seimbang' : 'Jurnal tidak seimbang' ?></span>
+            <span style="font-weight: 700; color: <?= $seimbang['seimbang'] ? 'var(--ok-fg)' : 'var(--bad-fg)' ?>;"><?= $seimbang['seimbang'] ? 'Jurnal seimbang' : 'Jurnal tidak seimbang' ?></span>
         </div>
     </div>
 
@@ -115,14 +158,11 @@ require_once __DIR__ . '/layout/header.php';
             </div>
             <div style="display: flex; align-items: center; gap: 14px;">
                 <div style="text-align: right;">
-                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Saldo</div>
-                    <div style="font-size: 18px; font-weight: 800;"><?= Helper::formatRupiah($balances[$akun]) ?></div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;"><?= $adaPeriode ? 'Saldo akhir periode' : 'Saldo' ?></div>
+                    <div style="font-size: 18px; font-weight: 800;"><?= Helper::formatRupiah($adaPeriode ? $akhirPer[$akun] : $balances[$akun]) ?></div>
+                    <?php if ($adaPeriode): ?><div style="font-size: 11.5px; color: var(--text-muted);">Saldo awal <?= Helper::formatRupiah($awalPer[$akun]) ?></div><?php endif; ?>
                 </div>
-                <?php if ($adaPeriode): ?>
-                    <a href="javascript:history.back()" class="btn btn-outline btn-sm">Kembali ke Laba Rugi</a>
-                <?php else: ?>
-                    <a href="index.php?page=coa" class="btn btn-outline btn-sm">Kembali ke COA</a>
-                <?php endif; ?>
+                <a href="index.php?page=coa<?= $adaPeriode ? '&dari=' . $dari . '&sampai=' . $sampai : '' ?>" class="btn btn-outline btn-sm">Kembali ke COA</a>
             </div>
         </div>
         <div class="table-responsive">

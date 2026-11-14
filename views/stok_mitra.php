@@ -557,26 +557,6 @@ require_once __DIR__ . '/layout/header.php';
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>
-            <tfoot>
-                <tr style="background: var(--bg-muted); font-weight: 800; border-top: 2px solid var(--border);">
-                    <td colspan="6" style="text-align: right; font-size: 13px; text-transform: uppercase;">
-                        TOTAL AKUMULASI (<?= count($detailItems) ?> ITEM):
-                    </td>
-                    <td style="text-align: right; font-size: 14px; font-weight: 900;">
-                        <?= Helper::formatNumber($subtotalDetailKemasan) ?> pcs
-                    </td>
-                    <td></td>
-                    <td style="text-align: right; font-size: 15px; font-weight: 900; color: var(--aktif-fg); background: rgba(2, 132, 199, 0.08);">
-                        <?= Helper::formatKg($subtotalDetailKg) ?>
-                    </td>
-                    <td style="text-align: right; font-size: 11.5px; color: var(--text-muted);">
-                        Nilai Persediaan:
-                    </td>
-                    <td style="text-align: right; font-size: 16px; font-weight: 900; color: var(--ok-fg); background: rgba(16, 185, 129, 0.2);">
-                        <?= Helper::formatRupiah($subtotalDetailNilai) ?>
-                    </td>
-                </tr>
-            </tfoot>
         </table>
     </div>
 
@@ -711,34 +691,6 @@ require_once __DIR__ . '/layout/header.php';
                 </tr>
                 <?php endforeach; ?>
             </tbody>
-            <tfoot>
-                <tr style="background: var(--bg-muted); font-weight: 800; border-top: 2px solid var(--border);">
-                    <td colspan="2" style="font-size: 13px; text-transform: uppercase;">TOTAL KESELURUHAN GUDANG</td>
-                    <?php 
-                    $checkGrandKg = 0;
-                    $checkGrandLabel = 0;
-                    foreach ($jenisList as $j): 
-                        $jId = $j['id'];
-                        $totKg = $totalsPerJenis[$jId]['kg'] ?? 0;
-                        $totLbl = $totalsPerJenis[$jId]['label'] ?? 0;
-                        $checkGrandKg += $totKg;
-                        $checkGrandLabel += $totLbl;
-                    ?>
-                        <td style="text-align: right;">
-                            <div style="font-weight: 800; color: var(--text-main);"><?= Helper::formatKg($totKg) ?></div>
-                            <div style="font-size: 11px; color: var(--text-muted);"><?= Helper::formatNumber($totLbl) ?> pcs</div>
-                        </td>
-                    <?php endforeach; ?>
-                    <td style="text-align: right; background: var(--primary-gradient); color: #ffffff;">
-                        <div style="font-size: 15px; font-weight: 900;"><?= Helper::formatKg($checkGrandKg) ?></div>
-                        <div style="font-size: 11px; opacity: 0.95; font-weight: 600;"><?= Helper::formatNumber($checkGrandLabel) ?> Kemasan</div>
-                    </td>
-                    <td style="text-align: right; background: var(--ok-solid); color: #ffffff;">
-                        <div style="font-size: 16px; font-weight: 900;"><?= Helper::formatRupiah($grandTotalValuasi) ?></div>
-                        <div style="font-size: 11px; opacity: 0.95; font-weight: 600;">Valuasi Finansial 100%</div>
-                    </td>
-                </tr>
-            </tfoot>
         </table>
     </div>
 </div>

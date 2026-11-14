@@ -8,7 +8,7 @@ use PDO;
 /**
  * Tutup harian. Hari yang sudah ditutup tidak menerima jurnal baru, dan dokumen yang tanggalnya jatuh di hari itu
  * tidak bisa dibatalkan, sehingga angka hari itu tidak berubah lagi (mis. ketika harga master berubah besoknya).
- * Hanya hari yang sudah lewat yang bisa ditutup. Membuka kembali hanya oleh Admin, dengan alasan dan jejak audit.
+ * Hari berjalan boleh ditutup lebih awal (mis. toko tutup sebelum tengah malam); tanggal yang belum tiba tidak bisa. Membuka kembali hanya oleh Admin, dengan alasan dan jejak audit.
  * Nama kelas dipertahankan (PeriodeService) agar semua titik penguncian yang sudah ada tetap berfungsi.
  */
 class PeriodeService
@@ -120,8 +120,10 @@ class PeriodeService
             $hasil[] = ['ok', 'Jurnal hari ini seimbang.'];
         }
 
-        if ($tanggal >= date('Y-m-d')) {
-            $hasil[] = ['blok', 'Hari ini belum berakhir. Tanggal ini baru bisa ditutup mulai besok.'];
+        if ($tanggal > date('Y-m-d')) {
+            $hasil[] = ['blok', 'Tanggal ini belum tiba, belum bisa ditutup.'];
+        } elseif ($tanggal === date('Y-m-d')) {
+            $hasil[] = ['peringatan', 'Hari ini belum berakhir. Setelah ditutup, transaksi bertanggal hari ini akan ditolak (bisa dibuka kembali oleh Admin).'];
         }
 
         $hari = \App\Models\RekonsiliasiBank::daftarHari($tanggal, $tanggal);
@@ -208,7 +210,7 @@ class PeriodeService
                 'tanggal'  => $d,
                 'nama'     => self::namaTanggal($d),
                 'status'   => $s['status'] ?? 'TERBUKA',
-                'bisa_tutup' => $d < date('Y-m-d'),
+                'bisa_tutup' => $d <= date('Y-m-d'),
                 'transaksi' => (int)($aktif[$d] ?? 0),
                 'ringkas'  => $ringkas,
                 'baris'    => $s,

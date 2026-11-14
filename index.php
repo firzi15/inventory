@@ -820,7 +820,7 @@ if ($action) {
 
                 Helper::jsonResponse([
                     'success'    => true,
-                    'message'    => "Purchase Invoice {$newInv['no_invoice']} ({$newInv['nama_vendor']}) berhasil dibukukan.",
+                    'message'    => "Payment Out {$newInv['no_invoice']} ({$newInv['nama_vendor']}) berhasil dibukukan.",
                     'invoice_id' => $newInvoiceId,
                     'invoice'    => $newInv
                 ]);
@@ -831,7 +831,7 @@ if ($action) {
                 $invId = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
                 if ($invId <= 0) throw new Exception("ID Invoice tidak valid.");
                 $inv = \App\Models\PurchaseInvoice::findById($invId);
-                if (!$inv) throw new Exception("Purchase Invoice tidak ditemukan.");
+                if (!$inv) throw new Exception("Payment Out tidak ditemukan.");
 
                 Helper::jsonResponse([
                     'success' => true,
@@ -924,7 +924,7 @@ if ($action) {
 
                 Helper::jsonResponse([
                     'success' => true,
-                    'message' => "Purchase Invoice {$inv['no_invoice']} berhasil dihapus."
+                    'message' => "Payment Out {$inv['no_invoice']} berhasil dihapus."
                 ]);
                 exit;
 
@@ -1360,7 +1360,6 @@ $allowedPages = [
     'coa'                          => __DIR__ . '/views/coa.php',
     'purchase_book'                => __DIR__ . '/views/book.php',
     'barang_datang'                => __DIR__ . '/views/barang_datang.php',
-    'sales_book'                   => __DIR__ . '/views/book.php',
     'stok_mitra'                   => __DIR__ . '/views/stok_mitra.php',
     'stok_opname'                  => __DIR__ . '/views/stok_opname.php',
     'accurate_sync'                => __DIR__ . '/views/accurate_sync.php',

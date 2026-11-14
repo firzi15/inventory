@@ -30,7 +30,7 @@ class MasterGuard
             'pemasok' => [
                 ['Penerimaan (keranjang)',          "SELECT COUNT(*) FROM labels WHERE pemasok_id = ?"],
                 ['Transaksi stok',                  "SELECT COUNT(*) FROM transaksi_stok WHERE pemasok_id = ?"],
-                ['Purchase Invoice',                "SELECT COUNT(*) FROM purchase_invoices WHERE pemasok_id = ?"],
+                ['Payment Out',                "SELECT COUNT(*) FROM purchase_invoices WHERE pemasok_id = ?"],
                 ['Pembayaran ke pemasok',           "SELECT COUNT(*) FROM ap_pembayaran WHERE pemasok_id = ?"],
             ],
         ];

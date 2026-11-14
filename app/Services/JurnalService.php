@@ -204,13 +204,44 @@ class JurnalService
     // ------------------------------------------------------------------
 
     /** Total debit dan kredit per akun: [kode => [debit, kredit]] */
-    public static function totalsPerAkun(): array
+    /** [kode akun => [debit, kredit]]; dengan $dari/$sampai hanya jurnal pada rentang tanggal itu (salah satunya boleh null). */
+    public static function totalsPerAkun(?string $dari = null, ?string $sampai = null): array
     {
         self::ensureTables();
         $db = Database::getConnection();
         $out = [];
-        foreach ($db->query("SELECT kode_akun, SUM(debit) d, SUM(kredit) k FROM jurnal_baris GROUP BY kode_akun") as $r) {
+        if ($dari === null && $sampai === null) {
+            $rows = $db->query("SELECT kode_akun, SUM(debit) d, SUM(kredit) k FROM jurnal_baris GROUP BY kode_akun")->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $kond = []; $p = [];
+            if ($dari !== null)   { $kond[] = 'j.tanggal >= ?'; $p[] = $dari; }
+            if ($sampai !== null) { $kond[] = 'j.tanggal <= ?'; $p[] = $sampai; }
+            $st = $db->prepare("SELECT b.kode_akun, SUM(b.debit) d, SUM(b.kredit) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE " . implode(' AND ', $kond) . " GROUP BY b.kode_akun");
+            $st->execute($p);
+            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+        }
+        foreach ($rows as $r) {
             $out[$r['kode_akun']] = [(float)$r['d'], (float)$r['k']];
+        }
+        return $out;
+    }
+
+    /** [kode akun => [tanggal Y-m-d => nilai]] untuk akun Pendapatan, HPP, dan Beban pada rentang tanggal */
+    public static function labaRugiAkunHarian(string $dari, string $sampai): array
+    {
+        self::ensureTables();
+        $db = Database::getConnection();
+        $st = $db->prepare("
+            SELECT j.tanggal, b.kode_akun, c.tipe, SUM(b.debit) d, SUM(b.kredit) k
+            FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id JOIN coa_akun c ON c.kode = b.kode_akun
+            WHERE j.tanggal BETWEEN ? AND ? AND c.tipe IN ('REVENUE','COGS','EXPENSE')
+            GROUP BY j.tanggal, b.kode_akun, c.tipe
+            ORDER BY b.kode_akun");
+        $st->execute([$dari, $sampai]);
+        $out = [];
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $g = self::GRUP[$r['tipe']];
+            $out[$r['kode_akun']][$r['tanggal']] = self::netto($g, (float)$r['d'], (float)$r['k']);
         }
         return $out;
     }
@@ -352,24 +383,48 @@ class JurnalService
         return $out;
     }
 
-    /** Laba per surat jalan keluar, memakai jurnal pengeluaran (harga jual dan HPP yang sudah dibekukan). */
-    public static function labaPerSuratJalan(string $dari, string $sampai): array
+    /**
+     * Detail Laba: satu baris = satu surat jalan keluar x produk x pemasok asal, memakai nilai jual dan HPP yang dibekukan
+     * pada detail pengeluaran. Dokumen yang dibatalkan tidak ikut. Filter: dari, sampai (tanggal dokumen), mitra_id, jenis_id,
+     * item_id, pemasok_id, cari (nomor surat jalan / transaksi).
+     */
+    public static function detailLaba(array $f): array
     {
-        self::ensureTables();
         $db = Database::getConnection();
-        $st = $db->prepare("
-            SELECT t.id, t.no_transaksi, t.jenis_transaksi, j.tanggal, COALESCE(m.nama_mitra, '-') nama_mitra,
-                   SUM(CASE WHEN b.kode_akun = '4000' THEN b.kredit - b.debit ELSE 0 END) penjualan,
-                   SUM(CASE WHEN b.kode_akun = '5000' THEN b.debit - b.kredit ELSE 0 END) hpp
-            FROM jurnal j
-            JOIN jurnal_baris b ON b.jurnal_id = j.id
-            JOIN transaksi_stok t ON t.id = j.sumber_id
+        $sql = "
+            SELECT t.id trx_id, COALESCE(t.no_referensi_eksternal, t.no_bast, t.no_transaksi) sj, DATE(t.created_at) tanggal,
+                   t.mitra_id, COALESCE(m.nama_mitra, '-') mitra,
+                   i.id item_id, i.nama_item produk, i.jenis_id, COALESCE(jb.nama_jenis, '-') jenis,
+                   l.pemasok_id, COALESCE(p.nama_pemasok, '-') pemasok,
+                   COUNT(*) kemasan, SUM(d.berat_netto) qty, SUM(d.total_jual) jual, SUM(d.total_beli) hpp
+            FROM transaksi_stok t
+            JOIN transaksi_stok_detail d ON d.transaksi_id = t.id
+            JOIN labels l ON l.id = d.label_id
+            JOIN items i ON i.id = l.item_id
+            LEFT JOIN jenis_barang jb ON jb.id = i.jenis_id
             LEFT JOIN mitra m ON m.id = t.mitra_id
-            WHERE j.sumber_tipe = 'PENGELUARAN' AND j.tanggal BETWEEN ? AND ?
-            GROUP BY t.id, t.no_transaksi, t.jenis_transaksi, j.tanggal, m.nama_mitra
-            ORDER BY j.tanggal DESC, t.id DESC");
-        $st->execute([$dari, $sampai]);
-        return $st->fetchAll(PDO::FETCH_ASSOC);
+            LEFT JOIN pemasok p ON p.id = l.pemasok_id
+            WHERE t.jenis_transaksi = 'PENGELUARAN' AND DATE(t.created_at) BETWEEN :dari AND :sampai";
+        $p = [':dari' => $f['dari'], ':sampai' => $f['sampai']];
+        if (!empty($f['mitra_id']))   { $sql .= " AND t.mitra_id = :mitra";   $p[':mitra'] = (int)$f['mitra_id']; }
+        if (!empty($f['jenis_id']))   { $sql .= " AND i.jenis_id = :jenis";   $p[':jenis'] = (int)$f['jenis_id']; }
+        if (!empty($f['item_id']))    { $sql .= " AND i.id = :item";          $p[':item'] = (int)$f['item_id']; }
+        if (!empty($f['pemasok_id'])) { $sql .= " AND l.pemasok_id = :pms";   $p[':pms'] = (int)$f['pemasok_id']; }
+        if (($f['cari'] ?? '') !== '') {
+            $sql .= " AND (t.no_transaksi LIKE :cari OR t.no_referensi_eksternal LIKE :cari OR t.no_bast LIKE :cari)";
+            $p[':cari'] = '%' . $f['cari'] . '%';
+        }
+        $sql .= " GROUP BY t.id, t.no_referensi_eksternal, t.no_bast, t.no_transaksi, t.created_at, t.mitra_id, m.nama_mitra,
+                           i.id, i.nama_item, i.jenis_id, jb.nama_jenis, l.pemasok_id, p.nama_pemasok
+                  ORDER BY t.created_at DESC, t.id DESC, i.nama_item";
+        $st = $db->prepare($sql);
+        $st->execute($p);
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as &$r) {
+            $r['kemasan'] = (int)$r['kemasan']; $r['qty'] = (float)$r['qty'];
+            $r['jual'] = (float)$r['jual']; $r['hpp'] = (float)$r['hpp'];
+        }
+        return $rows;
     }
 
     /** Tahun-tahun yang punya jurnal, ditambah tahun berjalan. */

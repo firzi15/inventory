@@ -16,7 +16,7 @@ use App\Models\TipeBiaya;
 use App\Models\Utang;
 use App\Models\PurchaseInvoice;
 
-$pageTitle = 'AP Aging & Faktur Pembelian (Purchase Invoice)';
+$pageTitle = 'AP Aging & Payment Out';
 $activeTab = $_GET['tab'] ?? 'matriks';
 if (!in_array($activeTab, ['invoices', 'matriks', 'riwayat_bayar'])) {
     $activeTab = 'matriks';
@@ -74,7 +74,7 @@ require_once __DIR__ . '/layout/header.php';
     <!-- PAGE HEADER -->
     <div class="page-header no-print">
         <div>
-            <h1 class="page-title"><?= $activeTab === 'invoices' ? 'Purchase Invoice' : 'AP Aging' ?></h1>
+            <h1 class="page-title"><?= $activeTab === 'invoices' ? 'Payment Out' : 'AP Aging' ?></h1>
             <p class="page-subtitle"><?= $activeTab === 'invoices' ? 'Faktur pembelian dan biaya operasional' : 'Utang dan pembayaran ke pemasok' ?></p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -84,7 +84,7 @@ require_once __DIR__ . '/layout/header.php';
                 <span>Faktur Operasional</span>
             </button>
             <?php endif; ?>
-            <?php $eksporNama = 'AP_Aging_' . $activeTab; $eksporJudul = ($activeTab === 'invoices' ? 'Purchase Invoice' : 'AP Aging'); include __DIR__ . '/layout/ekspor.php'; ?>
+            <?php $eksporNama = 'AP_Aging_' . $activeTab; $eksporJudul = ($activeTab === 'invoices' ? 'Payment Out' : 'AP Aging'); include __DIR__ . '/layout/ekspor.php'; ?>
         </div>
     </div>
 
@@ -263,7 +263,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <?= !empty($inv['kode_pemasok']) ? '[' . htmlspecialchars($inv['kode_pemasok']) . '] ' : '' ?><?= htmlspecialchars($inv['nama_vendor']) ?>
                                     </strong>
                                     <?php if (!empty($inv['keterangan'])): ?>
-                                        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.3; max-width: 200px;">
+                                        <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
                                             <?= htmlspecialchars($inv['keterangan']) ?>
                                         </div>
                                     <?php endif; ?>
@@ -327,15 +327,6 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endif; ?>
                     </tbody>
                     <?php if (!empty($invoicesList)): ?>
-                    <tfoot>
-                        <tr style="background: var(--bg-muted); font-weight: 800;">
-                            <td colspan="6" style="text-align: right; text-transform: uppercase;">Total Faktur Ditampilkan:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($sumTotalTagihan) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($sumTotalBayar) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted); color: var(--warn-fg);"><?= Helper::formatRupiah($sumSisaUtang) ?></td>
-                            <td colspan="2" class="no-print"></td>
-                        </tr>
-                    </tfoot>
                     <?php endif; ?>
                 </table>
             </div>
@@ -398,14 +389,6 @@ require_once __DIR__ . '/layout/header.php';
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
-                    <tfoot>
-                        <tr style="background: var(--bg-muted); font-weight: 800;">
-                            <td colspan="3" style="text-align: right; text-transform: uppercase;">Total Keseluruhan Pemasok:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($totTagihan) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($totBayar) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted); color: var(--warn-fg);"><?= Helper::formatRupiah($totSisa) ?></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
@@ -687,13 +670,6 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endif; ?>
                     </tbody>
                     <?php if (!empty($riwayatPayments)): ?>
-                    <tfoot>
-                        <tr style="background: var(--bg-muted); font-weight: 800;">
-                            <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Kas Keluar Terbuku:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($totKasKeluar) ?></td>
-                            <td colspan="3"></td>
-                        </tr>
-                    </tfoot>
                     <?php endif; ?>
                 </table>
             </div>

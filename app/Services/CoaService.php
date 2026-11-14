@@ -20,47 +20,18 @@ class CoaService
         'EXPENSE'   => ['Beban',      'Expense',          'Debit',  6000, 9999],
     ];
 
-    /** Akun bawaan sesuai kaidah akuntansi: [kode, nama, tipe, induk, system, saldo_normal(null=ikut tipe), keterangan] */
+    /** Akun bawaan (hanya akun induk; sub-akun diinput sendiri oleh pengguna): [kode, nama, tipe, induk, system, saldo_normal(null=ikut tipe), keterangan] */
     private static function bawaan(): array
     {
         return [
             ['1000', 'Kas & Bank', 'ASSET', null, 1, null, 'Kas dan rekening bank'],
-            ['1010', 'Kas Kecil', 'ASSET', '1000', 0, null, 'Kas tunai operasional harian'],
-            ['1020', 'Bank', 'ASSET', '1000', 0, null, 'Rekening bank perusahaan'],
             ['1100', 'Piutang & Aset Lainnya', 'ASSET', null, 1, null, 'Piutang mitra dan aset non-stok'],
-            ['1110', 'Piutang Karyawan', 'ASSET', '1100', 0, null, 'Kasbon / pinjaman karyawan'],
-            ['1120', 'Uang Muka Pembelian', 'ASSET', '1100', 0, null, 'Pembayaran di muka ke pemasok / vendor'],
-            ['1130', 'Biaya Dibayar Dimuka', 'ASSET', '1100', 0, null, 'Sewa, asuransi, dan lain-lain yang dibayar di muka'],
-            ['1150', 'Peralatan & Mesin', 'ASSET', '1100', 0, null, 'Timbangan, mesin pendingin, peralatan gudang'],
-            ['1160', 'Kendaraan', 'ASSET', '1100', 0, null, 'Truk dan kendaraan operasional'],
-            ['1170', 'Bangunan & Gudang', 'ASSET', '1100', 0, null, 'Bangunan, gudang, cold storage'],
-            ['1190', 'Akumulasi Penyusutan', 'ASSET', '1100', 0, 'Credit', 'Pengurang nilai aset tetap (akun kontra)'],
             ['1200', 'Inventory / Persediaan', 'ASSET', null, 1, null, 'Persediaan barang dagang'],
             ['2000', 'Utang', 'LIABILITY', null, 1, null, 'Utang usaha ke pemasok dan vendor'],
-            ['2100', 'Utang Gaji', 'LIABILITY', '2000', 0, null, 'Gaji dan upah yang belum dibayar'],
-            ['2200', 'Utang Pajak', 'LIABILITY', '2000', 0, null, 'PPN, PPh, dan pajak lain yang belum disetor'],
-            ['2300', 'Pinjaman Bank', 'LIABILITY', '2000', 0, null, 'Pinjaman jangka pendek / panjang'],
-            ['2400', 'Uang Muka Penjualan', 'LIABILITY', '2000', 0, null, 'Uang muka dari mitra sebelum barang keluar'],
             ['3000', 'Modal', 'EQUITY', null, 1, null, 'Modal pemilik'],
-            ['3100', 'Laba Ditahan', 'EQUITY', '3000', 0, null, 'Akumulasi laba tahun lalu'],
-            ['3200', 'Prive / Penarikan Pemilik', 'EQUITY', '3000', 0, 'Debit', 'Penarikan dana oleh pemilik (akun kontra)'],
             ['4000', 'Penjualan / Pendapatan', 'REVENUE', null, 1, null, 'Penjualan barang ke mitra'],
-            ['4100', 'Pendapatan Jasa', 'REVENUE', '4000', 0, null, 'Pendapatan jasa lain di luar penjualan barang'],
-            ['4200', 'Pendapatan Lain-lain', 'REVENUE', '4000', 0, null, 'Pendapatan di luar usaha utama'],
             ['5000', 'HPP', 'COGS', null, 1, null, 'Harga pokok barang yang terjual'],
-            ['5100', 'Biaya Angkut Pembelian', 'COGS', '5000', 0, null, 'Ongkos angkut barang masuk'],
-            ['5200', 'Selisih Persediaan', 'COGS', '5000', 0, null, 'Selisih hasil stok opname'],
             ['6000', 'Biaya Operasional', 'EXPENSE', null, 1, null, 'Biaya operasional umum'],
-            ['6100', 'Gaji & Upah', 'EXPENSE', '6000', 0, null, 'Gaji, upah harian, lembur'],
-            ['6200', 'Listrik, Air & Telepon', 'EXPENSE', '6000', 0, null, 'Utilitas gudang dan kantor'],
-            ['6300', 'BBM & Transportasi', 'EXPENSE', '6000', 0, null, 'Solar, tol, parkir, ongkos kirim'],
-            ['6400', 'Sewa', 'EXPENSE', '6000', 0, null, 'Sewa gudang, kendaraan, peralatan'],
-            ['6500', 'Pemeliharaan & Perbaikan', 'EXPENSE', '6000', 0, null, 'Servis mesin pendingin, perbaikan gudang'],
-            ['6600', 'Kemasan, Es & Pengawet', 'EXPENSE', '6000', 0, null, 'Es balok, box styrofoam, plastik, lakban'],
-            ['6700', 'Penyusutan', 'EXPENSE', '6000', 0, null, 'Beban penyusutan aset tetap'],
-            ['6800', 'ATK & Administrasi', 'EXPENSE', '6000', 0, null, 'Alat tulis, cetak, administrasi'],
-            ['6900', 'Biaya Lain-lain', 'EXPENSE', '6000', 0, null, 'Biaya di luar kelompok lain'],
-            ['6950', 'Biaya Bank & Administrasi Bank', 'EXPENSE', '6000', 0, null, 'Biaya transfer dan administrasi rekening'],
         ];
     }
 
@@ -163,7 +134,7 @@ class CoaService
             '1000' => 'Setoran mitra, pembayaran ke pemasok, dan Transaksi Kas & Bank (biaya, modal, prive)',
             '1100' => 'Nota Pengeluaran, setoran mitra, dan faktur aset',
             '1200' => 'Faktur Penerimaan (masuk) dan Pengeluaran (keluar)',
-            '2000' => 'Purchase Invoice dan pembayaran ke pemasok',
+            '2000' => 'Payment Out dan pembayaran ke pemasok',
             '3000' => 'Setoran modal dan prive dari Transaksi Kas & Bank',
             '4000' => 'Nilai jual Pengeluaran ke mitra',
             '5000' => 'Nilai beli barang pada Pengeluaran ke mitra',

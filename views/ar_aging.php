@@ -43,7 +43,7 @@ require_once __DIR__ . '/layout/header.php';
     <!-- PAGE HEADER -->
     <div class="page-header no-print">
         <div>
-            <h1 class="page-title"><?= $activeTab === 'nota' ? 'Sales Invoice' : 'AR Aging' ?></h1>
+            <h1 class="page-title"><?= $activeTab === 'nota' ? 'Payment In' : 'AR Aging' ?></h1>
             <p class="page-subtitle"><?= $activeTab === 'nota' ? 'Nota penjualan ke mitra dan setoran' : 'Umur piutang dan setoran mitra' ?></p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -53,7 +53,7 @@ require_once __DIR__ . '/layout/header.php';
                 <span>Catat Setoran</span>
             </button>
             <?php endif; ?>
-            <?php $eksporNama = 'AR_Aging_' . $activeTab; $eksporJudul = ($activeTab === 'nota' ? 'Sales Invoice' : 'AR Aging'); include __DIR__ . '/layout/ekspor.php'; ?>
+            <?php $eksporNama = 'AR_Aging_' . $activeTab; $eksporJudul = ($activeTab === 'nota' ? 'Payment In' : 'AR Aging'); include __DIR__ . '/layout/ekspor.php'; ?>
         </div>
     </div>
 
@@ -194,19 +194,6 @@ require_once __DIR__ . '/layout/header.php';
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
-                    <tfoot>
-                        <tr style="background: var(--bg-muted); font-weight: 800;">
-                            <td colspan="3" style="text-align: right; text-transform: uppercase;">Total Keseluruhan Mitra:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace;"><?= Helper::formatRupiah($totBelanja) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($totSetor) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; background: var(--bg-muted); color: var(--warn-fg);"><?= Helper::formatRupiah($totSisa) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--aktif-fg);"><?= Helper::formatRupiah($totBelum) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);"><?= Helper::formatRupiah($tot0to7) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);"><?= Helper::formatRupiah($tot8to14) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);"><?= Helper::formatRupiah($tot15to30) ?></td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--bad-fg);"><?= Helper::formatRupiah($totGt30) ?></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
@@ -458,15 +445,6 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endif; ?>
                     </tbody>
                     <?php if (!empty($riwayatPayments)): ?>
-                    <tfoot>
-                        <tr style="background: var(--bg-muted); font-weight: 800;">
-                            <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Penerimaan Kas Terpilih:</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--ok-fg);">
-                                <?= Helper::formatRupiah($totKasMasuk) ?>
-                            </td>
-                            <td colspan="3"></td>
-                        </tr>
-                    </tfoot>
                     <?php endif; ?>
                 </table>
             </div>
@@ -807,7 +785,7 @@ async function submitPayment(e) {
         const data = await resp.json();
 
         if (data.success) {
-            alert(`✓ ${data.message}\nNomor Bukti: ${data.data.no_bukti_bayar}\nNota Terpotong: ${data.data.allocated_count} nota`);
+            alert(`${data.message}\nNomor Bukti: ${data.data.no_bukti_bayar}\nNota Terpotong: ${data.data.allocated_count} nota`);
             closePaymentModal();
             window.location.reload();
         } else {

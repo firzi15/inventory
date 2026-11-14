@@ -1,16 +1,14 @@
 <?php
 /**
- * Purchase Book (pembelian per artikel per pemasok) dan Sales Book (penjualan per artikel per mitra).
- * Dipakai bersama; mode ditentukan dari halaman yang dibuka.
+ * Purchase Book: riwayat pembelian per artikel dari tiap pemasok.
  */
 
 use App\Core\Helper;
 use App\Services\BukuService;
 
-$jual = ($page ?? '') === 'sales_book';
-$judul = $jual ? 'Sales Book' : 'Purchase Book';
+$judul = 'Purchase Book';
 $pageTitle = $judul;
-$labelPihak = $jual ? 'Mitra' : 'Pemasok';
+$labelPihak = 'Pemasok';
 
 $preset = $_GET['periode'] ?? 'tahun_ini';
 $hariIni = date('Y-m-d');
@@ -27,17 +25,22 @@ switch ($preset) {
 $itemId  = (int)($_GET['item'] ?? 0);
 $pihakId = (int)($_GET['pihak'] ?? 0);
 
-$urut = in_array($_GET['urut'] ?? '', ['tanggal', 'pihak', 'harga', 'artikel'], true) ? $_GET['urut'] : 'tanggal';
+$kolomUrut = ['tanggal' => 'tanggal', 'pihak' => 'pihak', 'artikel' => 'nama_item', 'dokumen' => 'dokumen', 'sj' => 'sj', 'kemasan' => 'kemasan',
+              'qty' => 'qty', 'harga' => 'harga', 'nilai' => 'nilai', 'selisih' => 'selisih'];
+$urut = array_key_exists($_GET['urut'] ?? '', $kolomUrut) ? $_GET['urut'] : 'tanggal';
 $arah = ($_GET['arah'] ?? 'naik') === 'turun' ? 'turun' : 'naik';
 $f = ['dari' => $dari, 'sampai' => $sampai, 'item_id' => $itemId, 'pihak_id' => $pihakId];
-$rows = $jual ? BukuService::penjualan($f) : BukuService::pembelian($f);
+$rows = BukuService::pembelian($f);
 $sum = BukuService::ringkas($rows);
 
 // Urutan tampilan tabel. Selisih harga sudah dihitung kronologis, jadi tidak berubah oleh pengurutan.
-$kunciUrut = ['tanggal' => 'tanggal', 'pihak' => 'pihak', 'harga' => 'harga', 'artikel' => 'nama_item'][$urut];
+$kunciUrut = $kolomUrut[$urut];
+
 $rowsTampil = $rows;
 usort($rowsTampil, function ($a, $b) use ($kunciUrut, $arah) {
-    $c = is_numeric($a[$kunciUrut]) && !is_string($a[$kunciUrut]) ? $a[$kunciUrut] <=> $b[$kunciUrut] : strcasecmp((string)$a[$kunciUrut], (string)$b[$kunciUrut]);
+    $x = $a[$kunciUrut] ?? null; $y = $b[$kunciUrut] ?? null;
+    if ($x === null || $y === null) { $c = ($x === null) <=> ($y === null); return $c; } // nilai kosong selalu di bawah
+    $c = (is_int($x) || is_float($x)) ? $x <=> $y : strcasecmp((string)$x, (string)$y);
     if ($c === 0) $c = strcmp($a['tanggal'], $b['tanggal']);
     return $arah === 'turun' ? -$c : $c;
 });
@@ -50,14 +53,27 @@ if ($urut === 'pihak' || $urut === 'artikel') {
     $grupTampil[''] = $rowsTampil;
 }
 $perPihak = $itemId ? BukuService::perPihak($rows) : [];
-$daftarPihak = $jual ? BukuService::daftarMitra() : BukuService::daftarPemasok();
+$kolomUb = ['pihak', 'transaksi', 'qty', 'nilai', 'min', 'max', 'rata', 'terakhir'];
+$ub = in_array($_GET['ub'] ?? '', $kolomUb, true) ? $_GET['ub'] : 'pihak';
+$ab = ($_GET['ab'] ?? 'naik') === 'turun' ? 'turun' : 'naik';
+if ($ub === 'pihak') { $ab === 'turun' ? krsort($perPihak, SORT_NATURAL | SORT_FLAG_CASE) : ksort($perPihak, SORT_NATURAL | SORT_FLAG_CASE); }
+else { uasort($perPihak, fn($a, $b) => $ab === 'turun' ? $b[$ub] <=> $a[$ub] : $a[$ub] <=> $b[$ub]); }
+
+// Judul kolom yang bisa diklik: tautan mempertahankan semua filter yang sedang aktif
+$tautanUrut = function (string $kunciParam, string $kunciArah, string $kolom, string $label, string $sekarang, string $arahSekarang) {
+    $baru = ($sekarang === $kolom && $arahSekarang === 'naik') ? 'turun' : 'naik';
+    $q = array_merge($_GET, [$kunciParam => $kolom, $kunciArah => $baru]);
+    $aktif = $sekarang === $kolom;
+    return '<a class="th-sort ' . ($aktif ? 'aktif' : '') . '" href="index.php?' . htmlspecialchars(http_build_query($q)) . '">' . $label
+         . '<span class="panah">' . ($aktif ? ($arahSekarang === 'naik' ? '&#9650;' : '&#9660;') : '&#8645;') . '</span></a>';
+};
+$thUrut  = fn(string $kolom, string $label, bool $kanan = false) => '<th' . ($kanan ? ' style="text-align: right;"' : '') . '>' . $tautanUrut('urut', 'arah', $kolom, $label, $urut, $arah) . '</th>';
+$thPihak = fn(string $kolom, string $label, bool $kanan = false) => '<th' . ($kanan ? ' style="text-align: right;"' : '') . '>' . $tautanUrut('ub', 'ab', $kolom, $label, $ub, $ab) . '</th>';
+$daftarPihak = BukuService::daftarPemasok();
 $daftarArtikel = BukuService::daftarArtikel();
 $namaArtikel = '';
 foreach ($daftarArtikel as $a) { if ((int)$a['id'] === $itemId) $namaArtikel = $a['nama']; }
 
-$logHarga = \App\Services\LogHargaService::daftar([
-    'jenis' => $jual ? 'MITRA' : 'PEMASOK', 'item_id' => $itemId, 'pihak_id' => $pihakId, 'dari' => $dari, 'sampai' => $sampai, 'limit' => 300,
-]);
 $rp = fn($n) => Helper::formatRupiah($n);
 $kg = fn($n) => number_format($n, 2, ',', '.') . ' kg';
 $tglFmt = fn($d) => date('d/m/Y', strtotime($d));
@@ -88,9 +104,7 @@ require_once __DIR__ . '/layout/header.php';
     <div class="page-header no-print">
         <div>
             <h1 class="page-title"><?= $judul ?></h1>
-            <p class="page-subtitle"><?= $jual
-                ? 'Riwayat harga jual per artikel ke setiap mitra, lengkap dengan HPP dan margin'
-                : 'Riwayat harga beli per artikel dari setiap pemasok' ?></p>
+            <p class="page-subtitle">Riwayat harga beli tiap produk dari setiap pemasok</p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <?php include __DIR__ . '/layout/ekspor.php'; ?>
@@ -98,7 +112,7 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 
     <form method="GET" class="card no-print" style="padding: 14px 16px; margin-bottom: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-        <input type="hidden" name="page" value="<?= $jual ? 'sales_book' : 'purchase_book' ?>">
+        <input type="hidden" name="page" value="purchase_book">
         <div style="min-width: 190px;">
             <label class="form-label">Periode</label>
             <select name="periode" class="form-control" onchange="this.form.submit()">
@@ -137,22 +151,8 @@ require_once __DIR__ . '/layout/header.php';
                 <?php endforeach; ?>
             </select>
         </div>
-        <div style="min-width: 170px;">
-            <label class="form-label">Urutkan</label>
-            <select name="urut" class="form-control" onchange="this.form.submit()">
-                <option value="tanggal" <?= $urut === 'tanggal' ? 'selected' : '' ?>>Tanggal</option>
-                <option value="pihak" <?= $urut === 'pihak' ? 'selected' : '' ?>><?= $labelPihak ?></option>
-                <option value="harga" <?= $urut === 'harga' ? 'selected' : '' ?>>Harga</option>
-                <option value="artikel" <?= $urut === 'artikel' ? 'selected' : '' ?>>Nama artikel</option>
-            </select>
-        </div>
-        <div style="min-width: 130px;">
-            <label class="form-label">Arah</label>
-            <select name="arah" class="form-control" onchange="this.form.submit()">
-                <option value="naik" <?= $arah === 'naik' ? 'selected' : '' ?>>Naik (A-Z, kecil-besar)</option>
-                <option value="turun" <?= $arah === 'turun' ? 'selected' : '' ?>>Turun (Z-A, besar-kecil)</option>
-            </select>
-        </div>
+        <input type="hidden" name="urut" value="<?= $urut ?>">
+        <input type="hidden" name="arah" value="<?= $arah ?>">
         <?php if ($preset === 'rentang'): ?>
             <button type="submit" class="btn btn-primary">Tampilkan</button>
         <?php endif; ?>
@@ -181,14 +181,14 @@ require_once __DIR__ . '/layout/header.php';
             <table class="table-custom" data-no-tools>
                 <thead>
                     <tr>
-                        <th><?= $labelPihak ?></th>
-                        <th style="text-align: right;">Transaksi</th>
-                        <th style="text-align: right;">Qty</th>
-                        <th style="text-align: right;">Nilai</th>
-                        <th style="text-align: right;">Harga Terendah</th>
-                        <th style="text-align: right;">Harga Tertinggi</th>
-                        <th style="text-align: right;">Harga Rata-rata</th>
-                        <th style="text-align: right;">Harga Terakhir</th>
+                        <?= $thPihak('pihak', $labelPihak) ?>
+                        <?= $thPihak('transaksi', 'Transaksi', true) ?>
+                        <?= $thPihak('qty', 'Qty', true) ?>
+                        <?= $thPihak('nilai', 'Nilai', true) ?>
+                        <?= $thPihak('min', 'Harga Terendah', true) ?>
+                        <?= $thPihak('max', 'Harga Tertinggi', true) ?>
+                        <?= $thPihak('rata', 'Harga Rata-rata', true) ?>
+                        <?= $thPihak('terakhir', 'Harga Terakhir', true) ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -215,53 +215,31 @@ require_once __DIR__ . '/layout/header.php';
             <table class="table-custom" data-no-tools>
                 <thead>
                     <tr>
-                        <th>Tanggal</th>
-                        <th><?= $labelPihak ?></th>
-                        <th>Artikel</th>
-                        <th><?= $jual ? 'No. Surat Jalan' : 'No. Faktur' ?></th>
-                        <?php if (!$jual): ?><th>No. Surat Jalan</th><?php endif; ?>
-                        <th style="text-align: right;">Kemasan</th>
-                        <th style="text-align: right;">Qty</th>
-                        <th style="text-align: right;">Harga/kg</th>
-                        <th style="text-align: right;">Nilai</th>
-                        <th style="text-align: right;">Selisih Harga</th>
-                        <?php if ($jual): ?>
-                            <th style="text-align: right;">HPP/kg</th>
-                            <th style="text-align: right;">Margin</th>
-                        <?php endif; ?>
+                        <?= $thUrut('tanggal', 'Tanggal') ?>
+                        <?= $thUrut('pihak', $labelPihak) ?>
+                        <?= $thUrut('artikel', 'Artikel') ?>
+                        <?= $thUrut('dokumen', 'No. Faktur') ?>
+                        <?= $thUrut('sj', 'No. Surat Jalan') ?>
+                        <?= $thUrut('kemasan', 'Kemasan', true) ?>
+                        <?= $thUrut('qty', 'Qty', true) ?>
+                        <?= $thUrut('harga', 'Harga/kg', true) ?>
+                        <?= $thUrut('nilai', 'Nilai', true) ?>
+                        <?= $thUrut('selisih', 'Selisih Harga', true) ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$rows): ?>
-                        <tr><td colspan="<?= $jual ? 11 : 10 ?>" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada data pada filter ini</td></tr>
+                        <tr><td colspan="10" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada data pada filter ini</td></tr>
                     <?php endif; ?>
                     <?php
-                    // satu baris total (dipakai untuk TOTAL kelompok dan GRAND TOTAL)
-                    $barisTotal = function (string $label, array $list, bool $besar) use ($jual, $kg, $rp) {
-                        $q = array_sum(array_column($list, 'qty'));
-                        $n = array_sum(array_column($list, 'nilai'));
-                        $k = array_sum(array_column($list, 'kemasan'));
-                        $h = array_sum(array_column($list, 'hpp'));
-                        $gaya = $besar ? 'font-weight: 800; background: var(--primary); color: #fff;' : 'font-weight: 700; background: rgba(2, 132, 199, 0.06);';
-                        echo '<tr style="' . $gaya . '"><td colspan="' . ($jual ? 4 : 5) . '" style="text-align: right;">' . htmlspecialchars($label) . '</td>';
-                        echo '<td style="text-align: right;">' . $k . '</td><td style="text-align: right;">' . $kg($q) . '</td>';
-                        echo '<td style="text-align: right;">' . $rp($q > 0 ? $n / $q : 0) . '</td><td style="text-align: right;">' . $rp($n) . '</td><td></td>';
-                        if ($jual) {
-                            echo '<td style="text-align: right;">' . $rp($q > 0 ? $h / $q : 0) . '</td>';
-                            echo '<td style="text-align: right;">' . ($n > 0 ? number_format(($n - $h) / $n * 100, 1, ',', '.') . '%' : '-') . '</td>';
-                        }
-                        echo '</tr>';
-                    };
                     foreach ($grupTampil as $namaGrup => $listGrup):
-                        foreach ($listGrup as $r):
-                        $hppKg = $r['qty'] > 0 ? $r['hpp'] / $r['qty'] : 0;
-                        $margin = $r['nilai'] > 0 ? ($r['nilai'] - $r['hpp']) / $r['nilai'] * 100 : 0; ?>
+                        foreach ($listGrup as $r): ?>
                         <tr>
                             <td><?= $tglFmt($r['tanggal']) ?></td>
                             <td><?= htmlspecialchars($r['pihak']) ?></td>
                             <td style="font-weight: 600;"><?= htmlspecialchars($r['nama_item']) ?></td>
                             <td><?= htmlspecialchars($r['dokumen']) ?></td>
-                            <?php if (!$jual): ?><td><?= htmlspecialchars($r['sj']) ?></td><?php endif; ?>
+                            <td><?= htmlspecialchars($r['sj']) ?></td>
                             <td style="text-align: right;"><?= $r['kemasan'] ?></td>
                             <td style="text-align: right;"><?= $kg($r['qty']) ?></td>
                             <td style="text-align: right; font-weight: 700;"><?= $rp($r['harga']) ?></td>
@@ -272,65 +250,15 @@ require_once __DIR__ . '/layout/header.php';
                                 <?php else: ?><?= ($r['selisih'] > 0 ? 'naik ' : 'turun ') . $rp(abs($r['selisih'])) ?><?= $r['persen'] !== null ? ' (' . ($r['selisih'] > 0 ? '+' : '-') . number_format(abs($r['persen']), 1, ',', '.') . '%)' : '' ?>
                                 <?php endif; ?>
                             </td>
-                            <?php if ($jual): ?>
-                                <td style="text-align: right;"><?= $rp($hppKg) ?></td>
-                                <td style="text-align: right; color: <?= $margin < 0 ? '#b91c1c' : 'inherit' ?>;"><?= number_format($margin, 1, ',', '.') ?>%</td>
-                            <?php endif; ?>
                         </tr>
                         <?php endforeach;
-                        if ($namaGrup !== '') $barisTotal('TOTAL ' . mb_strtoupper($namaGrup), $listGrup, false);
                     endforeach;
-                    if ($rows) $barisTotal('GRAND TOTAL', $rows, true);
                     ?>
                 </tbody>
             </table>
         </div>
     </div>
 
-
-    <div class="card" style="margin-top: 18px;">
-        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <div style="font-weight: 800;">Log perubahan harga master <?= $jual ? '(harga jual mitra)' : '(harga beli pemasok)' ?></div>
-            <a href="index.php?page=master&tab=log_harga&jenis=<?= $jual ? 'MITRA' : 'PEMASOK' ?><?= $itemId ? '&item=' . $itemId : '' ?>" class="no-print" style="font-size: 12.5px; color: var(--primary); font-weight: 700;">Lihat semua di Master</a>
-        </div>
-        <div class="table-responsive">
-            <table class="table-custom" data-no-tools>
-                <thead>
-                    <tr>
-                        <th>Waktu</th>
-                        <th><?= $labelPihak ?></th>
-                        <th>Artikel</th>
-                        <th style="text-align: right;">Harga Lama</th>
-                        <th style="text-align: right;">Harga Baru</th>
-                        <th style="text-align: right;">Selisih</th>
-                        <th>Diubah Oleh</th>
-                        <th>Alasan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!$logHarga): ?>
-                        <tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">Tidak ada perubahan harga master pada filter ini</td></tr>
-                    <?php endif; ?>
-                    <?php foreach ($logHarga as $lg): ?>
-                        <tr>
-                            <td><?= date('d/m/Y H:i', strtotime($lg['waktu'])) ?></td>
-                            <td><?= htmlspecialchars((string)$lg['pihak']) ?></td>
-                            <td style="font-weight: 600;"><?= htmlspecialchars($lg['nama_item']) ?></td>
-                            <td style="text-align: right;"><?= $lg['harga_lama'] === null ? '-' : $rp($lg['harga_lama']) ?></td>
-                            <td style="text-align: right; font-weight: 700;"><?= $rp($lg['harga_baru']) ?></td>
-                            <td style="text-align: right; color: <?= $lg['selisih'] === null ? 'inherit' : ($lg['selisih'] > 0 ? '#b91c1c' : '#15803d') ?>;">
-                                <?php if ($lg['selisih'] === null): ?>harga awal
-                                <?php else: ?><?= ($lg['selisih'] > 0 ? 'naik ' : 'turun ') . $rp(abs($lg['selisih'])) ?><?= $lg['persen'] !== null ? ' (' . ($lg['selisih'] > 0 ? '+' : '-') . number_format(abs($lg['persen']), 1, ',', '.') . '%)' : '' ?>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= htmlspecialchars((string)($lg['oleh'] ?? '-')) ?></td>
-                            <td style="font-size: 12.5px; color: var(--text-muted);"><?= htmlspecialchars((string)($lg['alasan'] ?? '')) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
 </div>
 

@@ -88,7 +88,6 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 </div>
 
-<div id="opnameAlertBox" style="display: none; margin-bottom: 20px;"></div>
 
 <!-- STATS SUMMARY COUNTER WIDGETS -->
 <div class="grid grid-cols-4 no-print" style="margin-bottom: 24px; gap: 16px;">
@@ -381,21 +380,12 @@ require_once __DIR__ . '/layout/header.php';
 
 <script>
     const opnameInput = document.getElementById('opname_scan_input');
-    const alertBox = document.getElementById('opnameAlertBox');
     const totalItems = <?= $totalFisikCount ?>;
     const totalItemsGudang = <?= (int)$countGudangUtama ?>;
 
     function showOpnameAlert(msg, isSuccess = true) {
-        alertBox.style.display = 'block';
-        if (isSuccess) {
-            alertBox.className = 'alert alert-success';
-            alertBox.innerHTML = `✓ ${msg}`;
-            if (window.scannerAudio) window.scannerAudio.playSuccessBeep();
-        } else {
-            alertBox.className = 'alert alert-danger';
-            alertBox.innerHTML = `⚠️ ${msg}`;
-            if (window.scannerAudio) window.scannerAudio.playErrorBuzz();
-        }
+        showToast(msg, isSuccess ? 'success' : 'error');
+        if (window.scannerAudio) isSuccess ? window.scannerAudio.playSuccessBeep() : window.scannerAudio.playErrorBuzz();
     }
 
     function updateOpnameCounters() {
@@ -466,11 +456,11 @@ require_once __DIR__ . '/layout/header.php';
                 updateOpnameCounters();
                 showOpnameAlert(data.message, true);
             } else {
-                showOpnameAlert(data.message || 'Gagal memverifikasi barcode', false);
+                showOpnameAlert(data.message || 'Barcode tidak dapat diverifikasi.', false);
             }
         } catch (err) {
             console.error('Error saat verifikasi opname:', err);
-            showOpnameAlert('Gagal terhubung ke server saat memverifikasi barcode ke database.', false);
+            showOpnameAlert('Tidak dapat terhubung ke server saat memeriksa barcode.', false);
         }
     }
 

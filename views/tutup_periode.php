@@ -43,7 +43,7 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 
     <div class="card" style="padding: 14px 18px; margin-bottom: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-        Hanya hari yang sudah lewat yang bisa ditutup, jadi hari ini baru bisa ditutup mulai besok. Setelah ditutup, transaksi bertanggal di hari itu
+        Hari ini boleh ditutup lebih awal, misalnya bila toko tutup sebelum tengah malam. Setelah ditutup, transaksi bertanggal di hari itu
         (faktur, pembayaran, setoran, kas, rekonsiliasi) ditolak, dan dokumen bertanggal di hari itu tidak bisa dibatalkan.
         Perubahan harga master di hari berikutnya tidak mengubah angka hari yang sudah ditutup. Untuk koreksi, Admin membuka kembali harinya dengan alasan yang tercatat di log audit.
     </div>
@@ -109,7 +109,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <?php elseif ($p['status'] === 'BUKA' && $b): ?>
                                     Dibuka <?= date('d/m/Y H:i', strtotime($b['dibuka_at'])) ?>
                                     <div style="color: var(--text-muted);">Alasan: <?= htmlspecialchars((string)$b['alasan_buka']) ?></div>
-                                <?php elseif (!$p['bisa_tutup']): ?>
+                                <?php elseif ($p['tanggal'] === date('Y-m-d')): ?>
                                     <span style="color: var(--text-muted);">Hari ini</span>
                                 <?php endif; ?>
                             </td>

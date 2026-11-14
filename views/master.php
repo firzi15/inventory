@@ -261,7 +261,7 @@ require_once __DIR__ . '/layout/header.php';
                 <i data-lucide="book-open" style="width: 20px; height: 20px; color: var(--aktif-fg);"></i>
                 <span>Master Akun COA</span>
             </h2>
-            <div class="card-description">Daftar akun buku besar. Akun inti dipakai posting otomatis dokumen; sub-akun bisa ditambah dan dipilih di Purchase Invoice.</div>
+            <div class="card-description">Daftar akun buku besar. Sub-akun bisa ditambah dan dipilih di Payment Out.</div>
         </div>
         <?php $eksporTabel = 'tableMasterCoa'; $eksporNama = 'Master_COA'; include __DIR__ . '/layout/ekspor.php'; ?>
         <button type="button" class="btn btn-primary" onclick="openModalCoa('')">
@@ -290,7 +290,6 @@ require_once __DIR__ . '/layout/header.php';
                     <td><span class="badge" style="background: rgba(2, 132, 199, 0.12); color: var(--aktif-fg); font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12px;"><?= $kodeC ?></span></td>
                     <td style="padding-left: <?= 12 + $c[9] * 22 ?>px; font-weight: <?= $c[9] === 0 ? '800' : '600' ?>;">
                         <?= $c[9] > 0 ? '<span style="color: var(--text-muted);">&#8627;</span> ' : '' ?><?= htmlspecialchars($c[0]) ?>
-                        <?php if ($c[3]): ?><span class="badge badge-info" style="margin-left: 6px; font-size: 10.5px;">Akun inti</span><?php endif; ?>
                     </td>
                     <td><?= htmlspecialchars($c[4]) ?></td>
                     <td><?= $c[2] ?></td>
@@ -304,7 +303,7 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endif; ?>
                     </td>
                     <td style="text-align: center;">
-                        <div style="display: flex; justify-content: center; gap: 6px;">
+                        <div style="display: flex; justify-content: center; gap: 6px; min-width: 128px;">
                             <button type="button" class="btn btn-outline btn-sm" onclick="openModalCoa('<?= $kodeC ?>')" title="Tambah sub-akun di bawah akun ini">
                                 <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
                             </button>
@@ -315,6 +314,10 @@ require_once __DIR__ . '/layout/header.php';
                             <a href="javascript:void(0)" onclick="hapusMaster('delete_coa', '<?= $kodeC ?>', 'akun <?= $kodeC ?> <?= htmlspecialchars($c[0], ENT_QUOTES) ?>')" class="btn btn-outline btn-sm" style="color: var(--bad-fg); border-color: rgba(239, 68, 68, 0.3);" title="Hapus akun">
                                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                             </a>
+                            <?php else: ?>
+                            <button type="button" class="btn btn-outline btn-sm" disabled style="opacity: .45; cursor: not-allowed;" title="Akun sistem tidak dapat dihapus">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            </button>
                             <?php endif; ?>
                         </div>
                     </td>
@@ -343,10 +346,11 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 
 <?php if ($msg): ?>
-<div class="alert alert-<?= htmlspecialchars($msgType) ?>" style="margin-bottom: 20px;">
-    <i data-lucide="<?= $msgType === 'success' ? 'check-circle-2' : 'alert-circle' ?>" style="width: 18px; height: 18px;"></i>
-    <div><?= htmlspecialchars($msg) ?></div>
-</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        showToast(<?= json_encode((string)$msg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>, <?= json_encode($msgType === 'success' ? 'success' : 'error') ?>);
+    });
+</script>
 <?php endif; ?>
 
 <!-- ========================================================================= -->
@@ -2304,7 +2308,7 @@ require_once __DIR__ . '/layout/header.php';
             const resData = await resp.json();
 
             if (resData.success) {
-                alert('✓ ' + resData.message + '\nDatabase: ' + (dbAlias || dbId));
+                alert('' + resData.message + '\nDatabase: ' + (dbAlias || dbId));
                 location.reload();
             } else {
                 alert('Peringatan: ' + resData.message);
@@ -2347,7 +2351,7 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
 
             if (data.success) {
-                alert('✓ ' + data.message);
+                alert('' + data.message);
                 location.reload();
             } else {
                 alert('Gagal: ' + data.message);
@@ -2381,7 +2385,7 @@ require_once __DIR__ . '/layout/header.php';
             const resp = await fetch('index.php?action=retry_sync&queue_id=' + queueId);
             const data = await resp.json();
             if (data.success) {
-                alert('✓ ' + data.message + '\nNomor Dokumen Accurate: ' + (data.docNo || '-'));
+                alert('' + data.message + '\nNomor Dokumen Accurate: ' + (data.docNo || '-'));
                 location.reload();
             } else {
                 alert('Gagal Sinkronisasi: ' + data.message);

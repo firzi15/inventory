@@ -121,61 +121,39 @@ $totalPages = max(1, ceil($totalCount / $perPage));
 function renderOutboundFilterBar(array $c, array $pemasokList, array $mitraList): void {
     $hasDates = !empty($c['start_name']);
     ?>
-    <div class="no-print" style="background: var(--bg-muted); padding: 16px; border-bottom: 1.5px solid var(--border);">
-        <form method="GET" action="index.php" id="<?= htmlspecialchars($c['form_id']) ?>" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <input type="hidden" name="page" value="pengeluaran">
-            <input type="hidden" name="tab" value="riwayat">
-            <input type="hidden" name="subtab" value="<?= htmlspecialchars($c['subtab']) ?>">
-
-            <div style="flex: 2; min-width: 200px;">
-                <div style="position: relative;">
-                    <input type="text" name="<?= $c['search_name'] ?>" class="form-control" placeholder="<?= htmlspecialchars($c['placeholder']) ?>" value="<?= htmlspecialchars($c['search_val']) ?>" style="padding-left: 36px; height: 38px; font-size: 13px;">
-                    <i data-lucide="search" style="position: absolute; left: 12px; top: 11px; width: 15px; height: 15px; color: var(--text-muted);"></i>
-                </div>
-            </div>
-
-            <?php if ($hasDates): ?>
-            <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; min-width: 145px; flex: 1;">
-                <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); white-space: nowrap;">Mulai:</span>
-                <input type="date" name="<?= $c['start_name'] ?>" value="<?= htmlspecialchars($c['start_val']) ?>" style="border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-main); height: 100%; padding: 0; outline: none; cursor: pointer; flex: 1; min-width: 0;" title="Tanggal mulai">
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 38px; min-width: 145px; flex: 1;">
-                <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); white-space: nowrap;">Sampai:</span>
-                <input type="date" name="<?= $c['end_name'] ?>" value="<?= htmlspecialchars($c['end_val']) ?>" style="border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-main); height: 100%; padding: 0; outline: none; cursor: pointer; flex: 1; min-width: 0;" title="Tanggal sampai">
-            </div>
-            <?php endif; ?>
-
-            <div style="flex: 1.3; min-width: 150px;">
-                <select name="<?= $c['pemasok_name'] ?>" class="form-control" style="height: 38px; font-size: 12.5px; font-weight: 600;">
-                    <option value="">-- Semua Pemasok --</option>
-                    <?php foreach ($pemasokList as $pms): ?>
-                        <option value="<?= $pms['id'] ?>" <?= (int)$c['pemasok_val'] === (int)$pms['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($pms['kode_pemasok']) ?> - <?= htmlspecialchars($pms['nama_pemasok']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div style="flex: 1.3; min-width: 150px;">
-                <select name="<?= $c['mitra_name'] ?>" class="form-control" style="height: 38px; font-size: 12.5px; font-weight: 600;">
-                    <option value="">-- Semua Mitra --</option>
-                    <?php foreach ($mitraList as $m): ?>
-                        <option value="<?= $m['id'] ?>" <?= (int)$c['mitra_val'] === (int)$m['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($m['kode_mitra']) ?> - <?= htmlspecialchars($m['nama_mitra']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div style="display: flex; gap: 6px;">
-                <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 16px; font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px;">
-                    <i data-lucide="filter" style="width: 14px; height: 14px;"></i>
-                    <span>Filter</span>
-                </button>
-                <a href="index.php?page=pengeluaran&tab=riwayat&subtab=<?= htmlspecialchars($c['subtab']) ?>" class="btn btn-outline" style="height: 38px; padding: 0 14px; display: inline-flex; align-items: center;">Reset</a>
-            </div>
-        </form>
-    </div>
+    <form method="GET" action="index.php" id="<?= htmlspecialchars($c['form_id']) ?>" class="card no-print" style="padding: 14px 16px; margin-bottom: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+        <input type="hidden" name="page" value="pengeluaran">
+        <input type="hidden" name="tab" value="riwayat">
+        <input type="hidden" name="subtab" value="<?= htmlspecialchars($c['subtab']) ?>">
+        <div style="flex: 1; min-width: 220px;">
+            <label class="form-label">Cari</label>
+            <input type="text" name="<?= $c['search_name'] ?>" class="form-control" placeholder="<?= htmlspecialchars($c['placeholder']) ?>" value="<?= htmlspecialchars($c['search_val']) ?>">
+        </div>
+        <?php if ($hasDates): ?>
+        <div><label class="form-label">Dari</label><input type="date" name="<?= $c['start_name'] ?>" value="<?= htmlspecialchars($c['start_val']) ?>" class="form-control"></div>
+        <div><label class="form-label">Sampai</label><input type="date" name="<?= $c['end_name'] ?>" value="<?= htmlspecialchars($c['end_val']) ?>" class="form-control"></div>
+        <?php endif; ?>
+        <div style="min-width: 190px;">
+            <label class="form-label">Pemasok</label>
+            <select name="<?= $c['pemasok_name'] ?>" class="form-control">
+                <option value="">Semua pemasok</option>
+                <?php foreach ($pemasokList as $pms): ?>
+                    <option value="<?= $pms['id'] ?>" <?= (int)$c['pemasok_val'] === (int)$pms['id'] ? 'selected' : '' ?>><?= htmlspecialchars('[' . $pms['kode_pemasok'] . '] ' . $pms['nama_pemasok']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div style="min-width: 190px;">
+            <label class="form-label">Mitra</label>
+            <select name="<?= $c['mitra_name'] ?>" class="form-control">
+                <option value="">Semua mitra</option>
+                <?php foreach ($mitraList as $m): ?>
+                    <option value="<?= $m['id'] ?>" <?= (int)$c['mitra_val'] === (int)$m['id'] ? 'selected' : '' ?>><?= htmlspecialchars('[' . $m['kode_mitra'] . '] ' . $m['nama_mitra']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Tampilkan</button>
+        <a href="index.php?page=pengeluaran&tab=riwayat&subtab=<?= htmlspecialchars($c['subtab']) ?>" class="btn btn-outline">Reset</a>
+    </form>
     <?php
 }
 
@@ -192,9 +170,13 @@ require_once __DIR__ . '/layout/header.php';
             <p class="page-subtitle">Keluarkan stok fisik pemasok di gudang ke mitra bisnis dan sinkronisasi otomatis ke Accurate</p>
         <?php endif; ?>
     </div>
+    <?php if ($outboundTab === 'riwayat'): ?>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <?php $eksporNama = 'Riwayat_Pengeluaran'; include __DIR__ . '/layout/ekspor.php'; ?>
+    </div>
+    <?php endif; ?>
 </div>
 
-<div id="scanAlertBox" style="display: none; margin-bottom: 20px;"></div>
 
 <!-- GRID SESI SCAN OUTBOUND (TAB SCAN) -->
 <div id="sectionOutboundScan" style="<?= $outboundTab === 'scan' ? 'display: block;' : 'display: none;' ?>">
@@ -275,7 +257,7 @@ require_once __DIR__ . '/layout/header.php';
                             <option value="<?= $hr ?>" <?= $hr === 14 ? 'selected' : '' ?>><?= $lb ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Dihitung dari tanggal nota. Bisa diubah nanti di Sales Invoice.</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Dihitung dari tanggal nota. Bisa diubah nanti di Payment In.</div>
                 </div>
 
                 <hr style="border: none; border-top: 1px solid var(--border); margin: 16px 0;">
@@ -286,11 +268,12 @@ require_once __DIR__ . '/layout/header.php';
                         <span>Input Scan Barcode Kemasan</span>
                     </label>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="inputBarcodeScan" class="form-control form-control-lg" placeholder="Scan barcode kemasan..." autofocus style="font-size: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+                        <input type="text" id="inputBarcodeScan" class="form-control form-control-lg" placeholder="Scan barcode kemasan..." style="font-size: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
                         <button type="button" class="btn btn-primary" id="btnProsesScan" style="padding: 0 18px; font-weight: 700;">Scan</button>
                     </div>
                     <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
                         Arahkan scanner laser atau ketik ID label lalu tekan tombol Enter.
+                        <span id="infoAutoScan" style="display: block; margin-top: 2px;"></span>
                     </div>
                 </div>
             </form>
@@ -358,26 +341,7 @@ require_once __DIR__ . '/layout/header.php';
 <!-- RIWAYAT PENGELUARAN BARANG (TAB RIWAYAT - MERGED SURAT JALAN & BARANG)     -->
 <!-- ========================================================================= -->
 <div id="sectionOutboundRiwayat" style="<?= $outboundTab === 'riwayat' ? 'display: block;' : 'display: none;' ?>">
-<div class="card no-print" style="margin-top: 10px; border: 1.5px solid var(--border);">
-    <div style="padding: 18px 22px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; user-select: none; background: var(--bg-card); border-bottom: 1px solid var(--border);">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: rgba(2, 132, 199, 0.1); width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
-                <i data-lucide="package-open" style="width: 22px; height: 22px; color: var(--primary);"></i>
-            </div>
-            <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 16px; font-weight: 800; color: var(--text-main);">Daftar Seluruh Pengeluaran Barang ke Mitra</span>
-                    <span class="badge badge-purple" id="outboundCountBadge"><?= number_format($outboundSubTab === 'sj' ? $totalHistory : $totalCount, 0, ',', '.') ?> Data</span>
-                </div>
-                <div style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px;">
-                    Daftar lengkap surat jalan keluar, rincian kemasan, mitra penerima, dan status fisik
-                </div>
-            </div>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <?php $eksporNama = 'Riwayat_Pengeluaran'; include __DIR__ . '/layout/ekspor.php'; ?>
-        </div>
-    </div>
+<div class="no-print">
 
     <!-- Filter Bar Dinamis (mengikuti tampilan aktif) -->
     <div id="filterBarSj" style="<?= $outboundSubTab === 'sj' ? '' : 'display: none;' ?>">
@@ -399,21 +363,16 @@ require_once __DIR__ . '/layout/header.php';
     ], $pemasokList, $mitraList); ?>
     </div>
 
-    <!-- Switch Mode Tampilan: Per Surat Jalan vs Rincian Barang Keluar -->
-    <div style="display: flex; gap: 8px; padding: 12px 16px; background: var(--bg-card); border-bottom: 1.5px solid var(--border); align-items: center; justify-content: space-between; flex-wrap: wrap;">
+    <!-- Pilihan tampilan: Per Surat Jalan vs Rincian Barang Keluar -->
+    <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
         <div style="display: flex; gap: 8px; align-items: center;">
-            <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-right: 4px;">Tampilan:</span>
-            <button type="button" class="btn <?= $outboundSubTab === 'sj' ? 'btn-primary' : 'btn-outline' ?> btn-sm" id="btnViewModeSj" onclick="switchOutboundViewMode('sj')" style="font-weight: 700; border-radius: 8px;">
-                <i data-lucide="package" style="width: 14px; height: 14px;"></i>
-                <span>Per Surat Jalan</span>
-            </button>
-            <button type="button" class="btn <?= $outboundSubTab === 'barang' ? 'btn-primary' : 'btn-outline' ?> btn-sm" id="btnViewModeBarang" onclick="switchOutboundViewMode('barang')" style="font-weight: 700; border-radius: 8px;">
-                <i data-lucide="list" style="width: 14px; height: 14px;"></i>
-                <span>Rincian Barang Keluar</span>
-            </button>
+            <button type="button" class="btn <?= $outboundSubTab === 'sj' ? 'btn-primary' : 'btn-outline' ?> btn-sm" id="btnViewModeSj" onclick="switchOutboundViewMode('sj')">Per Surat Jalan</button>
+            <button type="button" class="btn <?= $outboundSubTab === 'barang' ? 'btn-primary' : 'btn-outline' ?> btn-sm" id="btnViewModeBarang" onclick="switchOutboundViewMode('barang')">Rincian Barang Keluar</button>
         </div>
+        <span id="outboundCountBadge" style="font-size: 12.5px; color: var(--text-muted);"><?= number_format($outboundSubTab === 'sj' ? $totalHistory : $totalCount, 0, ',', '.') ?> Data</span>
     </div>
 
+    <div class="card">
     <!-- ========================================================================= -->
     <!-- TAMPILAN 1: PER SURAT JALAN PENGELUARAN                                   -->
     <!-- ========================================================================= -->
@@ -421,7 +380,7 @@ require_once __DIR__ . '/layout/header.php';
 
     <!-- Tabel Riwayat Transaksi Pengeluaran (Fokus Fisik Gudang) -->
     <div class="table-responsive">
-        <table class="table-custom" id="tableHistoryOutbound">
+        <table class="table-custom" id="tableHistoryOutbound" data-no-tools>
             <thead>
                 <tr>
                     <th style="width: 35px; text-align: center;">No</th>
@@ -429,16 +388,17 @@ require_once __DIR__ . '/layout/header.php';
                     <th style="width: 130px;">Waktu Keluar</th>
                     <th style="width: 175px;">Pemasok Asal</th>
                     <th style="width: 175px;">Mitra Penerima</th>
-                    <th style="text-align: center; width: 95px;">Kemasan</th>
-                    <th style="text-align: right; width: 115px;">Total Netto</th>
-                    <th style="width: 130px;">Petugas</th>
+                    <th style="text-align: right;">Kemasan</th>
+                    <th style="text-align: right;">Total Netto</th>
+                    <th>Petugas</th>
+                    <th>Status</th>
                     <th style="text-align: center; width: 160px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($historyOutbound)): ?>
                     <tr>
-                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 36px;">
+                        <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 36px;">
                             Belum ada riwayat pengeluaran barang tercatat.
                         </td>
                     </tr>
@@ -449,47 +409,29 @@ require_once __DIR__ . '/layout/header.php';
                         $sjKeluar = $ht['no_surat_jalan_keluar'];
                     ?>
                     <tr<?= $ht['jenis_transaksi'] === 'PENGELUARAN_BATAL' ? ' style="opacity: 0.65;"' : '' ?>>
-                        <td style="text-align: center; color: var(--text-muted); font-size: 11.5px;"><?= $hNo++ ?></td>
+                        <td style="text-align: center; color: var(--text-muted);"><?= $hNo++ ?></td>
                         <td>
-                            <div style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 12.5px; color: var(--primary);">
-                                <?= htmlspecialchars($sjKeluar) ?>
-                            </div>
-                            <div style="font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
-                                <?= htmlspecialchars($ht['no_transaksi']) ?>
-                            </div>
+                            <strong><?= htmlspecialchars($sjKeluar) ?></strong>
+                            <div style="font-size: 11.5px; color: var(--text-muted);"><?= htmlspecialchars($ht['no_transaksi']) ?></div>
+                        </td>
+                        <td style="color: var(--text-muted);"><?= date('d/m/Y H:i', strtotime($ht['created_at'])) ?></td>
+                        <td><?= htmlspecialchars($ht['nama_pemasok'] ?? 'Pemasok') ?></td>
+                        <td>
+                            <?= htmlspecialchars($ht['nama_mitra'] ?? 'Mitra') ?>
+                            <?php if (!empty($ht['nama_penerima']) && stripos($ht['nama_penerima'], (string)($ht['nama_mitra'] ?? '')) === false): ?>
+                                <div style="font-size: 11.5px; color: var(--text-muted);">PIC: <?= htmlspecialchars($ht['nama_penerima']) ?></div>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align: right;"><?= number_format($ht['total_label']) ?> pcs</td>
+                        <td style="text-align: right; font-weight: 600;"><?= Helper::formatKg($ht['total_kg']) ?></td>
+                        <td style="color: var(--text-muted);"><?= htmlspecialchars($ht['operator_name'] ?? 'Petugas Gudang') ?></td>
+                        <td>
                             <?php if ($ht['jenis_transaksi'] === 'PENGELUARAN_BATAL'): ?>
-                                <span class="badge badge-danger" style="font-size: 10.5px; margin-top: 3px;">Dibatalkan</span>
-                                <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;"><?= htmlspecialchars($ht['alasan_batal'] ?? '') ?></div>
+                                <span class="badge badge-danger" title="<?= htmlspecialchars($ht['alasan_batal'] ?? '', ENT_QUOTES) ?>">Dibatalkan</span>
+                                <?php if (!empty($ht['alasan_batal'])): ?><span style="font-size: 12px; color: var(--text-muted);"> <?= htmlspecialchars($ht['alasan_batal']) ?></span><?php endif; ?>
+                            <?php else: ?>
+                                <span style="color: var(--text-muted);">Selesai</span>
                             <?php endif; ?>
-                        </td>
-                        <td style="font-size: 11.5px; color: var(--text-muted);">
-                            <?= date('d/m/Y H:i', strtotime($ht['created_at'])) ?>
-                        </td>
-                        <td>
-                            <span class="badge badge-info" style="font-size: 11.5px; padding: 3px 8px; font-weight: 700;">
-                                [<?= htmlspecialchars($ht['kode_pemasok'] ?? 'PMS') ?>] <?= htmlspecialchars($ht['nama_pemasok'] ?? 'Pemasok') ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge badge-purple" style="font-size: 11.5px; padding: 3px 8px; font-weight: 700;">
-                                [<?= htmlspecialchars($ht['kode_mitra'] ?? 'MTR') ?>] <?= htmlspecialchars($ht['nama_mitra'] ?? 'Mitra') ?>
-                            </span>
-                            <?php if (!empty($ht['nama_penerima'])): ?>
-                                <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">
-                                    PIC: <?= htmlspecialchars($ht['nama_penerima']) ?>
-                                </div>
-                            <?php endif; ?>
-                        </td>
-                        <td style="text-align: center;">
-                            <span class="badge badge-secondary" style="font-weight: 700;">
-                                <?= number_format($ht['total_label']) ?> Pcs
-                            </span>
-                        </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13.5px; color: var(--ok-fg);">
-                            <?= Helper::formatKg($ht['total_kg']) ?>
-                        </td>
-                        <td style="font-size: 11.5px; color: var(--text-muted);">
-                            <?= htmlspecialchars($ht['operator_name'] ?? 'Petugas Gudang') ?>
                         </td>
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
@@ -503,6 +445,8 @@ require_once __DIR__ . '/layout/header.php';
                                 </button>
                                 <?php if ($ht['jenis_transaksi'] === 'PENGELUARAN'): ?>
                                 <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_pengeluaran', { id: <?= (int)$ht['id'] ?> }, 'surat jalan keluar <?= htmlspecialchars($ht['no_transaksi'], ENT_QUOTES) ?>')" style="padding: 5px 9px; font-size: 12px; color: var(--bad-fg); border-color: rgba(220,38,38,0.35);" title="Batalkan dokumen"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
+                                <?php else: ?>
+                                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 5px 9px; font-size: 12px; opacity: .45; cursor: not-allowed;" title="Dokumen sudah dibatalkan"><i data-lucide="ban" style="width: 14px; height: 14px;"></i><span>Batalkan</span></button>
                                 <?php endif; ?>
                             </div>
                         </td>
@@ -517,38 +461,11 @@ require_once __DIR__ . '/layout/header.php';
     <?php
     $baseHistoryUrl = "index.php?page=pengeluaran&tab=riwayat&subtab=sj&h_search=" . urlencode($hSearch) . "&h_pemasok=" . urlencode((string)$hPemasok) . "&h_mitra=" . urlencode((string)$hMitra) . "&h_start_date=" . urlencode($hStartDate) . "&h_end_date=" . urlencode($hEndDate) . "&h_date_range=" . urlencode($hDatePreset);
     ?>
-    <div style="padding: 14px 20px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
-        <div style="font-size: 12.5px; color: var(--text-muted);">
-            Menampilkan riwayat <strong><?= $hPage ?></strong> dari <strong><?= $totalHistoryPages ?></strong> (Total <?= number_format($totalHistory) ?> Surat Jalan)
-        </div>
-        <div style="display: flex; gap: 5px; align-items: center;">
-            <?php if ($hPage > 1): ?>
-                <a href="<?= $baseHistoryUrl ?>&hp=1" class="btn btn-outline btn-sm" style="padding: 4px 10px;">« Pertama</a>
-                <a href="<?= $baseHistoryUrl ?>&hp=<?= $hPage - 1 ?>" class="btn btn-outline btn-sm" style="padding: 4px 10px;">‹ Sebelumnya</a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">« Pertama</button>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">‹ Sebelumnya</button>
-            <?php endif; ?>
-
-            <?php 
-            $startHP = max(1, $hPage - 2);
-            $endHP = min($totalHistoryPages, $hPage + 2);
-            for ($hp = $startHP; $hp <= $endHP; $hp++): 
-            ?>
-                <a href="<?= $baseHistoryUrl ?>&hp=<?= $hp ?>" class="btn <?= $hp === $hPage ? 'btn-primary' : 'btn-outline' ?> btn-sm" style="padding: 4px 10px; font-weight: <?= $hp === $hPage ? '800' : '600' ?>;">
-                    <?= $hp ?>
-                </a>
-            <?php endfor; ?>
-
-            <?php if ($hPage < $totalHistoryPages): ?>
-                <a href="<?= $baseHistoryUrl ?>&hp=<?= $hPage + 1 ?>" class="btn btn-outline btn-sm" style="padding: 4px 10px;">Selanjutnya ›</a>
-                <a href="<?= $baseHistoryUrl ?>&hp=<?= $totalHistoryPages ?>" class="btn btn-outline btn-sm" style="padding: 4px 10px;">Terakhir »</a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">Selanjutnya ›</button>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">Terakhir »</button>
-            <?php endif; ?>
-        </div>
-    </div>
+    <?php
+    require_once __DIR__ . '/layout/pager_riwayat.php';
+    $hDari = $totalHistory ? ($hPage - 1) * $hPerPage + 1 : 0;
+    renderPagerRiwayat($hPage, $totalHistoryPages, 'Menampilkan ' . $hDari . '-' . min($totalHistory, $hPage * $hPerPage) . ' dari ' . number_format($totalHistory) . ' surat jalan', $baseHistoryUrl, 'hp');
+    ?>
     </div>
     <!-- END TAMPILAN 1: PER SURAT JALAN -->
 
@@ -559,7 +476,7 @@ require_once __DIR__ . '/layout/header.php';
 
     <!-- Tabel Data Seluruh Barang Keluar -->
     <div class="table-responsive">
-        <table class="table-custom" id="tableAllGoodsOutbound">
+        <table class="table-custom" id="tableAllGoodsOutbound" data-no-tools>
             <thead>
                 <tr>
                     <th style="width: 40px; text-align: center;">No</th>
@@ -591,42 +508,18 @@ require_once __DIR__ . '/layout/header.php';
                         $kodeMitraKeluar = !empty($item['kode_mitra_tujuan']) ? $item['kode_mitra_tujuan'] : (!empty($item['kode_mitra']) ? $item['kode_mitra'] : '');
                     ?>
                     <tr>
-                        <td style="text-align: center; color: var(--text-muted); font-size: 12px;"><?= $no++ ?></td>
-                        <td>
-                            <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--primary);">
-                                <?= htmlspecialchars($item['id_label']) ?>
-                            </strong>
-                        </td>
-                        <td>
-                            <span class="badge badge-info" style="font-size: 11px; font-weight: 700;">
-                                <?= htmlspecialchars($item['nama_pemasok'] ?? 'Pemasok') ?>
-                            </span>
-                        </td>
+                        <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
+                        <td><strong><?= htmlspecialchars($item['id_label']) ?></strong></td>
+                        <td><?= htmlspecialchars($item['nama_pemasok'] ?? 'Pemasok') ?></td>
                         <td>
                             <strong><?= htmlspecialchars($item['nama_item']) ?></strong>
-                            <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($item['nama_jenis']) ?></div>
+                            <div style="font-size: 11.5px; color: var(--text-muted);"><?= htmlspecialchars($item['nama_jenis']) ?></div>
                         </td>
-                        <td style="text-align: right; font-weight: 800; font-size: 13.5px; color: var(--ok-fg);">
-                            <?= Helper::formatKg($berat) ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($namaMitraKeluar) && $namaMitraKeluar !== '-'): ?>
-                                <span class="badge badge-purple" style="font-size: 11px; font-weight: 700;">
-                                    <?php if (!empty($kodeMitraKeluar)): ?>[<?= htmlspecialchars($kodeMitraKeluar) ?>] <?php endif; ?><?= htmlspecialchars($namaMitraKeluar) ?>
-                                </span>
-                            <?php else: ?>
-                                <span style="font-size: 11px; color: var(--text-muted);">-</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <code style="font-size: 11.5px; font-weight: 700; color: var(--aktif-fg);"><?= htmlspecialchars($sjKeluar) ?></code>
-                        </td>
-                        <td style="font-size: 11.5px; color: var(--text-muted);">
-                            <?= $waktuKeluar ?>
-                        </td>
-                        <td style="text-align: center;">
-                            <span class="badge badge-secondary" style="background: var(--text-muted); color: #fff; font-size: 11px;">Sudah Keluar</span>
-                        </td>
+                        <td style="text-align: right; font-weight: 600;"><?= Helper::formatKg($berat) ?></td>
+                        <td><?= (!empty($namaMitraKeluar) && $namaMitraKeluar !== '-') ? htmlspecialchars($namaMitraKeluar) : '-' ?></td>
+                        <td><?= htmlspecialchars($sjKeluar) ?></td>
+                        <td style="color: var(--text-muted);"><?= $waktuKeluar ?></td>
+                        <td style="text-align: center; color: var(--text-muted);">Sudah keluar</td>
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -638,76 +531,41 @@ require_once __DIR__ . '/layout/header.php';
     <?php
     $baseOutUrl = "index.php?page=pengeluaran&tab=riwayat&subtab=barang&filter_pemasok=" . urlencode((string)$filterPemasok) . "&filter_mitra=" . urlencode((string)$filterMitra) . "&search=" . urlencode($search);
     ?>
-    <div style="padding: 14px 20px; background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
-        <div style="font-size: 12.5px; color: var(--text-muted);">
-            Menampilkan halaman <strong><?= $page ?></strong> dari <strong><?= $totalPages ?></strong> (Total <?= number_format($totalCount, 0, ',', '.') ?> data)
-        </div>
-        <div style="display: flex; gap: 5px; align-items: center;">
-            <?php if ($page > 1): ?>
-                <a href="<?= $baseOutUrl ?>&p=1" class="btn btn-outline btn-sm" style="padding: 4px 10px;">« Pertama</a>
-                <a href="<?= $baseOutUrl ?>&p=<?= $page - 1 ?>" class="btn btn-outline btn-sm" style="padding: 4px 10px;">‹ Sebelumnya</a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">« Pertama</button>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">‹ Sebelumnya</button>
-            <?php endif; ?>
-
-            <?php 
-            $startP = max(1, $page - 2);
-            $endP = min($totalPages, $page + 2);
-            for ($i = $startP; $i <= $endP; $i++): 
-            ?>
-                <a href="<?= $baseOutUrl ?>&p=<?= $i ?>" class="btn <?= $i === $page ? 'btn-primary' : 'btn-outline' ?> btn-sm" style="padding: 4px 10px; font-weight: <?= $i === $page ? '800' : '600' ?>;">
-                    <?= $i ?>
-                </a>
-            <?php endfor; ?>
-
-            <?php if ($page < $totalPages): ?>
-                <a href="<?= $baseOutUrl ?>&p=<?= $page + 1 ?>" class="btn btn-outline btn-sm" style="padding: 4px 10px;">Selanjutnya ›</a>
-                <a href="<?= $baseOutUrl ?>&p=<?= $totalPages ?>" class="btn btn-outline btn-sm" style="padding: 4px 10px;">Terakhir »</a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">Selanjutnya ›</button>
-                <button type="button" class="btn btn-outline btn-sm" disabled style="padding: 4px 10px; opacity: 0.5;">Terakhir »</button>
-            <?php endif; ?>
-        </div>
-    </div>
+    <?php
+    $oDari = $totalCount ? ($page - 1) * $perPage + 1 : 0;
+    renderPagerRiwayat($page, $totalPages, 'Menampilkan ' . $oDari . '-' . min($totalCount, $page * $perPage) . ' dari ' . number_format($totalCount, 0, ',', '.') . ' kemasan', $baseOutUrl, 'p');
+    ?>
     </div>
     <!-- END TAMPILAN 2: RINCIAN BARANG KELUAR -->
 
+    </div>
 </div>
 </div>
 <!-- END SECTION OUTBOUND RIWAYAT -->
 
 <!-- Modal Detail Rincian Barcode Surat Jalan Pengeluaran -->
 <div id="modalOutboundDetail" class="sheet-preview-backdrop no-print" style="display: none; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999;">
-    <div class="sheet-preview-dialog" style="max-width: 860px; width: 95%; background: var(--bg-surface, #ffffff); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
-        <div class="sheet-preview-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: rgba(16, 185, 129, 0.15); color: var(--ok-fg); padding: 6px; border-radius: 8px;">
-                    <i data-lucide="package" style="width: 20px; height: 20px;"></i>
-                </div>
-                <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 800;" id="modalSjTitle">Rincian Surat Jalan</h3>
-                    <div style="font-size: 12px; color: var(--text-muted);" id="modalSjSubtitle">-</div>
-                </div>
+    <div class="sheet-preview-dialog" style="max-width: 820px; width: 95%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;">
+        <div class="sheet-preview-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800;" id="modalSjTitle">Rincian Surat Jalan</h3>
+                <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;" id="modalSjSubtitle">-</div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <a href="#" id="modalBtnPrintSj" target="_blank" class="btn btn-primary btn-sm" style="font-weight: 700;">
-                    <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
-                    <span>Cetak Surat Jalan</span>
-                </a>
-                <button type="button" class="btn btn-outline btn-sm" onclick="closeOutboundDetailModal()" style="font-weight: 700;">Tutup</button>
+                <a href="#" id="modalBtnPrintSj" target="_blank" class="btn btn-primary btn-sm">Cetak Surat Jalan</a>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeOutboundDetailModal()">Tutup</button>
             </div>
         </div>
         <div style="padding: 16px 20px; overflow-y: auto;">
-            <!-- Info Asal & Tujuan -->
-            <div id="modalSjPartyInfo" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; background: var(--bg-muted); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border);"></div>
+            <!-- Info asal dan tujuan -->
+            <div id="modalSjPartyInfo" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 24px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);"></div>
 
-            <!-- Tabel Barcode Transaksi -->
-            <div class="table-responsive">
-                <table class="table-custom">
+            <!-- Tabel barcode transaksi -->
+            <div class="table-responsive" style="max-height: none;">
+                <table class="table-custom" data-no-tools>
                     <thead>
                         <tr>
-                            <th style="width: 35px; text-align: center;">No</th>
+                            <th style="width: 40px; text-align: center;">No</th>
                             <th>ID Barcode Kemasan</th>
                             <th>Nama Barang / Produk</th>
                             <th>Kategori</th>
@@ -729,30 +587,31 @@ require_once __DIR__ . '/layout/header.php';
     const inputScan = document.getElementById('inputBarcodeScan');
     const selectPemasok = document.getElementById('outbound_pemasok_id');
     const selectMitra = document.getElementById('outbound_mitra_id');
-    const alertBox = document.getElementById('scanAlertBox');
+    // Fokus otomatis saat halaman dibuka. Di HP/tablet (layar sentuh) keyboard layar ditahan dengan inputmode=none,
+    // sehingga scanner bawaan tetap bisa mengetik; keyboard baru muncul bila kolom diketuk langsung.
+    (function () {
+        const sentuh = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (sentuh) {
+            inputScan.setAttribute('inputmode', 'none');
+            inputScan.addEventListener('pointerdown', function () {
+                if (inputScan.getAttribute('inputmode') !== 'none') return;
+                inputScan.setAttribute('inputmode', 'text');
+                if (document.activeElement === inputScan) { inputScan.blur(); setTimeout(function () { inputScan.focus(); }, 30); }
+            });
+        }
+        inputScan.focus({ preventScroll: true });
+    })();
 
+    // Notifikasi scan: toast SweetAlert + bunyi (true = berhasil, 'warning' = perhatian, false = gagal)
     function showAlert(msg, isSuccess = true) {
-        alertBox.style.display = 'block';
         if (isSuccess === 'warning') {
-            alertBox.className = 'alert';
-            alertBox.style.background = '#fffbeb';
-            alertBox.style.border = '1.5px solid #fcd34d';
-            alertBox.style.color = '#92400e';
-            alertBox.innerHTML = `⚠️ ${msg}`;
+            showToast(msg, 'warning');
             if (window.scannerAudio) window.scannerAudio.playSuccessBeep();
         } else if (isSuccess === true) {
-            alertBox.className = 'alert alert-success';
-            alertBox.style.background = '';
-            alertBox.style.border = '';
-            alertBox.style.color = '';
-            alertBox.innerHTML = `✓ ${msg}`;
+            showToast(msg, 'success');
             if (window.scannerAudio) window.scannerAudio.playSuccessBeep();
         } else {
-            alertBox.className = 'alert alert-danger';
-            alertBox.style.background = '';
-            alertBox.style.border = '';
-            alertBox.style.color = '';
-            alertBox.innerHTML = `⚠️ ${msg}`;
+            showToast(msg, 'error');
             if (window.scannerAudio) window.scannerAudio.playErrorBuzz();
         }
     }
@@ -858,13 +717,39 @@ require_once __DIR__ . '/layout/header.php';
         return true;
     }
 
+    // Tarif jual mitra diambil dari Master Harga untuk mitra yang sedang dipilih. Dihitung ulang tiap kali mitra berganti
+    // atau barcode baru discan, karena mitra bisa dipilih sesudah scan.
+    async function refreshHargaMitra() {
+        const mitraId = parseInt(selectMitra.value || 0, 10);
+        if (!mitraId) {
+            scannedLabels.forEach(l => { l.harga_mitra = 0; l.subtotal_jual = 0; });
+            renderCart();
+            return;
+        }
+        await Promise.all(Array.from(scannedLabels.keys()).map(async bc => {
+            try {
+                const resp = await fetch(`index.php?action=verify_label&barcode=${encodeURIComponent(bc)}&mitra_id=${mitraId}`);
+                const d = await resp.json();
+                const lbl = scannedLabels.get(bc);
+                if (d.success && lbl) {
+                    lbl.harga_mitra = d.label.harga_mitra;
+                    lbl.subtotal_jual = d.label.subtotal_jual;
+                    lbl.harga_pemasok = d.label.harga_pemasok;
+                    lbl.profit = d.label.profit;
+                }
+            } catch (e) { /* tarif tetap seperti sebelumnya */ }
+        }));
+        renderCart();
+    }
+    selectMitra.addEventListener('change', refreshHargaMitra);
+
     async function handleScan(barcode) {
         barcode = barcode.trim();
         if (!barcode) return;
         inputScan.value = '';
 
         if (scannedLabels.has(barcode)) {
-            showAlert(`Barcode '${barcode}' SUDAH PERNAH DISCAN dalam sesi ini!`, false);
+            showAlert(`Barcode ${barcode} sudah discan di sesi ini.`, false);
             return;
         }
 
@@ -874,7 +759,7 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
 
             if (!data.success) {
-                showAlert(`Gagal: ${data.message}`, false);
+                showAlert(data.message || 'Barcode tidak dapat diverifikasi.', false);
                 return;
             }
 
@@ -882,7 +767,7 @@ require_once __DIR__ . '/layout/header.php';
 
             // Validasi status
             if (label.status !== 'AKTIF') {
-                showAlert(`Barcode '${barcode}' berstatus '${label.status}', tidak dapat dikeluarkan dari gudang!`, false);
+                showAlert(`Barcode ${barcode} berstatus ${label.status} sehingga tidak bisa dikeluarkan.`, false);
                 return;
             }
 
@@ -893,7 +778,7 @@ require_once __DIR__ . '/layout/header.php';
             if (label.pemasok_id) {
                 if (firstInCart && firstInCart.pemasok_id && firstInCart.pemasok_id != label.pemasok_id) {
                     const namaPms = label.nama_pemasok ? `[${label.kode_pemasok}] ${label.nama_pemasok}` : 'pemasok lain';
-                    showAlert(`Barcode '${barcode}' berasal dari ${namaPms}. Satu surat jalan hanya untuk satu pemasok, selesaikan atau kosongkan sesi ini dulu.`, false);
+                    showAlert(`Barcode ${barcode} berasal dari ${namaPms}. Satu surat jalan hanya untuk satu pemasok; selesaikan atau kosongkan sesi ini dulu.`, false);
                     return;
                 }
                 if (String(selectPemasok.value) !== String(label.pemasok_id) && syncSelect(selectPemasok, label.pemasok_id)) {
@@ -909,10 +794,11 @@ require_once __DIR__ . '/layout/header.php';
 
             scannedLabels.set(barcode, label);
             renderCart();
+            refreshHargaMitra();
 
             if (data.fifo_info && data.fifo_info.has_older_stock) {
                 // Notifikasi reguler scan berhasil di alert box atas
-                showAlert(`Kemasan berhasil diverifikasi: <strong>${label.nama_item}</strong> (${parseFloat(label.berat_netto).toFixed(2)} kg)${syncNotes.length ? ' &middot; ' + syncNotes.join(' & ') + ' disesuaikan otomatis' : ''}`, true);
+                showAlert(`<strong>${label.nama_item}</strong> &middot; ${parseFloat(label.berat_netto).toFixed(2)} kg ditambahkan${syncNotes.length ? '<br>' + syncNotes.join(' & ') + ' disesuaikan otomatis' : ''}`, true);
 
                 // Notifikasi Peringatan FIFO standar SweetAlert Toast di pojok kanan atas
                 if (typeof Swal !== 'undefined') {
@@ -930,7 +816,7 @@ require_once __DIR__ . '/layout/header.php';
 
                     const pmsId = label.pemasok_id || selectPemasok.value || '';
                     const itmId = label.item_id || '';
-                    const stockUrl = `index.php?page=timbang_cetak&tab=stok_gudang&item_id=${encodeURIComponent(itmId)}${pmsId ? '&pemasok_id=' + encodeURIComponent(pmsId) : ''}`;
+                    const stockUrl = `index.php?page=barang_datang&stok=AKTIF&dari=2000-01-01&item=${encodeURIComponent(itmId)}${pmsId ? '&pihak=' + encodeURIComponent(pmsId) : ''}`;
 
                     Toast.fire({
                         icon: 'warning',
@@ -952,11 +838,11 @@ require_once __DIR__ . '/layout/header.php';
                     });
                 }
             } else {
-                showAlert(`Kemasan berhasil diverifikasi: ${label.nama_item} (${parseFloat(label.berat_netto).toFixed(2)} kg)${syncNotes.length ? ' · ' + syncNotes.join(' & ') + ' disesuaikan otomatis' : ''}`, true);
+                showAlert(`<strong>${label.nama_item}</strong> &middot; ${parseFloat(label.berat_netto).toFixed(2)} kg ditambahkan${syncNotes.length ? '<br>' + syncNotes.join(' & ') + ' disesuaikan otomatis' : ''}`, true);
             }
 
         } catch (err) {
-            showAlert('Kesalahan koneksi saat verifikasi barcode: ' + err.message, false);
+            showAlert('Koneksi bermasalah saat memeriksa barcode: ' + err.message, false);
         }
     }
 
@@ -998,11 +884,13 @@ require_once __DIR__ . '/layout/header.php';
                 <td>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                         <strong>${label.nama_item}</strong>
-                        <a href="index.php?page=timbang_cetak&tab=stok_gudang&item_id=${encodeURIComponent(label.item_id || '')}${label.pemasok_id ? '&pemasok_id=' + encodeURIComponent(label.pemasok_id) : ''}" target="_blank" title="Lihat Sisa Stok ${label.nama_item} di Gudang" style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; background: var(--bg-muted); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='var(--primary)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)';">
+                        <a href="index.php?page=barang_datang&stok=AKTIF&dari=2000-01-01&item=${encodeURIComponent(label.item_id || '')}${label.pemasok_id ? '&pihak=' + encodeURIComponent(label.pemasok_id) : ''}" target="_blank" title="Lihat riwayat harga dan stok aktif ${label.nama_item}" style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; background: var(--bg-muted); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='var(--primary)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
                     </div>
-                    ${hrgMitra <= 0 
+                    ${hrgMitra <= 0 && !selectMitra.value
+                        ? `<div style="font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 3px;">Pilih mitra penerima untuk melihat tarif jual</div>`
+                        : hrgMitra <= 0 
                         ? `<div style="font-size: 10.5px; color: var(--bad-fg); font-weight: 700; margin-top: 3px;">⚠️ Tarif Jual: Rp 0 (Belum diatur di Master)</div>`
                         : `<div style="font-size: 10.5px; color: var(--ok-fg); font-weight: 600; margin-top: 2px;">Tarif: Rp ${new Intl.NumberFormat('id-ID').format(hrgMitra)}/kg • Subtotal: Rp ${new Intl.NumberFormat('id-ID').format(netto * hrgMitra)}</div>`
                     }
@@ -1033,7 +921,7 @@ require_once __DIR__ . '/layout/header.php';
         if (scannedLabels.has(barcode)) {
             scannedLabels.delete(barcode);
             renderCart();
-            showAlert(`Barcode '${barcode}' dihapus dari sesi pengeluaran.`, true);
+            showAlert(`Barcode ${barcode} dikeluarkan dari daftar.`, true);
         }
     }
 
@@ -1045,9 +933,40 @@ require_once __DIR__ . '/layout/header.php';
         handleScan(inputScan.value);
     });
 
+    // Scan otomatis: begitu ID barcode lengkap terbaca (scanner mengetik cepat), langsung diproses tanpa menekan Enter.
+    // Hanya berlaku bila mitra penerima sudah dipilih; tanpa mitra, tarif tidak bisa dihitung, jadi scan tetap manual dengan Enter.
+    const POLA_BARCODE = /^[A-Za-z0-9]+(-[A-Za-z0-9]+){2,}-\d{5,}$/;
+    const infoAutoScan = document.getElementById('infoAutoScan');
+    let timerAutoScan = null;
+
+    function perbaruiInfoAutoScan() {
+        if (!infoAutoScan) return;
+        if (selectMitra.value) {
+            infoAutoScan.style.color = 'var(--ok-fg)';
+            infoAutoScan.textContent = 'Scan otomatis aktif: barcode diproses begitu terbaca, tanpa menekan Enter.';
+        } else {
+            infoAutoScan.style.color = 'var(--warn-fg)';
+            infoAutoScan.textContent = 'Pilih Mitra Bisnis Penerima dulu agar scan berjalan otomatis.';
+        }
+    }
+    selectMitra.addEventListener('change', perbaruiInfoAutoScan);
+    // Setelah mitra dipilih, kursor kembali ke kolom scan (tanpa memunculkan keyboard layar di HP)
+    selectMitra.addEventListener('change', function () { if (selectMitra.value) inputScan.focus({ preventScroll: true }); });
+    perbaruiInfoAutoScan();
+
+    inputScan.addEventListener('input', () => {
+        clearTimeout(timerAutoScan);
+        const v = inputScan.value.trim();
+        if (!selectMitra.value || !POLA_BARCODE.test(v)) return;
+        timerAutoScan = setTimeout(() => {
+            if (inputScan.value.trim() === v) handleScan(v);
+        }, 150);
+    });
+
     inputScan.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
+            clearTimeout(timerAutoScan);
             handleScan(inputScan.value);
         }
     });
@@ -1072,7 +991,7 @@ require_once __DIR__ . '/layout/header.php';
     // Submit pengeluaran stok pemasok ke mitra
     document.getElementById('btnSubmitOutbound').addEventListener('click', async () => {
         if (scannedLabels.size === 0) {
-            showAlert('Belum ada kemasan yang discan! Silakan scan minimal 1 barcode.', false);
+            showAlert('Belum ada kemasan yang discan. Scan minimal satu barcode.', false);
             return;
         }
 
@@ -1083,19 +1002,19 @@ require_once __DIR__ . '/layout/header.php';
         const ket = document.getElementById('keterangan') ? document.getElementById('keterangan').value.trim() : '';
 
         if (!pemasokId) {
-            showAlert('Pemasok asal stok wajib dipilih!', false);
+            showAlert('Pilih pemasok asal stok terlebih dahulu.', false);
             selectPemasok.focus();
             return;
         }
 
         if (!mitraId) {
-            showAlert('Mitra tujuan pengeluaran wajib dipilih!', false);
+            showAlert('Pilih mitra tujuan pengeluaran terlebih dahulu.', false);
             selectMitra.focus();
             return;
         }
 
         if (!noRef) {
-            showAlert('Nomor Surat Jalan / DO wajib diisi!', false);
+            showAlert('Isi nomor surat jalan / DO terlebih dahulu.', false);
             return;
         }
 
@@ -1179,12 +1098,12 @@ require_once __DIR__ . '/layout/header.php';
                 scannedLabels.clear();
                 window.location.reload();
             } else {
-                showAlert('Gagal Menyelesaikan Pengeluaran: ' + data.message, false);
+                showAlert('Pengeluaran belum bisa diselesaikan: ' + data.message, false);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = oldHtml;
             }
         } catch (err) {
-            showAlert('Kesalahan saat memproses pengeluaran: ' + err.message, false);
+            showAlert('Pengeluaran gagal diproses: ' + err.message, false);
             submitBtn.disabled = false;
             submitBtn.innerHTML = oldHtml;
         }
@@ -1223,7 +1142,7 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
             if (data.success && data.no_surat_jalan) {
                 document.getElementById('no_referensi').value = data.no_surat_jalan;
-                showAlert('Nomor Surat Jalan diperbarui: ' + data.no_surat_jalan, true);
+                showAlert('Nomor surat jalan diperbarui menjadi ' + data.no_surat_jalan, true);
             }
         } catch (e) {
             console.error(e);
@@ -1331,23 +1250,18 @@ require_once __DIR__ . '/layout/header.php';
             const t = data.transaksi;
             const sjNo = t.no_referensi_eksternal || t.no_bast || t.no_transaksi;
             titleEl.innerText = 'Rincian Surat Jalan: ' + sjNo;
-            subtitleEl.innerText = `Waktu: ${t.created_at} • Total: ${t.total_label} Kemasan (${parseFloat(t.total_kg).toFixed(2)} kg)`;
+            subtitleEl.innerText = `${t.created_at}  ·  ${t.total_label} kemasan  ·  ${parseFloat(t.total_kg).toFixed(2)} kg`;
 
-            const namaPms = t.nama_pemasok ? `[${t.kode_pemasok}] ${t.nama_pemasok}` : 'Gudang Pemasok';
-            const namaMtr = t.nama_mitra ? `[${t.kode_mitra}] ${t.nama_mitra}` : 'Mitra Penerima';
+            const namaPms = t.nama_pemasok || 'Gudang Pemasok';
+            const namaMtr = t.nama_mitra || 'Mitra Penerima';
 
-            partyInfoEl.innerHTML = `
-                <div>
-                    <div style="font-size: 11px; font-weight: 800; color: var(--aktif-fg); text-transform: uppercase; margin-bottom: 4px;">🚚 Pemasok Asal Stok (Gudang)</div>
-                    <div style="font-weight: 800; font-size: 13px; color: var(--aktif-fg);">${namaPms}</div>
-                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">Petugas Penyerah: <strong>${t.nama_penyerah || t.operator_pemroses || 'Petugas Gudang'}</strong></div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; font-weight: 800; color: var(--ok-fg); text-transform: uppercase; margin-bottom: 4px;">🏢 Mitra Bisnis Penerima (Tujuan)</div>
-                    <div style="font-weight: 800; font-size: 13px; color: var(--ok-fg);">${namaMtr}</div>
-                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">PIC / Penerima: <strong>${t.nama_penerima || '-'}</strong> • Catatan: <strong>${t.keterangan || '-'}</strong></div>
-                </div>
-            `;
+            const bidang = (label, isi) => `<div><div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 2px;">${label}</div><div style="font-weight: 600; font-size: 13.5px;">${isi}</div></div>`;
+            partyInfoEl.innerHTML =
+                bidang('Pemasok asal', namaPms) +
+                bidang('Mitra penerima', namaMtr) +
+                bidang('Petugas penyerah', t.nama_penyerah || t.operator_pemroses || 'Petugas Gudang') +
+                bidang('PIC / penerima', t.nama_penerima || '-') +
+                bidang('Catatan', t.keterangan || '-');
 
             if (!t.items || t.items.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 25px;">Tidak ada kemasan terdaftar dalam transaksi ini.</td></tr>';
@@ -1358,12 +1272,12 @@ require_once __DIR__ . '/layout/header.php';
             t.items.forEach((it, idx) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="text-align: center; color: var(--text-muted); font-size: 11.5px;">${idx + 1}</td>
-                    <td><strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary);">${it.id_label}</strong></td>
+                    <td style="text-align: center; color: var(--text-muted);">${idx + 1}</td>
+                    <td><strong>${it.id_label}</strong></td>
                     <td><strong>${it.nama_item}</strong></td>
-                    <td><span class="badge badge-outline" style="font-size: 10.5px;">${it.nama_jenis || '-'}</span></td>
-                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">${parseFloat(it.berat_netto).toFixed(2)} kg</td>
-                    <td><code style="font-size: 10.5px;">${it.no_surat_jalan || it.batch_no || '-'}</code></td>
+                    <td style="color: var(--text-muted);">${it.nama_jenis || '-'}</td>
+                    <td style="text-align: right; font-weight: 600;">${parseFloat(it.berat_netto).toFixed(2)} kg</td>
+                    <td>${it.no_surat_jalan || it.batch_no || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });

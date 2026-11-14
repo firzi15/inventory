@@ -344,10 +344,10 @@ require_once __DIR__ . '/layout/header.php';
         input.select();
         input.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(input.value).then(() => {
-            alert('✓ Berhasil disalin ke clipboard: ' + input.value);
+            alert('Berhasil disalin ke clipboard: ' + input.value);
         }).catch(() => {
             document.execCommand('copy');
-            alert('✓ Berhasil disalin: ' + input.value);
+            alert('Berhasil disalin: ' + input.value);
         });
     }
 
@@ -440,7 +440,7 @@ require_once __DIR__ . '/layout/header.php';
             const resData = await resp.json();
 
             if (resData.success) {
-                alert('✓ ' + resData.message + '\nDatabase: ' + (dbAlias || dbId));
+                alert('' + resData.message + '\nDatabase: ' + (dbAlias || dbId));
                 location.reload();
             } else {
                 alert('Peringatan: ' + resData.message);
@@ -477,7 +477,7 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
 
             if (data.success) {
-                alert('✓ ' + data.message);
+                alert('' + data.message);
                 location.reload();
             } else {
                 alert('Gagal: ' + data.message);
@@ -506,7 +506,7 @@ require_once __DIR__ . '/layout/header.php';
             const resp = await fetch('index.php?action=retry_sync&queue_id=' + queueId);
             const data = await resp.json();
             if (data.success) {
-                alert('✓ ' + data.message + '\nNomor Dokumen Accurate: ' + (data.docNo || '-'));
+                alert('' + data.message + '\nNomor Dokumen Accurate: ' + (data.docNo || '-'));
                 location.reload();
             } else {
                 alert('Gagal Sinkronisasi: ' + data.message);

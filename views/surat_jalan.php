@@ -219,14 +219,6 @@ require_once __DIR__ . '/layout/header.php';
         .sj-sort.aktif::after { opacity: 1; }
         .sj-sort.aktif.asc::after { content: '\25B2'; }
         .sj-sort.aktif.desc::after { content: '\25BC'; }
-        .sj-halaman { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 4px; margin-bottom: 8px; }
-        .sj-halaman-info { font-size: 12.5px; color: var(--text-muted); }
-        .sj-halaman-nomor { display: flex; gap: 4px; align-items: center; }
-        .sj-hal { min-width: 32px; height: 32px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700; color: var(--text-main); text-decoration: none; background: var(--bg-card); }
-        a.sj-hal:hover { border-color: var(--primary); }
-        .sj-hal.aktif { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .sj-hal.mati { opacity: .45; cursor: default; }
-        .sj-halaman-per { font-size: 12.5px; color: var(--text-muted); }
     </style>
     <?php if ($tampil === 'grid'): ?>
     <style>
@@ -274,10 +266,10 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
                 <div class="sj-aksi no-print">
                     <?php if (!$x['batal']): ?>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="bukaPreview(this)" <?= $attrPreview($x) ?>>Preview PDF</button>
-                        <a href="<?= $x['urlForm'] ?>" target="_blank" class="btn btn-outline btn-sm">Cetak Form</a>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="bukaPreview(this)" <?= $attrPreview($x) ?>>Preview</button>
+                        <a href="<?= $x['urlForm'] ?>" target="_blank" class="btn btn-outline btn-sm">Print Ext.</a>
                         <?php if ($bolehInternal && $x['urlInternal']): ?>
-                            <a href="<?= $x['urlInternal'] ?>" target="_blank" class="btn btn-outline btn-sm">Versi Internal</a>
+                            <a href="<?= $x['urlInternal'] ?>" target="_blank" class="btn btn-outline btn-sm">Print Int.</a>
                         <?php endif; ?>
                     <?php else: ?>
                         <span class="sj-muted">Tidak dapat dicetak</span>
@@ -342,11 +334,11 @@ require_once __DIR__ . '/layout/header.php';
         <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <div id="pvJudul" style="font-weight: 800; font-size: 14px; flex: 1; min-width: 160px; word-break: break-all;"></div>
             <div id="pvVersi" style="display: none; gap: 4px;">
-                <button type="button" class="btn btn-sm" id="pvBtnForm" onclick="pvGanti('form')">Form (tanpa harga)</button>
-                <button type="button" class="btn btn-sm" id="pvBtnInternal" onclick="pvGanti('internal')">Versi Internal</button>
+                <button type="button" class="btn btn-sm" id="pvBtnForm" onclick="pvGanti('form')">Extenal</button>
+                <button type="button" class="btn btn-sm" id="pvBtnInternal" onclick="pvGanti('internal')">Internal</button>
             </div>
-            <button type="button" class="btn btn-primary btn-sm" onclick="pvCetak()">Cetak / Simpan PDF</button>
-            <a id="pvTab" href="#" target="_blank" class="btn btn-outline btn-sm">Buka di tab baru</a>
+            <button type="button" class="btn btn-primary btn-sm" onclick="pvCetak()">Print</button>
+            <a id="pvTab" href="#" target="_blank" class="btn btn-outline btn-sm">Open New Tab</a>
             <button type="button" class="btn btn-outline btn-sm" onclick="tutupPreview()" aria-label="Tutup">&#10005;</button>
         </div>
         <div id="pvArea" style="flex: 1; overflow: auto; background: var(--text-muted); padding: 16px;">

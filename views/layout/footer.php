@@ -8,7 +8,7 @@
     <script src="assets/js/xlsx.full.min.js"></script>
     <script src="assets/js/chart.umd.min.js"></script>
     <script src="assets/js/table-tools.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/table-tools.js') ?>"></script>
-    <script src="assets/js/tabel-rapi.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/tabel-rapi.js') ?>"></script>
+    <script src="assets/js/salin.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/salin.js') ?>"></script>
     <script src="assets/js/select-ui.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/select-ui.js') ?>"></script>
     <script src="assets/js/ekspor.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/ekspor.js') ?>"></script>
     <script src="assets/js/batal.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/batal.js') ?>"></script>

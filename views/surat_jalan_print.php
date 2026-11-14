@@ -66,6 +66,7 @@ $lembarTinggi = $tinggiMm > 200;
 $labelKertas = ['a4' => 'A4 (210 x 297 mm)', 'setengah' => '9½ x 5½ inci', 'penuh' => 'Letter 8½ x 11 inci'][$kertas];
 $tinggiSheet = $tinggiMm - 2 * $mAtas - 2;
 $lebarSheet = $lebarMm - 2 * $mSisi;
+$dasarMm = 8.0; // ruang untuk garis dasar lembar
 $barisMm = $lembarTinggi ? 7.4 : 5.8; $kepalaTabelMm = $lembarTinggi ? 8.0 : 6.5; $kakiMm = $lembarTinggi ? 52.0 : 36.0; $kepalaLanjutMm = $lembarTinggi ? 12.0 : 9.0;
 $kepalaAwalMm = ($lembarTinggi ? 60.0 : 39.0) + ($adaCatatan ? 4.4 : 0);
 
@@ -73,8 +74,8 @@ $lembar = [];
 $i = 0; $n = count($items); $ke = 0;
 while (true) {
     $kepala = $ke === 0 ? $kepalaAwalMm : $kepalaLanjutMm;
-    $kapPenuh = max(1, (int)floor(($tinggiSheet - $kepala - $kepalaTabelMm) / $barisMm));
-    $kapAkhir = max(0, (int)floor(($tinggiSheet - $kepala - $kepalaTabelMm - $kakiMm) / $barisMm));
+    $kapPenuh = max(1, (int)floor(($tinggiSheet - $dasarMm - $kepala - $kepalaTabelMm) / $barisMm));
+    $kapAkhir = max(0, (int)floor(($tinggiSheet - $dasarMm - $kepala - $kepalaTabelMm - $kakiMm) / $barisMm));
     $sisa = $n - $i;
     if ($sisa <= $kapAkhir) { $lembar[] = ['baris' => array_slice($items, $i), 'awal' => $i, 'akhir' => true]; break; }
     $ambil = min($kapPenuh, $sisa);
@@ -111,6 +112,9 @@ $jmlKolom = $isAdmin ? 7 : 7;
 
         .sheet { width: <?= $lebarSheet ?>mm; max-width: 100%; height: <?= round($tinggiSheet, 1) ?>mm; margin: 0 auto 14px; background: #ffffff; border: 1px solid #999999; position: relative; overflow: hidden; }
         .sheet:last-child { margin-bottom: 0; }
+        /* Garis dasar di ujung bawah setiap lembar: kepala cetak dot matrix harus berjalan sampai batas bawah kertas,
+           sehingga kertas berhenti tepat di garis sobekan, bukan di tengah lembar */
+        .dasar { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1.5px dashed #000000; padding-top: 1px; display: flex; justify-content: space-between; font-size: 9.5px; font-weight: 700; line-height: 1.2; }
 
         .kop { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000000; padding-bottom: 3px; margin-bottom: 4px; }
         .kop .nama { font-size: 17px; font-weight: 900; line-height: 1.1; }
@@ -327,6 +331,7 @@ $jmlKolom = $isAdmin ? 7 : 7;
         <?php else: ?>
         <div class="catatan" style="text-align: right;">bersambung ke lembar <?= $idx + 2 ?> ...</div>
         <?php endif; ?>
+        <div class="dasar"><span><?= htmlspecialchars($noSuratJalan) ?></span><span>Lembar <?= $idx + 1 ?> dari <?= $jumlahLembar ?></span></div>
     </div>
 <?php endforeach; ?>
 

@@ -77,7 +77,6 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 </div>
 
-<div id="mutasiAlertBox" style="display: none; margin-bottom: 20px;"></div>
 
 <!-- ========================================================================= -->
 <!-- GRID FORMULIR PEMINDAHAN STOK & KERANJANG SCAN                             -->
@@ -833,7 +832,6 @@ require_once __DIR__ . '/layout/header.php';
     const mutasiCart = new Map();
     const inputScan = document.getElementById('inputBarcodeScanMutasi');
     const selectAlur = document.getElementById('alur_pergerakan');
-    const alertBox = document.getElementById('mutasiAlertBox');
 
     // Tab Switching
     function switchMainTab(tab) {
@@ -890,16 +888,8 @@ require_once __DIR__ . '/layout/header.php';
     });
 
     function showMutasiAlert(msg, isSuccess = true) {
-        alertBox.style.display = 'block';
-        if (isSuccess) {
-            alertBox.className = 'alert alert-success';
-            alertBox.innerHTML = `✓ ${msg}`;
-            if (window.scannerAudio) window.scannerAudio.playSuccessBeep();
-        } else {
-            alertBox.className = 'alert alert-danger';
-            alertBox.innerHTML = `⚠️ ${msg}`;
-            if (window.scannerAudio) window.scannerAudio.playErrorBuzz();
-        }
+        showToast(msg, isSuccess ? 'success' : 'error');
+        if (window.scannerAudio) isSuccess ? window.scannerAudio.playSuccessBeep() : window.scannerAudio.playErrorBuzz();
     }
 
     // Scan Barcode Mutasi
@@ -909,7 +899,7 @@ require_once __DIR__ . '/layout/header.php';
         inputScan.value = '';
 
         if (mutasiCart.has(barcode)) {
-            showMutasiAlert(`Barcode '${barcode}' SUDAH PERNAH DISCAN dalam sesi pemindahan ini!`, false);
+            showMutasiAlert(`Barcode ${barcode} sudah discan di sesi pemindahan ini.`, false);
             return;
         }
 
@@ -918,7 +908,7 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
 
             if (!data.success) {
-                showMutasiAlert(`Gagal: ${data.message}`, false);
+                showMutasiAlert(data.message || 'Barcode tidak dapat diverifikasi.', false);
                 return;
             }
 
@@ -927,7 +917,7 @@ require_once __DIR__ . '/layout/header.php';
 
             // 1. Validasi: Jika barang sudah berstatus KELUAR, tidak bisa dipindah lagi
             if (label.status === 'KELUAR') {
-                showMutasiAlert(`Barcode '${barcode}' sudah berstatus KELUAR dari gudang, tidak dapat dipindahkan lagi!`, false);
+                showMutasiAlert(`Barcode ${barcode} sudah keluar dari gudang dan tidak bisa dipindahkan lagi.`, false);
                 return;
             }
 
@@ -936,7 +926,7 @@ require_once __DIR__ . '/layout/header.php';
             const beratNetto = parseFloat(label.berat_netto || 0);
             if (beratNetto <= 0) {
                 showBarcodeNotWeighedModal(label);
-                showMutasiAlert(`Barcode '${barcode}' BELUM DITIMBANG (0.00 KG)! Silakan timbang terlebih dahulu sebelum dipindahkan.`, false);
+                showMutasiAlert(`Barcode ${barcode} belum ditimbang. Timbang dulu sebelum dipindahkan.`, false);
                 return;
             }
 
@@ -947,7 +937,7 @@ require_once __DIR__ . '/layout/header.php';
                 const namaTujuan = (label.last_mutasi && label.last_mutasi.nama_mitra_tujuan) 
                     ? label.last_mutasi.nama_mitra_tujuan 
                     : (label.nama_mitra || 'Mitra');
-                showMutasiAlert(`Barcode '${barcode}' SUDAH PERNAH DIPINDAHKAN ke ${namaTujuan}! Tidak dapat discan kembali.`, false);
+                showMutasiAlert(`Barcode ${barcode} sudah pernah dipindahkan ke ${namaTujuan}.`, false);
                 return;
             }
 
@@ -955,21 +945,21 @@ require_once __DIR__ . '/layout/header.php';
             if (alur === 'MUTASI_ANTAR_MITRA') {
                 const mitraAsalId = document.getElementById('mutasi_mitra_asal_id').value;
                 if (!label.mitra_id) {
-                    showMutasiAlert(`Barcode '${barcode}' belum dialokasikan ke mitra mana pun! Lakukan alur 'Pemasok ke Mitra' terlebih dahulu.`, false);
+                    showMutasiAlert(`Barcode ${barcode} belum dialokasikan ke mitra mana pun. Jalankan alur Pemasok ke Mitra lebih dulu.`, false);
                     return;
                 }
                 if (label.mitra_id != mitraAsalId) {
-                    showMutasiAlert(`Barcode '${barcode}' terdaftar milik ${label.nama_mitra || 'Mitra Lain'}, bukan mitra asal yang dipilih!`, false);
+                    showMutasiAlert(`Barcode ${barcode} milik ${label.nama_mitra || 'mitra lain'}, bukan mitra asal yang dipilih.`, false);
                     return;
                 }
             }
 
             mutasiCart.set(label.id_label, label);
             renderMutasiCart();
-            showMutasiAlert(`Kemasan ditambahkan ke pemindahan: ${label.nama_item} (${parseFloat(label.berat_netto || 0).toFixed(2)} kg)`, true);
+            showMutasiAlert(`<strong>${label.nama_item}</strong> &middot; ${parseFloat(label.berat_netto || 0).toFixed(2)} kg ditambahkan`, true);
 
         } catch (err) {
-            showMutasiAlert('Kesalahan koneksi saat verifikasi barcode: ' + err.message, false);
+            showMutasiAlert('Koneksi bermasalah saat memeriksa barcode: ' + err.message, false);
         }
     }
 
@@ -1142,10 +1132,10 @@ require_once __DIR__ . '/layout/header.php';
                 }
                 location.reload();
             } else {
-                showMutasiAlert('Gagal Menyelesaikan Pemindahan: ' + data.message, false);
+                showMutasiAlert('Pemindahan belum bisa diselesaikan: ' + data.message, false);
             }
         } catch (err) {
-            showMutasiAlert('Kesalahan sistem saat memproses: ' + err.message, false);
+            showMutasiAlert('Pemindahan gagal diproses: ' + err.message, false);
         }
     });
 

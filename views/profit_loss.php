@@ -7,29 +7,25 @@
 use App\Core\Helper;
 use App\Services\CoaService;
 use App\Services\JurnalService;
+use App\Services\BukuService;
 
 $pageTitle = 'Laba Rugi';
 
+use App\Core\Periode;
+
 $tab = ($_GET['tab'] ?? '') === 'laba_sj' || ($_GET['tab'] ?? '') === 'riwayat_sj' ? 'laba_sj' : 'ringkasan';
 
-$tahunList = JurnalService::tahunTersedia();
-$tahun = (int)($_GET['year'] ?? date('Y'));
-if (!in_array($tahun, $tahunList, true)) $tahun = (int)date('Y');
-// bulan 0 = setahun penuh
-$bulan = isset($_GET['month']) ? (int)$_GET['month'] : ($tahun === (int)date('Y') ? (int)date('n') : 12);
-if ($bulan < 0 || $bulan > 12) $bulan = 0;
+// Periode: bawaan bulan ini; bisa hari, minggu, bulan, YTD, atau tanggal bebas
+[$dari, $sampai] = Periode::baca($_GET, 'bulan');
 
 $namaBulan = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
               7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
 $bulanPendek = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'];
-
-$rentang = function (int $th, int $bl): array {
-    if ($bl === 0) return [sprintf('%04d-01-01', $th), sprintf('%04d-12-31', $th)];
-    $awal = sprintf('%04d-%02d-01', $th, $bl);
-    return [$awal, date('Y-m-t', strtotime($awal))];
-};
-[$dari, $sampai] = $rentang($tahun, $bulan);
-$labelPeriode = $bulan === 0 ? "Tahun $tahun" : $namaBulan[$bulan] . " $tahun";
+$tglPanjang = fn(string $d): string => (int)date('j', strtotime($d)) . ' ' . $bulanPendek[(int)date('n', strtotime($d))] . ' ' . date('Y', strtotime($d));
+$tglPendek  = fn(string $d): string => (int)date('j', strtotime($d)) . ' ' . $bulanPendek[(int)date('n', strtotime($d))];
+$rentangLabel = fn(string $d, string $s): string => $d === $s ? $tglPanjang($d) : $tglPanjang($d) . ' – ' . $tglPanjang($s);
+$labelPeriode = $rentangLabel($dari, $sampai);
+$jumlahHari = (int)round((strtotime($sampai) - strtotime($dari)) / 86400) + 1;
 
 $hitung = function (array $a): array {
     $jual = (float)$a['4000']; $hpp = (float)$a['5000']; $biaya = (float)$a['6000'];
@@ -38,8 +34,99 @@ $hitung = function (array $a): array {
 };
 $pct = fn(float $a, float $b): string => $b != 0.0 ? number_format($a / $b * 100, 1, ',', '.') . '%' : '-';
 $rp = fn($n) => Helper::formatRupiah($n);
-$warna = fn($n) => $n < 0 ? '#b91c1c' : 'inherit';
+$warna = fn($n) => $n < 0 ? 'var(--bad-fg)' : 'inherit';
 $linkAkun = fn(string $akun, string $d, string $s) => 'index.php?page=coa&akun=' . $akun . '&dari=' . $d . '&sampai=' . $s;
+
+// ---------- Detail Laba (tab laba_sj): filter, pengelompokan, pengurutan
+$fpExtra = ''; $fpLinkExtra = [];
+if ($tab === 'laba_sj') {
+    $dlMitra = (int)($_GET['mitra'] ?? 0);
+    $dlJenis = (int)($_GET['jenis'] ?? 0);
+    $dlItem = (int)($_GET['item'] ?? 0);
+    $dlPemasok = (int)($_GET['pemasok'] ?? 0);
+    $dlCari = trim((string)($_GET['cari'] ?? ''));
+    $opsiKelompok = ['sj' => 'Surat Jalan', 'rincian' => 'Surat Jalan per Produk', 'jenis' => 'Jenis Barang', 'produk' => 'Produk', 'mitra' => 'Mitra', 'pemasok' => 'Pemasok', 'tanggal' => 'Tanggal'];
+    $dlKel = array_key_exists($_GET['kelompok'] ?? '', $opsiKelompok) ? $_GET['kelompok'] : 'sj';
+    // kolom pengenal tiap kelompok: [kolom, judul]
+    $kolomLabel = [
+        'sj'      => [['sj', 'Surat Jalan'], ['tanggal', 'Tanggal'], ['mitra', 'Mitra']],
+        'rincian' => [['tanggal', 'Tanggal'], ['sj', 'Surat Jalan'], ['mitra', 'Mitra'], ['produk', 'Produk'], ['jenis', 'Jenis'], ['pemasok', 'Pemasok']],
+        'jenis'   => [['jenis', 'Jenis Barang']],
+        'produk'  => [['produk', 'Produk'], ['jenis', 'Jenis']],
+        'mitra'   => [['mitra', 'Mitra']],
+        'pemasok' => [['pemasok', 'Pemasok']],
+        'tanggal' => [['tanggal', 'Tanggal']],
+    ][$dlKel];
+    $kolomAngka = ['kemasan' => 'Kemasan', 'qty' => 'Qty', 'jual' => 'Penjualan', 'hpp' => 'HPP', 'laba' => 'Laba', 'margin' => 'Margin'];
+    $kunciUrutSah = array_merge(array_column($kolomLabel, 0), array_keys($kolomAngka));
+    $bawaanUrut = in_array($dlKel, ['sj', 'rincian', 'tanggal'], true) ? ['tanggal', 'turun'] : ['laba', 'turun'];
+    $dlUrut = in_array($_GET['urut'] ?? '', $kunciUrutSah, true) ? $_GET['urut'] : $bawaanUrut[0];
+    $dlArah = isset($_GET['urut']) ? (($_GET['arah'] ?? 'naik') === 'turun' ? 'turun' : 'naik') : $bawaanUrut[1];
+
+    $baris = JurnalService::detailLaba(['dari' => $dari, 'sampai' => $sampai, 'mitra_id' => $dlMitra, 'jenis_id' => $dlJenis,
+                                        'item_id' => $dlItem, 'pemasok_id' => $dlPemasok, 'cari' => $dlCari]);
+    $kunciGrup = ['sj' => 'trx_id', 'jenis' => 'jenis', 'produk' => 'item_id', 'mitra' => 'mitra_id', 'pemasok' => 'pemasok_id', 'tanggal' => 'tanggal'];
+    $hasilDl = []; $dlSjSet = [];
+    foreach ($baris as $i => $r) {
+        $dlSjSet[$r['trx_id']] = true;
+        $k = $dlKel === 'rincian' ? (string)$i : (string)$r[$kunciGrup[$dlKel]];
+        if (!isset($hasilDl[$k])) {
+            $hasilDl[$k] = ['kemasan' => 0, 'qty' => 0.0, 'jual' => 0.0, 'hpp' => 0.0];
+            foreach ($kolomLabel as [$kol]) $hasilDl[$k][$kol] = $r[$kol];
+        }
+        $hasilDl[$k]['kemasan'] += $r['kemasan']; $hasilDl[$k]['qty'] += $r['qty'];
+        $hasilDl[$k]['jual'] += $r['jual']; $hasilDl[$k]['hpp'] += $r['hpp'];
+    }
+    $dlTotal = ['kemasan' => 0, 'qty' => 0.0, 'jual' => 0.0, 'hpp' => 0.0];
+    foreach ($hasilDl as &$g) {
+        $g['laba'] = $g['jual'] - $g['hpp'];
+        $g['margin'] = $g['jual'] != 0.0 ? $g['laba'] / $g['jual'] * 100 : 0.0;
+        foreach (['kemasan', 'qty', 'jual', 'hpp'] as $m) $dlTotal[$m] += $g[$m];
+    }
+    unset($g);
+    $dlTotal['laba'] = $dlTotal['jual'] - $dlTotal['hpp'];
+    $dlTotal['margin'] = $dlTotal['jual'] != 0.0 ? $dlTotal['laba'] / $dlTotal['jual'] * 100 : 0.0;
+    $hasilDl = array_values($hasilDl);
+    usort($hasilDl, function ($a, $b) use ($dlUrut, $dlArah) {
+        $x = $a[$dlUrut]; $y = $b[$dlUrut];
+        $c = (is_int($x) || is_float($x)) ? $x <=> $y : strcasecmp((string)$x, (string)$y);
+        return $dlArah === 'turun' ? -$c : $c;
+    });
+    $dlPer = 50;
+    $dlTotalBaris = count($hasilDl);
+    $dlHalMax = max(1, (int)ceil($dlTotalBaris / $dlPer));
+    $dlHal = min($dlHalMax, max(1, (int)($_GET['hal'] ?? 1)));
+    $dlTampil = array_slice($hasilDl, ($dlHal - 1) * $dlPer, $dlPer);
+
+    // tautan pilihan cepat periode mempertahankan filter lain
+    $fpLinkExtra = array_filter(['mitra' => $dlMitra ?: null, 'jenis' => $dlJenis ?: null, 'item' => $dlItem ?: null, 'pemasok' => $dlPemasok ?: null,
+                                 'cari' => $dlCari ?: null, 'kelompok' => $dlKel !== 'sj' ? $dlKel : null, 'urut' => $_GET['urut'] ?? null, 'arah' => $_GET['arah'] ?? null],
+                                fn($v) => $v !== null && $v !== '');
+    $opt = function (array $daftar, int $dipilih, string $semua, string $kodeKey = '') {
+        $h = '<option value="0">' . $semua . '</option>';
+        foreach ($daftar as $d) {
+            $teks = ($kodeKey !== '' && !empty($d[$kodeKey]) ? '[' . $d[$kodeKey] . '] ' : '') . $d['nama'];
+            $h .= '<option value="' . (int)$d['id'] . '"' . ((int)$d['id'] === $dipilih ? ' selected' : '') . '>' . htmlspecialchars($teks) . '</option>';
+        }
+        return $h;
+    };
+    ob_start(); ?>
+        <div style="flex: 1; min-width: 200px;">
+            <label class="form-label">Cari surat jalan</label>
+            <input type="text" name="cari" value="<?= htmlspecialchars($dlCari) ?>" class="form-control" placeholder="No. surat jalan atau transaksi">
+        </div>
+        <div><label class="form-label">Mitra</label><select name="mitra" class="form-control"><?= $opt(BukuService::daftarMitra(), $dlMitra, 'Semua mitra', 'kode') ?></select></div>
+        <div><label class="form-label">Jenis Barang</label><select name="jenis" class="form-control"><?= $opt(BukuService::daftarKategori(), $dlJenis, 'Semua jenis') ?></select></div>
+        <div><label class="form-label">Produk</label><select name="item" class="form-control"><?= $opt(BukuService::daftarArtikel(), $dlItem, 'Semua produk', 'kode') ?></select></div>
+        <div><label class="form-label">Pemasok</label><select name="pemasok" class="form-control"><?= $opt(BukuService::daftarPemasok(), $dlPemasok, 'Semua pemasok', 'kode') ?></select></div>
+        <div>
+            <label class="form-label">Kelompokkan per</label>
+            <select name="kelompok" class="form-control">
+                <?php foreach ($opsiKelompok as $kk => $ll): ?><option value="<?= $kk ?>" <?= $dlKel === $kk ? 'selected' : '' ?>><?= $ll ?></option><?php endforeach; ?>
+            </select>
+        </div>
+    <?php $fpExtra = ob_get_clean();
+}
 
 require_once __DIR__ . '/layout/header.php';
 ?>
@@ -48,45 +135,73 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="page-header no-print">
         <div>
-            <h1 class="page-title"><?= $tab === 'laba_sj' ? 'Laba per Surat Jalan' : 'Laba Rugi' ?></h1>
-            <p class="page-subtitle">Dihitung dari jurnal: penjualan diakui saat barang keluar, HPP memakai harga beli yang sudah dibekukan</p>
+            <h1 class="page-title"><?= $tab === 'laba_sj' ? 'Detail Laba' : 'Laba Rugi' ?></h1>
+            <p class="page-subtitle"><?= $tab === 'laba_sj' ? 'Laba tiap pengeluaran barang, bisa dipecah per surat jalan, jenis, produk, mitra, atau pemasok' : 'Dihitung dari jurnal: penjualan diakui saat barang keluar, HPP memakai harga beli yang sudah dibekukan' ?></p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <?php $eksporNama = ($tab === 'laba_sj' ? 'Laba_per_Surat_Jalan' : 'Laba_Rugi') . '_' . $tahun . ($bulan ? sprintf('-%02d', $bulan) : ''); $eksporJudul = ($tab === 'laba_sj' ? 'Laba per Surat Jalan ' : 'Laba Rugi ') . $labelPeriode; include __DIR__ . '/layout/ekspor.php'; ?>
-        <form method="GET" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <input type="hidden" name="page" value="profit_loss">
-            <input type="hidden" name="tab" value="<?= $tab ?>">
-            <select name="year" class="form-control" style="width: auto;" onchange="this.form.submit()">
-                <?php foreach ($tahunList as $t): ?>
-                    <option value="<?= $t ?>" <?= $t === $tahun ? 'selected' : '' ?>><?= $t ?></option>
-                <?php endforeach; ?>
-            </select>
-            <select name="month" class="form-control" style="width: auto;" onchange="this.form.submit()">
-                <option value="0" <?= $bulan === 0 ? 'selected' : '' ?>>Setahun</option>
-                <?php foreach ($namaBulan as $n => $nm): ?>
-                    <option value="<?= $n ?>" <?= $n === $bulan ? 'selected' : '' ?>><?= $nm ?></option>
-                <?php endforeach; ?>
-            </select>
-        </form>
+        <?php $eksporNama = ($tab === 'laba_sj' ? 'Detail_Laba' : 'Laba_Rugi') . '_' . $dari . '_' . $sampai; $eksporJudul = ($tab === 'laba_sj' ? 'Detail Laba ' : 'Laba Rugi ') . $labelPeriode; include __DIR__ . '/layout/ekspor.php'; ?>
         </div>
     </div>
 
+    <?php
+    $fpDari = $dari; $fpSampai = $sampai; $fpHidden = ['page' => 'profit_loss', 'tab' => $tab]; $fpSemua = false;
+    include __DIR__ . '/layout/filter_periode.php';
+    ?>
+
     <?php if ($tab === 'ringkasan'):
-        $bulanan = JurnalService::labaRugiBulanan($tahun);
-        $hasilBulan = [];
-        $ytd = ['4000' => 0.0, '5000' => 0.0, '6000' => 0.0];
-        foreach ($bulanan as $m => $a) {
-            $hasilBulan[$m] = $hitung($a);
-            foreach ($ytd as $k => $_) $ytd[$k] += $a[$k];
+        // Kolom rincian: per hari (<= 31 hari), per minggu (<= 93 hari), selain itu per bulan
+        $granul = $jumlahHari <= 31 ? 'hari' : ($jumlahHari <= 93 ? 'minggu' : 'bulan');
+        $kolom = []; // [label, dari, sampai]
+        if ($granul === 'hari') {
+            for ($t = strtotime($dari); $t <= strtotime($sampai); $t = strtotime('+1 day', $t)) {
+                $d = date('Y-m-d', $t);
+                $kolom[] = [$tglPendek($d), $d, $d];
+            }
+        } elseif ($granul === 'minggu') {
+            $awal = $dari;
+            while ($awal <= $sampai) {
+                $akhirMinggu = date('Y-m-d', strtotime('sunday this week', strtotime($awal)));
+                $akhir = min($akhirMinggu, $sampai);
+                $kolom[] = [$tglPendek($awal) . ($awal === $akhir ? '' : '–' . $tglPendek($akhir)), $awal, $akhir];
+                $awal = date('Y-m-d', strtotime($akhir . ' +1 day'));
+            }
+        } else {
+            $awal = $dari;
+            while ($awal <= $sampai) {
+                $akhir = min(date('Y-m-t', strtotime($awal)), $sampai);
+                $kolom[] = [$bulanPendek[(int)date('n', strtotime($awal))] . ' ' . date('Y', strtotime($awal)), $awal, $akhir];
+                $awal = date('Y-m-d', strtotime($akhir . ' +1 day'));
+            }
         }
-        $hasilYtd = $hitung($ytd);
+        $banyakKolom = count($kolom);
+
+        $akunHarian = JurnalService::labaRugiAkunHarian($dari, $sampai);
+        $coaAkun = CoaService::accounts();
+        $tipeGrup = ['REVENUE' => '4000', 'COGS' => '5000', 'EXPENSE' => '6000'];
+        // nilai per akun per kolom
+        $nilaiAkun = []; $hasilKolom = array_fill(0, $banyakKolom, ['4000' => 0.0, '5000' => 0.0, '6000' => 0.0]);
+        foreach ($akunHarian as $kodeAk => $perTgl) {
+            if (!isset($coaAkun[$kodeAk], $tipeGrup[$coaAkun[$kodeAk][6]])) continue;
+            $g = $tipeGrup[$coaAkun[$kodeAk][6]];
+            foreach ($perTgl as $tgl => $v) {
+                foreach ($kolom as $i => [, $kd, $ks]) {
+                    if ($tgl >= $kd && $tgl <= $ks) {
+                        $nilaiAkun[$kodeAk][$i] = ($nilaiAkun[$kodeAk][$i] ?? 0.0) + $v;
+                        $hasilKolom[$i][$g] += $v;
+                        break;
+                    }
+                }
+            }
+        }
+        $hasilBulan = array_map($hitung, $hasilKolom);
+        $hasilYtd = $hitung(JurnalService::labaRugiRentang($dari, $sampai));
 
         // Pemeriksaan terhadap COA (seluruh periode)
         $semua = JurnalService::labaRugiRentang('1900-01-01', '2999-12-31');
         $hs = $hitung($semua);
         $saldoCoa = CoaService::balances();
         $grupCoa = ['REVENUE' => 0.0, 'COGS' => 0.0, 'EXPENSE' => 0.0];
-        foreach (CoaService::accounts() as $kodeC => $c) {
+        foreach ($coaAkun as $kodeC => $c) {
             if (!isset($grupCoa[$c[6]])) continue;
             $grupCoa[$c[6]] += ($c[2] === CoaService::TIPE[$c[6]][2] ? 1 : -1) * $saldoCoa[$kodeC];
         }
@@ -95,26 +210,24 @@ require_once __DIR__ . '/layout/header.php';
 
         $detailMitra  = JurnalService::detailPerMitra($dari, $sampai);
         $detailVendor = JurnalService::detailPerVendor($dari, $sampai);
+        $labelRincian = ['hari' => 'per hari', 'minggu' => 'per minggu', 'bulan' => 'per bulan'][$granul];
     ?>
 
     <div class="card" style="margin-bottom: 20px;">
-        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Laba Rugi <?= $tahun ?> per bulan</div>
+        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Laba Rugi <?= $labelPeriode ?><?= $banyakKolom > 1 ? ' &middot; rincian ' . $labelRincian : '' ?></div>
         <div class="table-responsive">
-            <table class="table-custom" data-no-tools style="min-width: 1250px;">
+            <table class="table-custom" data-no-tools style="min-width: <?= 230 + ($banyakKolom > 1 ? $banyakKolom * 110 : 0) + 130 ?>px;">
                 <thead>
                     <tr>
                         <th style="min-width: 190px;">Keterangan</th>
-                        <?php foreach ($bulanPendek as $n => $nm): ?>
-                            <th style="text-align: right; <?= $n === $bulan ? 'background: var(--bg-muted);' : '' ?>"><?= $nm ?></th>
-                        <?php endforeach; ?>
-                        <th style="text-align: right;">Total <?= $tahun ?></th>
+                        <?php if ($banyakKolom > 1): foreach ($kolom as [$lbl]): ?>
+                            <th style="text-align: right;"><?= htmlspecialchars($lbl) ?></th>
+                        <?php endforeach; endif; ?>
+                        <th style="text-align: right;">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
-                    $akunBulan = JurnalService::labaRugiAkunBulanan($tahun);
-                    $coaAkun = CoaService::accounts();
-                    $tipeGrup = ['4000' => 'REVENUE', '5000' => 'COGS', '6000' => 'EXPENSE'];
                     $baris = [
                         ['Penjualan', 'jual', '4000', false],
                         ['HPP', 'hpp', '5000', false],
@@ -125,35 +238,34 @@ require_once __DIR__ . '/layout/header.php';
                     foreach ($baris as [$label, $key, $grup, $tebal]): ?>
                         <tr style="<?= $tebal ? 'background: var(--bg-muted);' : '' ?> font-weight: 800;">
                             <td><?= $label ?></td>
-                            <?php foreach ($hasilBulan as $m => $h): ?>
+                            <?php if ($banyakKolom > 1): foreach ($hasilBulan as $h): ?>
                                 <td style="text-align: right; color: <?= $warna($h[$key]) ?>;"><?= $h[$key] != 0 ? $rp($h[$key]) : '-' ?></td>
-                            <?php endforeach; ?>
+                            <?php endforeach; endif; ?>
                             <td style="text-align: right; color: <?= $warna($hasilYtd[$key]) ?>;"><?= $hasilYtd[$key] != 0 ? $rp($hasilYtd[$key]) : '-' ?></td>
                         </tr>
                         <?php if ($grup):
-                            foreach ($akunBulan as $kodeAk => $perBulan):
-                                if (!isset($coaAkun[$kodeAk]) || $coaAkun[$kodeAk][6] !== $tipeGrup[$grup]) continue; ?>
+                            foreach ($nilaiAkun as $kodeAk => $perKolom):
+                                if ($tipeGrup[$coaAkun[$kodeAk][6]] !== $grup) continue; ?>
                             <tr style="font-size: 12.5px;">
                                 <td style="padding-left: 28px; font-weight: 500;"><?= $kodeAk ?> &nbsp;<?= htmlspecialchars($coaAkun[$kodeAk][0]) ?></td>
-                                <?php for ($m = 1; $m <= 12; $m++):
-                                    $v = $perBulan[$m] ?? 0.0;
-                                    [$d1, $s1] = $rentang($tahun, $m); ?>
+                                <?php if ($banyakKolom > 1): foreach ($kolom as $i => [, $kd, $ks]):
+                                    $v = $perKolom[$i] ?? 0.0; ?>
                                     <td style="text-align: right; color: <?= $warna($v) ?>;">
-                                        <?php if ($v != 0): ?><a href="<?= $linkAkun($kodeAk, $d1, $s1) ?>" style="color: inherit;"><?= $rp($v) ?></a><?php else: ?>-<?php endif; ?>
+                                        <?php if ($v != 0): ?><a href="<?= $linkAkun($kodeAk, $kd, $ks) ?>" style="color: inherit;"><?= $rp($v) ?></a><?php else: ?>-<?php endif; ?>
                                     </td>
-                                <?php endfor;
-                                $tot = array_sum($perBulan); ?>
+                                <?php endforeach; endif;
+                                $tot = array_sum($perKolom); ?>
                                 <td style="text-align: right; font-weight: 700; color: <?= $warna($tot) ?>;">
-                                    <?php if ($tot != 0): ?><a href="<?= $linkAkun($kodeAk, "$tahun-01-01", "$tahun-12-31") ?>" style="color: inherit;"><?= $rp($tot) ?></a><?php else: ?>-<?php endif; ?>
+                                    <?php if ($tot != 0): ?><a href="<?= $linkAkun($kodeAk, $dari, $sampai) ?>" style="color: inherit;"><?= $rp($tot) ?></a><?php else: ?>-<?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; endif; ?>
                         <?php if ($key === 'kotor' || $key === 'bersih'): ?>
                             <tr style="font-size: 12px; color: var(--text-muted);">
                                 <td style="padding-left: 28px;">Margin <?= $key === 'kotor' ? 'kotor' : 'bersih' ?></td>
-                                <?php foreach ($hasilBulan as $h): ?>
+                                <?php if ($banyakKolom > 1): foreach ($hasilBulan as $h): ?>
                                     <td style="text-align: right;"><?= $pct($h[$key], $h['jual']) ?></td>
-                                <?php endforeach; ?>
+                                <?php endforeach; endif; ?>
                                 <td style="text-align: right;"><?= $pct($hasilYtd[$key], $hasilYtd['jual']) ?></td>
                             </tr>
                         <?php endif; ?>
@@ -162,7 +274,7 @@ require_once __DIR__ . '/layout/header.php';
             </table>
         </div>
         <div style="padding: 12px 20px; border-top: 1px solid var(--border); font-size: 12.5px; display: flex; gap: 18px; flex-wrap: wrap; align-items: center;">
-            <span style="font-weight: 700; color: <?= $cocok ? '#15803d' : '#b91c1c' ?>;">
+            <span style="font-weight: 700; color: <?= $cocok ? 'var(--ok-fg)' : 'var(--bad-fg)' ?>;">
                 <?= $cocok ? 'Cocok dengan COA' : 'Tidak cocok dengan COA' ?>
             </span>
             <span style="color: var(--text-muted);">
@@ -171,25 +283,25 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </div>
 
-    <?php if ($bulan > 0):
-        $prevTh = $bulan === 1 ? $tahun - 1 : $tahun;
-        $prevBl = $bulan === 1 ? 12 : $bulan - 1;
-        [$pd, $ps] = $rentang($prevTh, $prevBl);
-        $ini = $hasilBulan[$bulan];
-        $lalu = $hitung(JurnalService::labaRugiRentang($pd, $ps));
+    <?php
+        // Pembanding: periode sebelumnya dengan panjang yang sama
+        $laluSampai = date('Y-m-d', strtotime($dari . ' -1 day'));
+        $laluDari = date('Y-m-d', strtotime($laluSampai . ' -' . ($jumlahHari - 1) . ' days'));
+        $ini = $hasilYtd;
+        $lalu = $hitung(JurnalService::labaRugiRentang($laluDari, $laluSampai));
         $banding = [['Penjualan', 'jual'], ['HPP', 'hpp'], ['Laba Kotor', 'kotor'], ['Biaya Operasional', 'biaya'], ['Laba Bersih', 'bersih']];
     ?>
     <div class="card" style="margin-bottom: 20px;">
         <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">
-            <?= $namaBulan[$bulan] ?> <?= $tahun ?> dibanding <?= $namaBulan[$prevBl] ?> <?= $prevTh ?>
+            Dibanding periode sebelumnya (<?= $rentangLabel($laluDari, $laluSampai) ?>)
         </div>
         <div class="table-responsive">
             <table class="table-custom" data-no-tools>
                 <thead>
                     <tr>
                         <th>Keterangan</th>
-                        <th style="text-align: right;"><?= $namaBulan[$bulan] ?></th>
-                        <th style="text-align: right;"><?= $namaBulan[$prevBl] ?></th>
+                        <th style="text-align: right;">Periode ini</th>
+                        <th style="text-align: right;">Periode sebelumnya</th>
                         <th style="text-align: right;">Selisih</th>
                         <th style="text-align: right;">Perubahan</th>
                     </tr>
@@ -210,7 +322,6 @@ require_once __DIR__ . '/layout/header.php';
             </table>
         </div>
     </div>
-    <?php endif; ?>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
         <div class="card">
@@ -285,55 +396,58 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 
     <?php else:
-        $rows = JurnalService::labaPerSuratJalan($dari, $sampai);
-        $tj = $th = 0.0;
+        // judul kolom yang bisa diklik; tautan mempertahankan semua filter
+        $thDl = function (string $kolom, string $label, bool $kanan = false) use ($dlUrut, $dlArah) {
+            $baru = ($dlUrut === $kolom && $dlArah === 'naik') ? 'turun' : 'naik';
+            $q = array_merge($_GET, ['urut' => $kolom, 'arah' => $baru, 'hal' => 1]);
+            $aktif = $dlUrut === $kolom;
+            return '<th' . ($kanan ? ' style="text-align: right;"' : '') . '><a class="th-sort ' . ($aktif ? 'aktif' : '') . '" href="index.php?' . htmlspecialchars(http_build_query($q)) . '">' . $label
+                 . '<span class="panah">' . ($aktif ? ($dlArah === 'naik' ? '&#9650;' : '&#9660;') : '&#8645;') . '</span></a></th>';
+        };
     ?>
 
+    <div class="grid grid-cols-4 no-print" style="gap: 16px; margin-bottom: 18px;">
+        <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Penjualan</div><div class="kpi-value"><?= $rp($dlTotal['jual']) ?></div><div class="kpi-sub"><?= count($dlSjSet) ?> surat jalan &middot; <?= number_format($dlTotal['kemasan'], 0, ',', '.') ?> kemasan</div></div></div>
+        <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">HPP</div><div class="kpi-value"><?= $rp($dlTotal['hpp']) ?></div><div class="kpi-sub"><?= number_format($dlTotal['qty'], 2, ',', '.') ?> kg</div></div></div>
+        <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Laba</div><div class="kpi-value" style="color: <?= $warna($dlTotal['laba']) ?>;"><?= $rp($dlTotal['laba']) ?></div></div></div>
+        <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Margin</div><div class="kpi-value"><?= number_format($dlTotal['margin'], 1, ',', '.') ?>%</div></div></div>
+    </div>
+
     <div class="card">
-        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); font-weight: 800;">Surat jalan keluar &middot; <?= $labelPeriode ?></div>
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: none;">
             <table class="table-custom" data-no-tools>
                 <thead>
                     <tr>
-                        <th>Tanggal</th>
-                        <th>No. Surat Jalan</th>
-                        <th>Mitra</th>
-                        <th style="text-align: right;">Penjualan</th>
-                        <th style="text-align: right;">HPP</th>
-                        <th style="text-align: right;">Laba</th>
-                        <th style="text-align: right;">Margin</th>
+                        <?php foreach ($kolomLabel as [$kol, $jdl]) echo $thDl($kol, $jdl); ?>
+                        <?php foreach ($kolomAngka as $kol => $jdl) echo $thDl($kol, $jdl, true); ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (!$rows): ?>
-                        <tr><td colspan="7" style="text-align: center; padding: 28px; color: var(--text-muted);">Belum ada surat jalan keluar pada periode ini</td></tr>
+                    <?php if (!$dlTampil): ?>
+                        <tr><td colspan="<?= count($kolomLabel) + count($kolomAngka) ?>" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada pengeluaran barang pada filter ini</td></tr>
                     <?php endif; ?>
-                    <?php foreach ($rows as $r):
-                        $batal = $r['jenis_transaksi'] === 'PENGELUARAN_BATAL';
-                        $j = (float)$r['penjualan']; $h = (float)$r['hpp'];
-                        if (!$batal) { $tj += $j; $th += $h; } ?>
-                        <tr style="<?= $batal ? 'color: var(--text-muted); text-decoration: line-through;' : '' ?>">
-                            <td><?= htmlspecialchars((string)$r['tanggal']) ?></td>
-                            <td style="font-weight: 600;"><?= htmlspecialchars((string)$r['no_transaksi']) ?><?= $batal ? ' <span style="text-decoration: none; display: inline-block;" class="badge">Dibatalkan</span>' : '' ?></td>
-                            <td><?= htmlspecialchars((string)$r['nama_mitra']) ?></td>
-                            <td style="text-align: right;"><?= $rp($j) ?></td>
-                            <td style="text-align: right;"><?= $rp($h) ?></td>
-                            <td style="text-align: right; color: <?= $batal ? 'inherit' : $warna($j - $h) ?>;"><?= $rp($j - $h) ?></td>
-                            <td style="text-align: right;"><?= $pct($j - $h, $j) ?></td>
+                    <?php foreach ($dlTampil as $g): ?>
+                        <tr>
+                            <?php foreach ($kolomLabel as $iK => [$kol]):
+                                $v = $g[$kol]; ?>
+                                <td style="<?= $iK === 0 ? 'font-weight: 600;' : '' ?>"><?= $kol === 'tanggal' ? $tglPanjang((string)$v) : htmlspecialchars((string)$v) ?></td>
+                            <?php endforeach; ?>
+                            <td style="text-align: right;"><?= number_format($g['kemasan'], 0, ',', '.') ?></td>
+                            <td style="text-align: right;"><?= number_format($g['qty'], 2, ',', '.') ?> kg</td>
+                            <td style="text-align: right;"><?= $rp($g['jual']) ?></td>
+                            <td style="text-align: right;"><?= $rp($g['hpp']) ?></td>
+                            <td style="text-align: right; font-weight: 700; color: <?= $warna($g['laba']) ?>;"><?= $rp($g['laba']) ?></td>
+                            <td style="text-align: right;"><?= number_format($g['margin'], 1, ',', '.') ?>%</td>
                         </tr>
                     <?php endforeach; ?>
-                    <?php if ($rows): ?>
-                        <tr style="font-weight: 800; background: var(--bg-muted);">
-                            <td colspan="3">Total (tanpa yang dibatalkan)</td>
-                            <td style="text-align: right;"><?= $rp($tj) ?></td>
-                            <td style="text-align: right;"><?= $rp($th) ?></td>
-                            <td style="text-align: right;"><?= $rp($tj - $th) ?></td>
-                            <td style="text-align: right;"><?= $pct($tj - $th, $tj) ?></td>
-                        </tr>
-                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
+        <?php
+        require_once __DIR__ . '/layout/pager_riwayat.php';
+        $dlUrlDasar = 'index.php?' . http_build_query(array_diff_key($_GET, ['hal' => 1]));
+        renderPagerRiwayat($dlHal, $dlHalMax, 'Menampilkan ' . ($dlTotalBaris ? ($dlHal - 1) * $dlPer + 1 : 0) . '-' . min($dlTotalBaris, $dlHal * $dlPer) . ' dari ' . number_format($dlTotalBaris) . ' baris', $dlUrlDasar, 'hal');
+        ?>
     </div>
 
     <?php endif; ?>
