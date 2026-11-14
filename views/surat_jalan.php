@@ -23,22 +23,76 @@ $tampil = ($_GET['tampil'] ?? 'tabel') === 'grid' ? 'grid' : 'tabel';
 $role = strtoupper($_SESSION['user_login']['role'] ?? '');
 $bolehInternal = in_array($role, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
 
-$f = ['dari' => $dari, 'sampai' => $sampai, 'cari' => $cari, 'status' => $status];
+// Urutan dan halaman
+$kunciUrut = array_keys(SuratJalanService::URUT_KELUAR);
+$urut = in_array($_GET['urut'] ?? '', $kunciUrut, true) ? $_GET['urut'] : 'tanggal';
+$arah = ($_GET['arah'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+$opsiPer = $tampil === 'grid' ? [12, 24, 48, 96] : [10, 25, 50, 100, 500];
+$per = in_array((int)($_GET['per'] ?? 0), $opsiPer, true) ? (int)$_GET['per'] : ($tampil === 'grid' ? 12 : 25);
+$hal = max(1, (int)($_GET['hal'] ?? 1));
+
+$f = ['dari' => $dari, 'sampai' => $sampai, 'cari' => $cari, 'status' => $status, 'urut' => $urut, 'arah' => $arah, 'limit' => $per, 'offset' => ($hal - 1) * $per];
 if ($tab === 'pengeluaran') {
     $f['mitra_id'] = $pihakId;
-    $rows = SuratJalanService::pengeluaran($f);
+    $hasil = SuratJalanService::pengeluaran($f);
     $daftarPihak = Mitra::getAll();
     $labelPihak = 'Mitra';
 } else {
     $f['pemasok_id'] = $pihakId;
-    $rows = SuratJalanService::penerimaan($f);
+    $hasil = SuratJalanService::penerimaan($f);
     $daftarPihak = Pemasok::getAll();
     $labelPihak = 'Pemasok';
 }
+$total = $hasil['total'];
+$halMax = max(1, (int)ceil($total / $per));
+if ($hal > $halMax) {
+    // halaman di luar jangkauan (mis. filter dipersempit): muat ulang halaman terakhir
+    $hal = $halMax;
+    $f['offset'] = ($hal - 1) * $per;
+    $hasil = $tab === 'pengeluaran' ? SuratJalanService::pengeluaran($f) : SuratJalanService::penerimaan($f);
+}
+$rows = $hasil['rows'];
 
 $rp = fn($n) => Helper::formatRupiah($n);
 $tgl = fn($d) => date('d/m/Y H:i', strtotime($d));
-$qs = fn(array $x) => http_build_query(array_merge(['page' => 'surat_jalan', 'dari' => $dari, 'sampai' => $sampai, 'tampil' => $tampil], $x));
+// Alamat halaman ini dengan semua pilihan saat ini; $x menimpa (nilai null = dibuang)
+$qs = function (array $x) use ($tab, $dari, $sampai, $tampil, $pihakId, $status, $cari, $per, $urut, $arah, $hal) {
+    $q = array_merge(['page' => 'surat_jalan', 'tab' => $tab, 'dari' => $dari, 'sampai' => $sampai, 'tampil' => $tampil,
+                      'pihak' => $pihakId ?: null, 'status' => $status ?: null, 'cari' => $cari ?: null,
+                      'per' => $per, 'urut' => $urut, 'arah' => $arah, 'hal' => $hal], $x);
+    return http_build_query(array_filter($q, fn($v) => $v !== null && $v !== ''));
+};
+
+// Judul kolom yang bisa diurutkan (klik lagi untuk membalik arah)
+$th = function (string $kunci, string $label, string $gaya = '') use ($qs, $urut, $arah) {
+    $aktif = $urut === $kunci;
+    $baru = ($aktif && $arah === 'asc') ? 'desc' : 'asc';
+    echo '<th style="' . $gaya . '"><a class="sj-sort ' . ($aktif ? 'aktif ' . $arah : '') . '" href="index.php?' . $qs(['urut' => $kunci, 'arah' => $baru, 'hal' => 1]) . '"'
+       . ' title="Urutkan menurut ' . htmlspecialchars($label, ENT_QUOTES) . '">' . htmlspecialchars($label) . '</a></th>';
+};
+
+// Bilah halaman: keterangan jumlah, pilihan baris per halaman, dan nomor halaman
+$bilahHalaman = function () use ($qs, $total, $per, $hal, $halMax, $opsiPer) {
+    $dari = $total ? ($hal - 1) * $per + 1 : 0;
+    $sampai = min($total, $hal * $per);
+    echo '<div class="sj-halaman no-print"><div class="sj-halaman-info">Menampilkan ' . $dari . '-' . $sampai . ' dari ' . $total . ' surat jalan</div>';
+    echo '<div class="sj-halaman-nomor">';
+    $tautan = function ($h, $label, $aktif = false, $mati = false) use ($qs) {
+        if ($mati) return '<span class="sj-hal mati">' . $label . '</span>';
+        return '<a class="sj-hal ' . ($aktif ? 'aktif' : '') . '" href="index.php?' . $qs(['hal' => $h]) . '">' . $label . '</a>';
+    };
+    echo $tautan(1, '&laquo;', false, $hal <= 1) . $tautan($hal - 1, '&lsaquo;', false, $hal <= 1);
+    $mulai = max(1, $hal - 2); $akhir = min($halMax, $hal + 2);
+    if ($mulai > 1) echo $tautan(1, '1') . ($mulai > 2 ? '<span class="sj-hal mati">&hellip;</span>' : '');
+    for ($i = $mulai; $i <= $akhir; $i++) echo $tautan($i, (string)$i, $i === $hal);
+    if ($akhir < $halMax) echo ($akhir < $halMax - 1 ? '<span class="sj-hal mati">&hellip;</span>' : '') . $tautan($halMax, (string)$halMax);
+    echo $tautan($hal + 1, '&rsaquo;', false, $hal >= $halMax) . $tautan($halMax, '&raquo;', false, $hal >= $halMax);
+    echo '</div><div class="sj-halaman-per"><label for="sjPer">Per halaman</label> <select id="sjPer" class="form-control" style="width: auto; display: inline-block;" onchange="location.href=this.value">';
+    foreach ($opsiPer as $o) {
+        echo '<option value="index.php?' . $qs(['per' => $o, 'hal' => 1]) . '"' . ($o === $per ? ' selected' : '') . '>' . $o . '</option>';
+    }
+    echo '</select></div></div>';
+};
 
 // Atribut data untuk tombol / thumbnail pratinjau
 $attrPreview = function (array $x) use ($bolehInternal) {
@@ -86,14 +140,14 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="no-print" style="display: flex; gap: 6px; margin-bottom: 14px; justify-content: space-between; flex-wrap: wrap;">
         <div style="display: flex; gap: 6px;">
-            <a href="index.php?<?= $qs(['tab' => 'pengeluaran']) ?>" class="btn <?= $tab === 'pengeluaran' ? 'btn-primary' : 'btn-outline' ?>">Pengeluaran ke Mitra</a>
-            <a href="index.php?<?= $qs(['tab' => 'penerimaan']) ?>" class="btn <?= $tab === 'penerimaan' ? 'btn-primary' : 'btn-outline' ?>">Penerimaan dari Pemasok</a>
+            <a href="index.php?<?= $qs(['tab' => 'pengeluaran', 'pihak' => null, 'hal' => 1]) ?>" class="btn <?= $tab === 'pengeluaran' ? 'btn-primary' : 'btn-outline' ?>">Pengeluaran ke Mitra</a>
+            <a href="index.php?<?= $qs(['tab' => 'penerimaan', 'pihak' => null, 'hal' => 1]) ?>" class="btn <?= $tab === 'penerimaan' ? 'btn-primary' : 'btn-outline' ?>">Penerimaan dari Pemasok</a>
         </div>
         <div style="display: flex; gap: 6px;" role="group" aria-label="Tampilan">
-            <a href="index.php?<?= $qs(['tab' => $tab, 'tampil' => 'tabel']) ?>" class="btn <?= $tampil === 'tabel' ? 'btn-primary' : 'btn-outline' ?>" onclick="try{localStorage.setItem('sjTampil','tabel')}catch(e){}" style="display: inline-flex; align-items: center; gap: 6px;">
+            <a href="index.php?<?= $qs(['tampil' => 'tabel', 'per' => null, 'hal' => 1]) ?>" class="btn <?= $tampil === 'tabel' ? 'btn-primary' : 'btn-outline' ?>" onclick="try{localStorage.setItem('sjTampil','tabel')}catch(e){}" style="display: inline-flex; align-items: center; gap: 6px;">
                 <i data-lucide="table" style="width: 15px; height: 15px;"></i><span>Tabel</span>
             </a>
-            <a href="index.php?<?= $qs(['tab' => $tab, 'tampil' => 'grid']) ?>" class="btn <?= $tampil === 'grid' ? 'btn-primary' : 'btn-outline' ?>" onclick="try{localStorage.setItem('sjTampil','grid')}catch(e){}" style="display: inline-flex; align-items: center; gap: 6px;">
+            <a href="index.php?<?= $qs(['tampil' => 'grid', 'per' => null, 'hal' => 1]) ?>" class="btn <?= $tampil === 'grid' ? 'btn-primary' : 'btn-outline' ?>" onclick="try{localStorage.setItem('sjTampil','grid')}catch(e){}" style="display: inline-flex; align-items: center; gap: 6px;">
                 <i data-lucide="layout-grid" style="width: 15px; height: 15px;"></i><span>Grid</span>
             </a>
         </div>
@@ -103,6 +157,11 @@ require_once __DIR__ . '/layout/header.php';
         <input type="hidden" name="page" value="surat_jalan">
         <input type="hidden" name="tab" value="<?= $tab ?>">
         <input type="hidden" name="tampil" value="<?= $tampil ?>">
+        <input type="hidden" name="per" value="<?= $per ?>">
+        <?php if ($tampil === 'tabel'): ?>
+            <input type="hidden" name="urut" value="<?= $urut ?>">
+            <input type="hidden" name="arah" value="<?= $arah ?>">
+        <?php endif; ?>
         <div>
             <label class="form-label">Dari</label>
             <input type="date" name="dari" value="<?= $dari ?>" class="form-control">
@@ -130,6 +189,23 @@ require_once __DIR__ . '/layout/header.php';
                 <option value="BATAL" <?= $status === 'BATAL' ? 'selected' : '' ?>>Dibatalkan</option>
             </select>
         </div>
+        <?php if ($tampil === 'grid'): ?>
+        <div style="min-width: 160px;">
+            <label class="form-label">Urutkan</label>
+            <select name="urut" class="form-control">
+                <?php foreach (['tanggal' => 'Tanggal', 'no' => 'No. surat jalan', 'pihak' => $labelPihak, 'box' => 'Jumlah box', 'kg' => 'Netto', 'nilai' => 'Nilai', 'status' => 'Status'] as $k => $lb): ?>
+                    <option value="<?= $k ?>" <?= $urut === $k ? 'selected' : '' ?>><?= $lb ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div style="min-width: 130px;">
+            <label class="form-label">Arah</label>
+            <select name="arah" class="form-control">
+                <option value="desc" <?= $arah === 'desc' ? 'selected' : '' ?>>Terbaru / terbesar</option>
+                <option value="asc" <?= $arah === 'asc' ? 'selected' : '' ?>>Terlama / terkecil</option>
+            </select>
+        </div>
+        <?php endif; ?>
         <div style="flex: 1; min-width: 180px;">
             <label class="form-label">Cari</label>
             <input type="text" name="cari" value="<?= htmlspecialchars($cari) ?>" class="form-control" placeholder="No. surat jalan atau nama">
@@ -137,6 +213,21 @@ require_once __DIR__ . '/layout/header.php';
         <button type="submit" class="btn btn-primary">Tampilkan</button>
     </form>
 
+    <style>
+        .sj-sort { color: inherit; text-decoration: none; white-space: nowrap; cursor: pointer; }
+        .sj-sort::after { content: '\2195'; opacity: .35; margin-left: 5px; font-size: 11px; }
+        .sj-sort.aktif::after { opacity: 1; }
+        .sj-sort.aktif.asc::after { content: '\25B2'; }
+        .sj-sort.aktif.desc::after { content: '\25BC'; }
+        .sj-halaman { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 4px; margin-bottom: 8px; }
+        .sj-halaman-info { font-size: 12.5px; color: var(--text-muted); }
+        .sj-halaman-nomor { display: flex; gap: 4px; align-items: center; }
+        .sj-hal { min-width: 32px; height: 32px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-weight: 700; color: var(--text-main); text-decoration: none; background: var(--bg-card); }
+        a.sj-hal:hover { border-color: var(--primary); }
+        .sj-hal.aktif { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .sj-hal.mati { opacity: .45; cursor: default; }
+        .sj-halaman-per { font-size: 12.5px; color: var(--text-muted); }
+    </style>
     <?php if ($tampil === 'grid'): ?>
     <style>
         .sj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; margin-bottom: 18px; }
@@ -195,6 +286,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
         <?php endforeach; ?>
     </div>
+    <?php if ($tampil === 'grid') $bilahHalaman(); ?>
     <?php endif; ?>
 
     <div class="card" style="<?= $tampil === 'grid' ? 'display: none;' : '' ?>">
@@ -202,13 +294,9 @@ require_once __DIR__ . '/layout/header.php';
             <table class="table-custom" id="tableSuratJalan" data-no-tools>
                 <thead>
                     <tr>
-                        <th>Tanggal</th>
-                        <th>No. Surat Jalan</th>
-                        <th><?= $labelPihak ?></th>
-                        <th style="text-align: right;">Box</th>
-                        <th style="text-align: right;">Netto (kg)</th>
-                        <?php if ($bolehInternal): ?><th style="text-align: right;"><?= $tab === 'pengeluaran' ? 'Nilai Jual' : 'Nilai Beli' ?></th><?php endif; ?>
-                        <th>Status</th>
+                        <?php $th('tanggal', 'Tanggal'); $th('no', 'No. Surat Jalan'); $th('pihak', $labelPihak); $th('box', 'Box', 'text-align: right;'); $th('kg', 'Netto (kg)', 'text-align: right;'); ?>
+                        <?php if ($bolehInternal) $th('nilai', $tab === 'pengeluaran' ? 'Nilai Jual' : 'Nilai Beli', 'text-align: right;'); ?>
+                        <?php $th('status', 'Status'); ?>
                         <th class="no-print" style="width: 330px;">Cetak</th>
                     </tr>
                 </thead>
@@ -245,9 +333,7 @@ require_once __DIR__ . '/layout/header.php';
                 </tbody>
             </table>
         </div>
-        <?php if (count($rows) >= SuratJalanService::batas()): ?>
-            <div style="padding: 10px 16px; font-size: 12.5px; color: #b45309;">Hanya <?= SuratJalanService::batas() ?> surat jalan terbaru yang ditampilkan. Persempit rentang tanggal untuk melihat yang lain.</div>
-        <?php endif; ?>
+        <?php if ($tampil === 'tabel') $bilahHalaman(); ?>
     </div>
 </div>
 
