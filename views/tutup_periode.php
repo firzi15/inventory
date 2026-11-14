@@ -1,22 +1,28 @@
 <?php
 /**
- * Tutup Periode (bulanan).
- * Periode tertutup tidak menerima jurnal baru, dan dokumen bertanggal di bulan itu tidak bisa dibatalkan.
- * Angka laba bulan itu disimpan saat ditutup. Hanya Admin yang dapat membuka kembali.
+ * Tutup Harian.
+ * Hari yang ditutup tidak menerima jurnal baru, dan dokumen bertanggal di hari itu tidak bisa dibatalkan.
+ * Angka hari itu disimpan saat ditutup. Hanya Admin yang dapat membuka kembali.
  */
 
 use App\Core\Helper;
 use App\Services\PeriodeService;
 
-$pageTitle = 'Tutup Periode';
+$pageTitle = 'Tutup Harian';
 
-$daftar = PeriodeService::daftar();
+$daftarBulan = PeriodeService::daftarBulan();
+$bulan = preg_match('/^\d{4}-\d{2}$/', $_GET['bulan'] ?? '') ? $_GET['bulan'] : date('Y-m');
+if (!in_array($bulan, $daftarBulan, true)) $bulan = $daftarBulan[0] ?? date('Y-m');
+
+$daftar = PeriodeService::daftarHari($bulan);
 $role = strtoupper($_SESSION['user_login']['role'] ?? '');
 $bolehTutup = in_array($role, ['ADMIN', 'FINANCE'], true);
 $bolehBuka = $role === 'ADMIN';
 
 $rp = fn($n) => Helper::formatRupiah($n);
 $jumlahTutup = count(array_filter($daftar, fn($p) => $p['status'] === 'TUTUP'));
+$kemarin = date('Y-m-d', strtotime('-1 day'));
+$adaTerbuka = (bool)array_filter($daftar, fn($p) => $p['status'] !== 'TUTUP' && $p['bisa_tutup']);
 
 require_once __DIR__ . '/layout/header.php';
 ?>
@@ -25,27 +31,46 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="page-header no-print">
         <div>
-            <h1 class="page-title">Tutup Periode</h1>
-            <p class="page-subtitle">Kunci laporan bulanan setelah dicek. Bulan yang ditutup tidak menerima transaksi atau pembatalan baru.</p>
+            <h1 class="page-title">Tutup Harian</h1>
+            <p class="page-subtitle">Kunci angka tiap hari setelah dicek. Hari yang ditutup tidak menerima transaksi atau pembatalan baru.</p>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <?php $eksporTabel = 'tablePeriode'; $eksporNama = 'Tutup_Periode'; $eksporJudul = 'Status Periode'; include __DIR__ . '/layout/ekspor.php'; ?>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <?php $eksporTabel = 'tablePeriode'; $eksporNama = 'Tutup_Harian_' . $bulan; $eksporJudul = 'Status Tutup Harian ' . PeriodeService::namaBulan($bulan); include __DIR__ . '/layout/ekspor.php'; ?>
+            <?php if ($bolehTutup): ?>
+                <button type="button" class="btn btn-primary" onclick='tutupSampai(<?= json_encode($kemarin) ?>)'>Tutup semua sampai kemarin</button>
+            <?php endif; ?>
         </div>
     </div>
 
     <div class="card" style="padding: 14px 18px; margin-bottom: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
-        Hanya bulan yang sudah lewat yang bisa ditutup. Setelah ditutup, transaksi bertanggal di bulan itu (faktur, pembayaran, setoran, kas, rekonsiliasi) ditolak,
-        dan dokumen bertanggal di bulan itu tidak bisa dibatalkan. Untuk koreksi, Admin membuka kembali periodenya dengan alasan yang tercatat di log audit.
-        Saat ini <strong style="color: var(--text-main);"><?= $jumlahTutup ?></strong> periode tertutup.
+        Hanya hari yang sudah lewat yang bisa ditutup, jadi hari ini baru bisa ditutup mulai besok. Setelah ditutup, transaksi bertanggal di hari itu
+        (faktur, pembayaran, setoran, kas, rekonsiliasi) ditolak, dan dokumen bertanggal di hari itu tidak bisa dibatalkan.
+        Perubahan harga master di hari berikutnya tidak mengubah angka hari yang sudah ditutup. Untuk koreksi, Admin membuka kembali harinya dengan alasan yang tercatat di log audit.
     </div>
+
+    <form method="GET" class="card no-print" style="padding: 12px 16px; margin-bottom: 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+        <input type="hidden" name="page" value="tutup_periode">
+        <div style="min-width: 200px;">
+            <label class="form-label">Bulan</label>
+            <select name="bulan" class="form-control" onchange="this.form.submit()">
+                <?php foreach ($daftarBulan as $b): ?>
+                    <option value="<?= $b ?>" <?= $b === $bulan ? 'selected' : '' ?>><?= PeriodeService::namaBulan($b) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); padding-bottom: 10px;">
+            <strong style="color: var(--text-main);"><?= $jumlahTutup ?></strong> dari <?= count($daftar) ?> hari pada bulan ini sudah ditutup
+        </div>
+    </form>
 
     <div class="card">
         <div class="table-responsive">
             <table class="table-custom" id="tablePeriode" data-no-tools>
                 <thead>
                     <tr>
-                        <th>Periode</th>
+                        <th>Tanggal</th>
                         <th>Status</th>
+                        <th style="text-align: right;">Jurnal</th>
                         <th style="text-align: right;">Penjualan</th>
                         <th style="text-align: right;">HPP</th>
                         <th style="text-align: right;">Biaya</th>
@@ -55,10 +80,13 @@ require_once __DIR__ . '/layout/header.php';
                     </tr>
                 </thead>
                 <tbody>
+                    <?php if (!$daftar): ?>
+                        <tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">Belum ada hari pada bulan ini</td></tr>
+                    <?php endif; ?>
                     <?php foreach ($daftar as $p):
                         $r = $p['ringkas']; $b = $p['baris'];
                         $tutup = $p['status'] === 'TUTUP'; ?>
-                        <tr>
+                        <tr style="<?= $p['transaksi'] === 0 && !$tutup ? 'color: var(--text-muted);' : '' ?>">
                             <td style="font-weight: 700;"><?= htmlspecialchars($p['nama']) ?></td>
                             <td>
                                 <?php if ($tutup): ?>
@@ -69,6 +97,7 @@ require_once __DIR__ . '/layout/header.php';
                                     <span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 700;">Terbuka</span>
                                 <?php endif; ?>
                             </td>
+                            <td style="text-align: right;"><?= $p['transaksi'] ?></td>
                             <td style="text-align: right;"><?= $rp($r['penjualan']) ?></td>
                             <td style="text-align: right;"><?= $rp($r['hpp']) ?></td>
                             <td style="text-align: right;"><?= $rp($r['biaya']) ?></td>
@@ -81,14 +110,14 @@ require_once __DIR__ . '/layout/header.php';
                                     Dibuka <?= date('d/m/Y H:i', strtotime($b['dibuka_at'])) ?>
                                     <div style="color: var(--text-muted);">Alasan: <?= htmlspecialchars((string)$b['alasan_buka']) ?></div>
                                 <?php elseif (!$p['bisa_tutup']): ?>
-                                    <span style="color: var(--text-muted);">Bulan berjalan</span>
+                                    <span style="color: var(--text-muted);">Hari ini</span>
                                 <?php endif; ?>
                             </td>
                             <td class="no-print">
                                 <?php if ($tutup && $bolehBuka): ?>
-                                    <button type="button" class="btn btn-outline btn-sm" onclick='bukaPeriode(<?= json_encode($p['periode']) ?>, <?= json_encode($p['nama']) ?>)'>Buka kembali</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick='bukaHari(<?= json_encode($p['tanggal']) ?>, <?= json_encode($p['nama']) ?>)'>Buka kembali</button>
                                 <?php elseif (!$tutup && $p['bisa_tutup'] && $bolehTutup): ?>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick='tutupPeriode(<?= json_encode($p['periode']) ?>)'>Tutup periode</button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick='tutupHari(<?= json_encode($p['tanggal']) ?>)'>Tutup hari</button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -101,8 +130,9 @@ require_once __DIR__ . '/layout/header.php';
 
 <script>
     function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+    function tglId(iso) { var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
 
-    async function kirimPeriode(action, data) {
+    async function kirimTutup(action, data) {
         const fd = new FormData();
         Object.keys(data).forEach(k => fd.append(k, data[k]));
         try {
@@ -119,10 +149,10 @@ require_once __DIR__ . '/layout/header.php';
         }
     }
 
-    async function tutupPeriode(periode) {
+    async function tutupHari(tanggal) {
         let info;
         try {
-            const resp = await fetch('index.php?action=cek_periode&periode=' + encodeURIComponent(periode));
+            const resp = await fetch('index.php?action=cek_periode&tanggal=' + encodeURIComponent(tanggal));
             info = await resp.json();
         } catch (e) {
             Swal.fire({ icon: 'error', title: 'Kesalahan jaringan', text: 'Coba lagi beberapa saat.' });
@@ -152,17 +182,30 @@ require_once __DIR__ . '/layout/header.php';
             inputPlaceholder: 'Catatan (opsional)',
             showCancelButton: true,
             showConfirmButton: !adaBlok,
-            confirmButtonText: 'Tutup Periode',
+            confirmButtonText: 'Tutup Hari',
             cancelButtonText: adaBlok ? 'Kembali' : 'Batal',
             width: 560
         });
-        if (r.isConfirmed) kirimPeriode('tutup_periode', { periode: periode, catatan: r.value || '' });
+        if (r.isConfirmed) kirimTutup('tutup_periode', { tanggal: tanggal, catatan: r.value || '' });
     }
 
-    async function bukaPeriode(periode, nama) {
+    async function tutupSampai(tanggal) {
+        const r = await Swal.fire({
+            title: 'Tutup semua hari sampai ' + tglId(tanggal) + '?',
+            html: '<div style="text-align:left;font-size:13px;color:#475569;">Semua hari yang masih terbuka dari transaksi pertama sampai tanggal itu ditutup sekaligus. Hari yang jurnalnya tidak seimbang dilewati. Pastikan setoran dan rekonsiliasi hari-hari itu sudah beres.</div>',
+            input: 'text',
+            inputPlaceholder: 'Catatan (opsional)',
+            showCancelButton: true,
+            confirmButtonText: 'Tutup Semua',
+            cancelButtonText: 'Batal'
+        });
+        if (r.isConfirmed) kirimTutup('tutup_sampai', { tanggal: tanggal, catatan: r.value || '' });
+    }
+
+    async function bukaHari(tanggal, nama) {
         const r = await Swal.fire({
             title: 'Buka kembali ' + nama + '?',
-            html: '<div style="text-align:left;font-size:13px;color:#475569;">Transaksi dan pembatalan bertanggal di bulan ini akan diizinkan lagi. Angka bulan ini bisa berubah. Tutup kembali setelah koreksi selesai.</div>',
+            html: '<div style="text-align:left;font-size:13px;color:#475569;">Transaksi dan pembatalan bertanggal hari ini akan diizinkan lagi. Angka hari ini bisa berubah. Tutup kembali setelah koreksi selesai.</div>',
             input: 'textarea',
             inputLabel: 'Alasan membuka kembali',
             showCancelButton: true,
@@ -174,7 +217,7 @@ require_once __DIR__ . '/layout/header.php';
                 return v.trim();
             }
         });
-        if (r.isConfirmed) kirimPeriode('buka_periode', { periode: periode, alasan: r.value });
+        if (r.isConfirmed) kirimTutup('buka_periode', { tanggal: tanggal, alasan: r.value });
     }
 </script>
 

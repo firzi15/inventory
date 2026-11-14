@@ -44,7 +44,7 @@ $pageInfoMap = [
     'pengeluaran'          => ['title' => 'Pengeluaran Barang ke Mitra', 'desc' => 'Keluarkan stok fisik pemasok dari gudang ke mitra bisnis'],
     'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
     'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Pelacakan umur utang surat jalan masuk, cicilan pembayaran kas keluar ke pemasok'],
-    'tutup_periode'        => ['title' => 'Tutup Periode', 'desc' => 'Kunci laporan bulanan setelah dicek; periode tertutup tidak menerima transaksi atau pembatalan'],
+    'tutup_periode'        => ['title' => 'Tutup Harian', 'desc' => 'Kunci angka tiap hari setelah dicek; hari yang ditutup tidak menerima transaksi atau pembatalan'],
     'surat_jalan'          => ['title' => 'Surat Jalan', 'desc' => 'Cetak surat jalan rangkap 3 tanpa harga dan versi internal dengan harga'],
     'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
     'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
@@ -593,7 +593,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             <li>
                                 <a href="index.php?page=tutup_periode" class="nav-sub-item <?= $currentPage === 'tutup_periode' ? 'active' : '' ?>">
                                     <i data-lucide="lock" style="width: 14px; height: 14px; color: #64748b;"></i>
-                                    <span>Tutup Periode</span>
+                                    <span>Tutup Harian</span>
                                 </a>
                             </li>
                         </ul>

@@ -1153,25 +1153,27 @@ if ($action) {
                 Helper::jsonResponse(['success' => true, 'message' => $pesanTempo]);
                 exit;
 
-            // TP. Tutup periode bulanan: pemeriksaan (semua peran login), tutup (ADMIN/FINANCE), buka kembali (ADMIN)
+            // TP. Tutup harian: pemeriksaan (semua peran login), tutup (ADMIN/FINANCE), buka kembali (ADMIN)
             case 'cek_periode':
-                $pCek = (string)($_GET['periode'] ?? '');
-                if (!preg_match('/^\d{4}-\d{2}$/', $pCek)) throw new Exception('Periode tidak valid.');
-                Helper::jsonResponse(['success' => true, 'nama' => \App\Services\PeriodeService::namaPeriode($pCek), 'cek' => \App\Services\PeriodeService::cek($pCek), 'ringkas' => \App\Services\PeriodeService::ringkas($pCek)]);
+                $tCek = (string)($_GET['tanggal'] ?? '');
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tCek) || strtotime($tCek) === false) throw new Exception('Tanggal tidak valid.');
+                Helper::jsonResponse(['success' => true, 'nama' => \App\Services\PeriodeService::namaTanggal($tCek), 'cek' => \App\Services\PeriodeService::cek($tCek), 'ringkas' => \App\Services\PeriodeService::ringkas($tCek)]);
                 exit;
             case 'tutup_periode':
+            case 'tutup_sampai':
             case 'buka_periode':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $rolePer = strtoupper($_SESSION['user_login']['role'] ?? '');
                 $bolehPer = $action === 'buka_periode' ? ['ADMIN'] : ['ADMIN', 'FINANCE'];
                 if (!in_array($rolePer, $bolehPer, true)) {
-                    Helper::jsonResponse(['success' => false, 'message' => $action === 'buka_periode' ? 'Hanya Admin yang dapat membuka kembali periode.' : 'Hanya Admin atau Finance yang dapat menutup periode.'], 403);
+                    Helper::jsonResponse(['success' => false, 'message' => $action === 'buka_periode' ? 'Hanya Admin yang dapat membuka kembali hari yang sudah ditutup.' : 'Hanya Admin atau Finance yang dapat menutup hari.'], 403);
                     exit;
                 }
                 $uidPer = (int)($_SESSION['user_login']['id'] ?? 0);
-                $pesanPer = $action === 'buka_periode'
-                    ? \App\Services\PeriodeService::buka((string)($_POST['periode'] ?? ''), (string)($_POST['alasan'] ?? ''), $uidPer)
-                    : \App\Services\PeriodeService::tutup((string)($_POST['periode'] ?? ''), (string)($_POST['catatan'] ?? ''), $uidPer);
+                $tglPer = (string)($_POST['tanggal'] ?? '');
+                if ($action === 'buka_periode') $pesanPer = \App\Services\PeriodeService::buka($tglPer, (string)($_POST['alasan'] ?? ''), $uidPer);
+                elseif ($action === 'tutup_sampai') $pesanPer = \App\Services\PeriodeService::tutupSampai($tglPer, (string)($_POST['catatan'] ?? ''), $uidPer);
+                else $pesanPer = \App\Services\PeriodeService::tutup($tglPer, (string)($_POST['catatan'] ?? ''), $uidPer);
                 Helper::jsonResponse(['success' => true, 'message' => $pesanPer]);
                 exit;
 
