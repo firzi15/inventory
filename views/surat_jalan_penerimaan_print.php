@@ -56,7 +56,7 @@ $isMultiItem = count($uniqueItems) > 1;
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         @page {
-            size: 9.5in 11in; /* kertas surat jalan 9 1/2 x 11 inci */
+            size: 8.5in 11in; /* form bersambung 9 1/2 x 11 setelah strip berlubang dirobek = Letter Fanfold 8 1/2 x 11 */
             margin: 8mm 10mm 8mm 10mm;
         }
         * {
@@ -73,7 +73,7 @@ $isMultiItem = count($uniqueItems) > 1;
         }
         .sj-page {
             width: 100%;
-            max-width: 9.5in;
+            max-width: 8.5in;
             margin: 0 auto;
             background: #ffffff;
             padding: 24px 28px;
@@ -289,7 +289,7 @@ $isMultiItem = count($uniqueItems) > 1;
 
         /* ACTIONS HEADER (NO PRINT) */
         .print-actions {
-            max-width: 9.5in;
+            max-width: 8.5in;
             margin: 0 auto 16px auto;
             display: flex;
             justify-content: space-between;

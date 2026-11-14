@@ -76,6 +76,7 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="pj-toc-head">Lainnya</div>
     <a href="#pembatalan">Pembatalan dan koreksi</a>
+    <a href="#cetak-sj">Mencetak surat jalan</a>
     <a href="#ekspor">Ekspor dan filter</a>
     <a href="#masalah">Jika ada masalah</a>
 </nav>
@@ -364,6 +365,31 @@ require_once __DIR__ . '/layout/header.php';
 </table>
 <p>Semua pembatalan ditolak bila tanggal dokumennya jatuh di bulan yang sudah ditutup (lihat Tutup Periode).</p>
 <p>Urutan membatalkan mengikuti arah sebaliknya: setoran atau pembayaran dibatalkan lebih dulu, baru dokumen di bawahnya (pengeluaran atau penerimaan).</p>
+
+<h2 id="cetak-sj">Mencetak surat jalan</h2>
+<p>Surat Jalan Penerimaan dan Surat Jalan Pengeluaran dicetak di form bersambung 9&frac12; x 11 inci. Setelah strip berlubang dirobek, kertasnya 8&frac12; x 11 inci, dan itulah ukuran halaman yang dipakai sistem. Satu dokumen pendek memakai satu lembar; dokumen panjang berlanjut ke lembar berikutnya dengan judul tabel berulang.</p>
+<h3>Dialog cetak browser (Chrome)</h3>
+<table>
+    <tr><th>Pengaturan</th><th>Nilai</th></tr>
+    <tr><td>Tujuan</td><td>Printer form bersambung (bukan Simpan sebagai PDF)</td></tr>
+    <tr><td>Salinan</td><td>1</td></tr>
+    <tr><td>Ukuran kertas</td><td>Letter Fanfold 8 1/2 x 11 in</td></tr>
+    <tr><td>Halaman per lembar</td><td>1</td></tr>
+    <tr><td>Margin</td><td>Default</td></tr>
+    <tr><td>Skala</td><td>Kustom, 100</td></tr>
+    <tr><td>Header dan footer</td><td>Tidak dicentang</td></tr>
+    <tr><td>Grafis latar belakang</td><td>Tidak perlu</td></tr>
+</table>
+<p>Pada Surat Jalan Pengeluaran, mode <strong>SJ Admin</strong> dan <strong>SJ Mitra</strong> masing-masing mencetak satu halaman. Mode <strong>Keduanya</strong> mencetak dua halaman berurutan. Untuk form rangkap (karbon), cukup cetak satu mode: tulisan tembus ke semua lapisan, jadi memilih Keduanya akan memakai dua form.</p>
+<h3>Pengaturan komputer dan printer</h3>
+<ol>
+    <li>Windows: Settings &gt; Printers &amp; scanners &gt; pilih printer &gt; Printing preferences. Pilih ukuran kertas <strong>Letter Fanfold 8 1/2 x 11 in</strong>, sumber kertas tractor atau continuous, orientasi Portrait.</li>
+    <li>Di properti yang sama, cari pengaturan ketebalan kertas atau multi-part dan pilih tebal bila memakai form rangkap, supaya hasil tembus.</li>
+    <li>Jangan mengaktifkan &quot;page length&quot; lain selain 11 inci. Panjang form di driver, di panel printer, dan di kertas harus sama, yaitu 11 inci.</li>
+    <li>Di printer dot matrix, pasang form dengan tepi atas sejajar kepala cetak, lalu atur posisi Top of Form dari panel printer (tombol Tear Off/Micro Feed) sebelum mencetak pertama kali. Jangan menggeser kertas dengan tangan sesudahnya.</li>
+    <li>Cetak satu lembar uji. Bila tulisan terlalu mepet ke atas atau kiri, beri tahu agar margin halaman disesuaikan.</li>
+</ol>
+<div class="pj-note"><p>Bila satu dokumen pendek memakai dua form, penyebabnya hampir selalu panjang halaman di printer atau driver tidak 11 inci, atau posisi Top of Form bergeser. Pratinjau Chrome menampilkan &quot;1 lembar kertas&quot; untuk dokumen satu halaman.</p></div>
 
 <h2 id="ekspor">Ekspor dan filter</h2>
 <ul>
