@@ -241,8 +241,8 @@ require_once __DIR__ . '/layout/header.php';
         .sj-stat div { font-size: 11px; color: var(--text-muted); }
         .sj-stat strong { display: block; font-size: 14px; color: var(--text-main); margin-top: 1px; }
         .sj-aksi { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
-        .sj-thumb { position: relative; width: 100%; aspect-ratio: 8.5 / 6.2; overflow: hidden; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; cursor: zoom-in; }
-        .sj-thumb iframe { position: absolute; left: 0; top: 0; width: 816px; height: 1056px; border: 0; transform-origin: 0 0; pointer-events: none; background: #ffffff; }
+        .sj-thumb { position: relative; width: 100%; aspect-ratio: 794 / 580; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; cursor: zoom-in; }
+        .sj-thumb iframe { position: absolute; left: 0; top: 0; width: 794px; height: 1123px; border: 0; transform-origin: 0 0; pointer-events: none; background: var(--bg-card); }
         .sj-thumb-kosong { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; background: var(--bg-muted); cursor: default; }
     </style>
     <div class="sj-grid">
@@ -260,12 +260,12 @@ require_once __DIR__ . '/layout/header.php';
                 <?php endif; ?>
                 <div class="sj-kartu-atas">
                     <div class="sj-no"><?= htmlspecialchars($x['no']) ?></div>
-                    <span class="badge" style="<?= $x['batal'] ? 'background: #fee2e2; color: #b91c1c;' : 'background: #dcfce7; color: #15803d;' ?> font-weight: 700; white-space: nowrap;"><?= $x['batal'] ? 'Dibatalkan' : 'Berlaku' ?></span>
+                    <span class="badge" style="<?= $x['batal'] ? 'background: var(--bad-bg); color: var(--bad-fg);' : 'background: var(--ok-bg); color: var(--ok-fg);' ?> font-weight: 700; white-space: nowrap;"><?= $x['batal'] ? 'Dibatalkan' : 'Berlaku' ?></span>
                 </div>
                 <div>
                     <div class="sj-pihak"><?= htmlspecialchars($x['pihak']) ?></div>
                     <div class="sj-muted"><?= $tgl($x['tgl']) ?></div>
-                    <?php if ($x['batal'] && $x['alasan']): ?><div class="sj-muted" style="color: #b91c1c;">Batal: <?= htmlspecialchars($x['alasan']) ?></div><?php endif; ?>
+                    <?php if ($x['batal'] && $x['alasan']): ?><div class="sj-muted" style="color: var(--bad-fg);">Batal: <?= htmlspecialchars($x['alasan']) ?></div><?php endif; ?>
                 </div>
                 <div class="sj-stat" style="<?= $bolehInternal ? '' : 'grid-template-columns: repeat(2, 1fr);' ?>">
                     <div>Box<strong><?= $x['box'] ?></strong></div>
@@ -316,7 +316,7 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="text-align: right;"><?= Helper::formatKg($kg) ?></td>
                             <?php if ($bolehInternal): ?><td style="text-align: right;"><?= $rp($nilai) ?></td><?php endif; ?>
                             <td>
-                                <span class="badge" style="<?= $batal ? 'background: #fee2e2; color: #b91c1c;' : 'background: #dcfce7; color: #15803d;' ?> font-weight: 700;"><?= $batal ? 'Dibatalkan' : 'Berlaku' ?></span>
+                                <span class="badge" style="<?= $batal ? 'background: var(--bad-bg); color: var(--bad-fg);' : 'background: var(--ok-bg); color: var(--ok-fg);' ?> font-weight: 700;"><?= $batal ? 'Dibatalkan' : 'Berlaku' ?></span>
                                 <?php if ($batal && $tab === 'pengeluaran' && $r['alasan_batal']): ?><div style="font-size: 11.5px; color: var(--text-muted);"><?= htmlspecialchars($r['alasan_batal']) ?></div><?php endif; ?>
                             </td>
                             <td class="no-print">
@@ -349,9 +349,9 @@ require_once __DIR__ . '/layout/header.php';
             <a id="pvTab" href="#" target="_blank" class="btn btn-outline btn-sm">Buka di tab baru</a>
             <button type="button" class="btn btn-outline btn-sm" onclick="tutupPreview()" aria-label="Tutup">&#10005;</button>
         </div>
-        <div id="pvArea" style="flex: 1; overflow: auto; background: #6b7280; padding: 16px;">
+        <div id="pvArea" style="flex: 1; overflow: auto; background: var(--text-muted); padding: 16px;">
             <div id="pvKertas" style="margin: 0 auto; position: relative;">
-                <iframe id="pvFrame" style="width: 816px; border: 0; background: #ffffff; box-shadow: 0 2px 12px rgba(0,0,0,.4); transform-origin: 0 0; display: block;" title="Pratinjau surat jalan"></iframe>
+                <iframe id="pvFrame" style="width: 794px; border: 0; background: #ffffff; box-shadow: 0 2px 12px rgba(0,0,0,.4); transform-origin: 0 0; display: block;" title="Pratinjau surat jalan"></iframe>
             </div>
         </div>
         <div style="padding: 8px 16px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border);">
@@ -362,7 +362,7 @@ require_once __DIR__ . '/layout/header.php';
 
 <script>
     // ---- Pratinjau surat jalan (iframe halaman cetak mode embed) ----
-    var PV_W = 816;
+    var PV_W = 794;
     var pvData = { form: '', internal: '' };
 
     function bukaPreview(el) {
@@ -380,7 +380,7 @@ require_once __DIR__ . '/layout/header.php';
         document.getElementById('pvBtnInternal').className = 'btn btn-sm ' + (v === 'internal' ? 'btn-primary' : 'btn-outline');
         document.getElementById('pvTab').href = url.replace(/&embed=1/, '');
         var f = document.getElementById('pvFrame');
-        f.style.height = '1056px';
+        f.style.height = '1123px';
         f.onload = pvUkur;
         f.src = url;
     }
@@ -389,7 +389,7 @@ require_once __DIR__ . '/layout/header.php';
     function pvUkur() {
         var f = document.getElementById('pvFrame');
         try {
-            var h = Math.max(1056, f.contentDocument.documentElement.scrollHeight);
+            var h = Math.max(1123, f.contentDocument.documentElement.scrollHeight);
             f.style.height = h + 'px';
             var lebar = document.getElementById('pvArea').clientWidth - 32;
             var k = Math.min(1, lebar / PV_W);

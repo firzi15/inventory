@@ -1,10 +1,13 @@
 <?php
 /**
- * Dokumen Resmi Surat Jalan Pengeluaran Barang (Delivery Order / Outbound SJ)
- * Format Siap Cetak A4 Portrait & 3-Ply Paper
- * Mendukung 2 Mode:
- * 1. Mode Admin: Lengkap dengan Harga satuan (@Kg), Subtotal, dan Total Nilai Tagihan Piutang (Rp).
- * 2. Mode Mitra: Non-Harga (tanpa nominal rupiah), hanya menampilkan Satuan Kemasan (Dus/Keranjang) & Bobot Netto Fisik (Kg).
+ * Surat Jalan Pengeluaran Barang (Delivery Order).
+ * Dirancang untuk form bersambung 3 rangkap di printer dot matrix: lebar cetak 8,5 inci (di antara strip berlubang),
+ * tinggi satu lembar 5,5 inci (garis sobekan ke garis sobekan). Bila barangnya banyak, tabel dilanjutkan ke lembar berikutnya;
+ * total dan tanda tangan ada di lembar terakhir. ?kertas=penuh memakai lembar 11 inci.
+ *
+ * Dua mode:
+ * - form (bawaan): tanpa harga, satu kali cetak tembus semua rangkap.
+ * - internal: dengan harga satuan, subtotal, dan total tagihan piutang; hanya Admin / Supervisor / Finance.
  */
 
 use App\Core\Helper;
@@ -22,300 +25,65 @@ $items = $trx['items'] ?? [];
 $noSuratJalan = !empty($trx['no_referensi_eksternal']) ? $trx['no_referensi_eksternal'] : (!empty($trx['no_bast']) ? $trx['no_bast'] : $trx['no_transaksi']);
 $barcodeSjSvg = BarcodeService::generateCode128Svg($noSuratJalan, 60, 1.8);
 
-// Mode cetak: 'form' = form rangkap 3, tanpa harga, satu kali cetak tembus semua lapis (default).
-// 'internal' = versi kita, lengkap dengan harga dan piutang, hanya untuk Admin / Supervisor / Finance.
 $mode = strtolower(trim($_GET['mode'] ?? 'form'));
 if ($mode === 'admin') $mode = 'internal';
 if (!in_array($mode, ['form', 'internal'], true)) $mode = 'form';
 $bolehInternal = in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
 if ($mode === 'internal' && !$bolehInternal) $mode = 'form';
+$isAdmin = $mode === 'internal';
 
-/**
- * Fungsi Render Satu Lembar Halaman Surat Jalan (Admin / Mitra)
- */
-function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, string $barcodeSjSvg, string $viewType = 'admin'): void {
-    $isAdmin = in_array($viewType, ['admin', 'internal'], true);
-    $mitraId = (int)($trx['mitra_id'] ?? 0);
-    $totalNetto = 0.0;
-    $grandTotalJual = 0.0;
-
-    foreach ($items as &$it) {
-        $netto = (float)$it['berat_netto'];
-        $totalNetto += $netto;
-        
-        $hrgMitra = (float)($it['harga_mitra'] ?? 0);
-        if ($hrgMitra <= 0 && $mitraId > 0 && !empty($it['item_id'])) {
-            $hrgMitra = (float)\App\Models\MasterHarga::getHargaByMitraAndItem($mitraId, (int)$it['item_id']);
-        }
-        $it['harga_mitra_calc'] = $hrgMitra;
-
-        $totJual = (float)($it['total_jual'] ?? 0);
-        if ($totJual <= 0) {
-            $totJual = round($netto * $hrgMitra, 2);
-        }
-        $it['total_jual_calc'] = $totJual;
-        $grandTotalJual += $totJual;
+// Hitung netto dan harga
+$mitraId = (int)($trx['mitra_id'] ?? 0);
+$totalNetto = 0.0;
+$grandTotalJual = 0.0;
+foreach ($items as &$it) {
+    $netto = (float)$it['berat_netto'];
+    $totalNetto += $netto;
+    $hrgMitra = (float)($it['harga_mitra'] ?? 0);
+    if ($hrgMitra <= 0 && $mitraId > 0 && !empty($it['item_id'])) {
+        $hrgMitra = (float)\App\Models\MasterHarga::getHargaByMitraAndItem($mitraId, (int)$it['item_id']);
     }
-    unset($it);
-
-    if (!empty($trx['total_nilai_jual']) && (float)$trx['total_nilai_jual'] > 0) {
-        $grandTotalJual = (float)$trx['total_nilai_jual'];
-    }
-    ?>
-    <div class="sj-page <?= $isAdmin ? 'version-admin' : 'version-mitra' ?>">
-        <!-- Indikator Rangkap Cetak (3-Ply Paper) -->
-        <div class="ply-indicator" style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 800; font-size: 11px; color: #000000;">
-                <?= $isAdmin ? 'SALINAN INTERNAL: ADMIN & FINANCE' : 'SURAT JALAN RANGKAP 3' ?>
-            </span>
-            <span style="color: #444444;">
-                <?= $isAdmin 
-                    ? 'VERSI INTERNAL • LENGKAP HARGA & PIUTANG' 
-                    : 'ASLI + TEMBUSAN • NON-HARGA (FISIK & SATUAN)' ?>
-            </span>
-        </div>
-
-        <!-- Header Perusahaan & Barcode Surat Jalan -->
-        <div class="header-company">
-            <div class="logo-title">
-                <h1>AR_BAROKAH</h1>
-                <p>Sistem Manajemen Inventory Multi-Mitra & Pengeluaran Catch-Weight</p>
-            </div>
-            <div class="barcode-header">
-                <div class="barcode-header-svg">
-                    <?= $barcodeSjSvg ?>
-                </div>
-                <div class="barcode-header-text"><?= htmlspecialchars($noSuratJalan) ?></div>
-            </div>
-        </div>
-
-        <!-- Judul Dokumen -->
-        <div class="doc-title">
-            <h2>Surat Jalan Pengeluaran Barang</h2>
-            <div class="doc-subtitle">
-                <?= $isAdmin 
-                    ? 'Delivery Order & Outbound Invoice Note (Versi Admin / Tagihan)' 
-                    : 'Delivery Order / Outbound Dispatch Note (Bukti Serah Terima)' ?>
-            </div>
-        </div>
-
-        <!-- Kartu 2 Kolom: Asal Pengeluaran Gudang (Kiri) & Tujuan Pengeluaran Mitra (Kanan) -->
-        <div class="party-grid">
-            <!-- Kolom 1: Asal Pengeluaran Barang (Gudang) -->
-            <div class="party-card origin">
-                <div class="party-card-title">
-                    <span>Asal Pengeluaran (AR_BAROKAH)</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Lokasi Gudang:</span>
-                    <span class="meta-val">AR_BAROKAH</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Diserahkan Oleh:</span>
-                    <span class="meta-val"><?= htmlspecialchars($trx['nama_penyerah'] ?: ($trx['operator_pemroses'] ?: 'Petugas Gudang')) ?></span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Status Verifikasi:</span>
-                    <span class="meta-val" style="color: #000000; font-weight: 700;">Fisik & Timbangan Terverifikasi</span>
-                </div>
-            </div>
-
-            <!-- Kolom 2: Tujuan Pengeluaran (Mitra Bisnis Penerima) -->
-            <div class="party-card destination">
-                <div class="party-card-title">
-                    <span>Tujuan Pengeluaran (Mitra Bisnis Penerima)</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Mitra Penerima:</span>
-                    <span class="meta-val">
-                        <strong style="color: #000000; font-size: 13px;">
-                            [<?= htmlspecialchars($trx['kode_mitra'] ?? 'MTR') ?>] <?= htmlspecialchars($trx['nama_mitra'] ?? 'Mitra Bisnis') ?>
-                        </strong>
-                    </span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">PIC / Penerima:</span>
-                    <span class="meta-val">
-                        <?= htmlspecialchars($trx['nama_penerima'] ?: ($trx['pic_mitra'] ?: 'Customer / Pembeli')) ?>
-                    </span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">No. Surat Jalan:</span>
-                    <span class="meta-val" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: #000000;">
-                        <?= htmlspecialchars($noSuratJalan) ?>
-                    </span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Status Penjualan:</span>
-                    <span class="meta-val" style="color: #000000; font-weight: 800;">
-                        <?= $isAdmin ? 'Beli Putus (Piutang Dagang Mitra)' : 'Penyerahan Fisik Barang (Catch-Weight)' ?>
-                    </span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">No. Transaksi TRX:</span>
-                    <span class="meta-val" style="font-family: 'JetBrains Mono', monospace; color: #000000;"><?= htmlspecialchars($trx['no_transaksi']) ?></span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Waktu Pengeluaran:</span>
-                    <span class="meta-val"><?= date('d F Y, H:i', strtotime($trx['created_at'])) ?> WIB</span>
-                </div>
-                <div class="meta-row">
-                    <span class="meta-label">Catatan / Ekspedisi:</span>
-                    <span class="meta-val"><?= htmlspecialchars($trx['keterangan'] ?: '-') ?></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabel Rincian Kemasan / Barcode -->
-        <table class="table-items">
-            <thead>
-                <tr>
-                    <th style="width: 30px; text-align: center;">No</th>
-                    <th style="width: <?= $isAdmin ? '155px' : '175px' ?>;">ID Barcode Kemasan</th>
-                    <th>Nama Barang / Produk SKU</th>
-                    <th style="width: 85px;">Kategori</th>
-                    <th style="width: <?= $isAdmin ? '85px' : '105px' ?>; text-align: right;">Netto (Kg)</th>
-                    <?php if ($isAdmin): ?>
-                        <th style="width: 105px; text-align: right;">Harga (@Kg)</th>
-                        <th style="width: 125px; text-align: right;">Subtotal (Rp)</th>
-                    <?php else: ?>
-                        <th style="width: 125px; text-align: center;">Satuan Kemasan</th>
-                    <?php endif; ?>
-                    <th style="width: 105px;">SJ Asal</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $no = 1;
-                foreach ($items as $item): 
-                    $netto = (float)$item['berat_netto'];
-                    $hrgMitra = $item['harga_mitra_calc'] ?? 0;
-                    $subTotal = $item['total_jual_calc'] ?? 0;
-                    $sjAsal = !empty($item['no_surat_jalan']) ? $item['no_surat_jalan'] : (!empty($item['batch_no']) ? $item['batch_no'] : '-');
-                    
-                    // Format Satuan untuk Mitra (hanya menampilkan satuan fisik, e.g. 1 Dus / 1 Keranjang)
-                    $satuanName = !empty($item['satuan_accurate']) ? strtoupper($item['satuan_accurate']) : (!empty($item['satuan_stok']) ? strtoupper($item['satuan_stok']) : 'DUS');
-                ?>
-                <tr>
-                    <td style="text-align: center; color: #000000; font-size: 11px;"><?= $no++ ?></td>
-                    <td>
-                        <strong style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #000000;">
-                            <?= htmlspecialchars($item['id_label']) ?>
-                        </strong>
-                    </td>
-                    <td>
-                        <strong style="color: #000000;"><?= htmlspecialchars($item['nama_item']) ?></strong>
-                        <?php if (!empty($item['kode_item'])): ?>
-                            <span style="font-size: 10px; color: #444444; font-family: 'JetBrains Mono', monospace;">(<?= htmlspecialchars($item['kode_item']) ?>)</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="color: #000000; font-size: 11px;"><?= htmlspecialchars($item['nama_jenis']) ?></td>
-                    <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #000000;">
-                        <?= Helper::formatKg($netto) ?>
-                    </td>
-                    <?php if ($isAdmin): ?>
-                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #000000;">
-                            <?= $hrgMitra > 0 ? Helper::formatRupiah($hrgMitra) : '-' ?>
-                        </td>
-                        <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #000000;">
-                            <?= $subTotal > 0 ? Helper::formatRupiah($subTotal) : '-' ?>
-                        </td>
-                    <?php else: ?>
-                        <!-- Versi Mitra: Menampilkan Satuan Kemasan Polos Tanpa Badge Warna -->
-                        <td style="text-align: center; font-weight: 700; color: #000000;">
-                            1 <?= htmlspecialchars($satuanName) ?>
-                        </td>
-                    <?php endif; ?>
-                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #000000;">
-                        <?= htmlspecialchars($sjAsal) ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="4" style="text-align: right; text-transform: uppercase; font-size: 11px; color: #000000;">
-                        Total Pengeluaran (<?= count($items) ?> Dus / Kemasan):
-                    </td>
-                    <td style="text-align: right; font-size: 13.5px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: #000000;">
-                        <?= Helper::formatKg($totalNetto) ?>
-                    </td>
-                    <?php if ($isAdmin): ?>
-                        <td></td>
-                        <td style="text-align: right; font-size: 13.5px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: #000000;">
-                            <?= Helper::formatRupiah($grandTotalJual) ?>
-                        </td>
-                    <?php else: ?>
-                        <td style="text-align: center; font-size: 11.5px; font-weight: 800; color: #000000;">
-                            <?= count($items) ?> Dus Utuh
-                        </td>
-                    <?php endif; ?>
-                    <td style="text-align: center; font-size: 10px; color: #000000;">
-                        -
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <!-- GRAND SUMMARY BOX -->
-        <div class="summary-grand-box" style="<?= !$isAdmin ? 'grid-template-columns: 1fr 1.3fr 1.4fr;' : '' ?>">
-            <div class="summary-col">
-                <div class="lbl">TOTAL DUS / KEMASAN</div>
-                <div class="val"><?= count($items) ?> Dus</div>
-                <div style="font-size: 10.5px; color: #444444; margin-top: 2px;">Terverifikasi Scan Outbound</div>
-            </div>
-            <div class="summary-col">
-                <div class="lbl">TOTAL BOBOT FISIK BERSIH (NETTO)</div>
-                <div class="val" style="color: #000000; font-size: 18px;"><?= Helper::formatKg($totalNetto) ?></div>
-                <div style="font-size: 10.5px; color: #000000; margin-top: 2px; font-weight: 700;">100% Catch-Weight Riil</div>
-            </div>
-            <?php if ($isAdmin): ?>
-                <!-- Versi Admin: Total Nilai Tagihan Piutang (Rp) -->
-                <div class="summary-col highlight">
-                    <div class="lbl">TOTAL NILAI TAGIHAN / PIUTANG MITRA (RP)</div>
-                    <div class="val" style="font-size: 20px; color: #000000;"><?= Helper::formatRupiah($grandTotalJual) ?></div>
-                    <div style="font-size: 10.5px; color: #000000; margin-top: 2px; font-weight: 800;">Beli Putus (Piutang Mitra)</div>
-                </div>
-            <?php else: ?>
-                <!-- Versi Mitra: Non-Harga, Menampilkan Format Satuan Penyerahan -->
-                <div class="summary-col highlight">
-                    <div class="lbl" style="color: #000000;">SATUAN FISIK SERAH TERIMA</div>
-                    <div class="val" style="font-size: 17px; color: #000000;">Kemasan Dus / Keranjang</div>
-                    <div style="font-size: 10.5px; color: #000000; margin-top: 2px; font-weight: 700;">Non-Harga • Periksa Fisik & Timbangan</div>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Informasi Tambahan / Syarat Ketentuan -->
-        <div style="font-size: 10.5px; color: #333333; margin-top: 8px; line-height: 1.5; border-top: 1px dashed #000000; padding-top: 8px;">
-            <?php if ($isAdmin): ?>
-                <div><strong>* SYARAT & KETENTUAN PENERIMAAN (BELI PUTUS):</strong> Barang yang tercantum pada surat jalan ini telah diserahterimakan dan sah dicatat sebagai <strong>Piutang Dagang Mitra Penerima</strong>. Pembeli wajib memeriksa kondisi fisik kemasan dan bobot timbangan pada saat serah terima.</div>
-            <?php else: ?>
-                <div><strong>* BUKTI SERAH TERIMA FISIK BARANG:</strong> Barang yang dikeluarkan telah diverifikasi fisik dan sistem melalui scan barcode per dus catch-weight. Mohon pihak mitra penerima memeriksa keutuhan dus dan bobot timbangan pada saat serah terima.</div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Kolom Tanda Tangan 3 Pihak -->
-        <div class="signatures">
-            <div class="sign-box">
-                <div class="sign-title">Diserahkan Oleh (Gudang)</div>
-                <div class="sign-name"><?= htmlspecialchars($trx['nama_penyerah'] ?: ($trx['operator_pemroses'] ?: 'Petugas Gudang')) ?></div>
-                <div class="sign-role">Operator Outbound Gudang</div>
-            </div>
-            <div class="sign-box">
-                <div class="sign-title">Pembawa / Sopir Ekspedisi</div>
-                <div class="sign-name">( ........................................ )</div>
-                <div class="sign-role">Driver / Ekspedisi Pengantar</div>
-            </div>
-            <div class="sign-box">
-                <div class="sign-title">Diterima Oleh (Mitra Bisnis)</div>
-                <div class="sign-name"><?= htmlspecialchars($trx['nama_penerima'] ?: ($trx['pic_mitra'] ?: 'Mitra Bisnis Penerima')) ?></div>
-                <div class="sign-role">Pihak Mitra Bisnis Penerima</div>
-            </div>
-        </div>
-    </div>
-    <?php
+    $it['harga_mitra_calc'] = $hrgMitra;
+    $totJual = (float)($it['total_jual'] ?? 0);
+    if ($totJual <= 0) $totJual = round($netto * $hrgMitra, 2);
+    $it['total_jual_calc'] = $totJual;
+    $grandTotalJual += $totJual;
 }
+unset($it);
+if (!empty($trx['total_nilai_jual']) && (float)$trx['total_nilai_jual'] > 0) $grandTotalJual = (float)$trx['total_nilai_jual'];
+
+$penyerah = $trx['nama_penyerah'] ?: ($trx['operator_pemroses'] ?: 'Petugas Gudang');
+$penerima = $trx['nama_penerima'] ?: ($trx['pic_mitra'] ?: 'Mitra Bisnis Penerima');
+$catatan = trim((string)($trx['keterangan'] ?? ''));
+$adaCatatan = $catatan !== '' && $catatan !== '-';
+
+// Ukuran lembar dan pembagian baris per lembar (satuan mm)
+// Ukuran kertas: A4 (bawaan, form 3 rangkap ukuran A4), setengah (9 1/2 x 5 1/2), atau penuh (Letter 11 inci)
+$kertas = strtolower($_GET['kertas'] ?? 'a4');
+if (!in_array($kertas, ['a4', 'setengah', 'penuh'], true)) $kertas = 'a4';
+[$lebarMm, $tinggiMm, $mAtas, $mSisi] = ['a4' => [210, 297, 8, 10], 'setengah' => [215.9, 139.7, 6, 8], 'penuh' => [215.9, 279.4, 8, 10]][$kertas];
+$lembarTinggi = $tinggiMm > 200;
+$labelKertas = ['a4' => 'A4 (210 x 297 mm)', 'setengah' => '9½ x 5½ inci', 'penuh' => 'Letter 8½ x 11 inci'][$kertas];
+$tinggiSheet = $tinggiMm - 2 * $mAtas - 2;
+$lebarSheet = $lebarMm - 2 * $mSisi;
+$barisMm = $lembarTinggi ? 7.4 : 5.8; $kepalaTabelMm = $lembarTinggi ? 8.0 : 6.5; $kakiMm = $lembarTinggi ? 52.0 : 36.0; $kepalaLanjutMm = $lembarTinggi ? 12.0 : 9.0;
+$kepalaAwalMm = ($lembarTinggi ? 60.0 : 39.0) + ($adaCatatan ? 4.4 : 0);
+
+$lembar = [];
+$i = 0; $n = count($items); $ke = 0;
+while (true) {
+    $kepala = $ke === 0 ? $kepalaAwalMm : $kepalaLanjutMm;
+    $kapPenuh = max(1, (int)floor(($tinggiSheet - $kepala - $kepalaTabelMm) / $barisMm));
+    $kapAkhir = max(0, (int)floor(($tinggiSheet - $kepala - $kepalaTabelMm - $kakiMm) / $barisMm));
+    $sisa = $n - $i;
+    if ($sisa <= $kapAkhir) { $lembar[] = ['baris' => array_slice($items, $i), 'awal' => $i, 'akhir' => true]; break; }
+    $ambil = min($kapPenuh, $sisa);
+    if ($sisa <= $kapPenuh) $ambil = max(1, $sisa - 1); // sisakan satu baris agar total dan tanda tangan tidak sendirian di lembar baru
+    $lembar[] = ['baris' => array_slice($items, $i, $ambil), 'awal' => $i, 'akhir' => false];
+    $i += $ambil; $ke++;
+}
+$jumlahLembar = count($lembar);
+$jmlKolom = $isAdmin ? 7 : 7;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -323,406 +91,244 @@ function renderSuratJalanSheet(array $trx, array $items, string $noSuratJalan, s
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Surat Jalan Pengeluaran (<?= strtoupper($mode) ?>) - <?= htmlspecialchars($noSuratJalan) ?></title>
-    
-    <!-- Favicon Berwarna -->
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @page {
-            size: 8.5in 11in; /* form bersambung 9 1/2 x 11 setelah strip berlubang dirobek = Letter Fanfold 8 1/2 x 11 */
-            margin: 8mm 10mm 8mm 10mm;
-        }
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Plus Jakarta Sans', Arial, sans-serif;
-            background: #ffffff;
-            color: #000000;
-            margin: 0;
-            padding: 24px;
-            font-size: 12.5px;
-            line-height: 1.45;
-        }
-        .sj-page {
-            max-width: 8.5in;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 28px 32px;
-            border-radius: 0;
-            box-shadow: none;
-            border: 1px solid #000000;
-            position: relative;
-        }
-        .header-company {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #000000;
-            padding-bottom: 12px;
-            margin-bottom: 14px;
-        }
-        .logo-title h1 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: -0.3px;
-            text-transform: uppercase;
-            color: #000000;
-        }
-        .logo-title p {
-            margin: 2px 0 0;
-            font-size: 11.5px;
-            color: #333333;
-        }
-        .barcode-header {
-            text-align: right;
-            max-width: 250px;
-        }
-        .barcode-header-svg {
-            height: 38px;
-            display: flex;
-            justify-content: flex-end;
-        }
-        .barcode-header-svg svg {
-            height: 38px;
-            max-width: 230px;
-        }
-        .barcode-header-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            color: #000000;
-            margin-top: 2px;
-        }
-        .doc-title {
-            text-align: center;
-            margin: 10px 0 14px;
-        }
-        .doc-title h2 {
-            margin: 0;
-            font-size: 17px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #000000;
-        }
-        .doc-title .doc-subtitle {
-            font-size: 11px;
-            color: #333333;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
+        /* Huruf sistem, hitam pekat, garis tebal: hasil paling jelas di printer dot matrix */
+        @page { size: <?= $lebarMm ?>mm <?= $tinggiMm ?>mm; margin: <?= $mAtas ?>mm <?= $mSisi ?>mm; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 20px; font-size: 12px; line-height: 1.3; }
+        .mono { font-family: 'Courier New', Courier, monospace; font-weight: 700; }
 
-        /* GRID INFORMASI ASAL STOK DAN TUJUAN (FULL MONOKROM) */
-        .party-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-        .party-card {
-            border: 1px solid #000000;
-            border-radius: 0;
-            padding: 10px 12px;
-            background: #ffffff;
-        }
-        .party-card.origin,
-        .party-card.destination {
-            border-color: #000000;
-            background: #ffffff;
-        }
-        .party-card-title {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding-bottom: 4px;
-            margin-bottom: 6px;
-            border-bottom: 1px solid #000000;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #000000;
-        }
-        .party-card.origin .party-card-title,
-        .party-card.destination .party-card-title {
-            color: #000000;
-            border-color: #000000;
-        }
-        
-        .meta-row {
-            display: flex;
-            margin-bottom: 3.5px;
-            font-size: 11.5px;
-        }
-        .meta-row:last-child { margin-bottom: 0; }
-        .meta-label {
-            width: 120px;
-            color: #333333;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-        .meta-val {
-            font-weight: 700;
-            color: #000000;
-            flex-grow: 1;
-        }
-
-        /* TABEL BARANG (FULL HITAM PUTIH) */
-        .table-items {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11.5px;
-            margin: 12px 0;
-        }
-        .table-items th {
-            background: #f0f0f0;
-            border: 1px solid #000000;
-            padding: 7px 8px;
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 10.5px;
-            color: #000000;
-            letter-spacing: 0.3px;
-        }
-        .table-items td {
-            border: 1px solid #000000;
-            padding: 5.5px 8px;
-            vertical-align: middle;
-            color: #000000;
-        }
-        .table-items tr:nth-child(even) {
-            background: #ffffff;
-        }
-        .table-items tfoot td {
-            background: #f0f0f0;
-            font-weight: 800;
-            border: 1px solid #000000;
-            border-top: 2px solid #000000;
-            padding: 7px 8px;
-            color: #000000;
-        }
-
-        /* GRAND SUMMARY BOX TOTAL KG & RUPIAH (FULL MONOKROM) */
-        .summary-grand-box {
-            border: 2px solid #000000;
-            background: #ffffff;
-            border-radius: 0;
-            display: grid;
-            grid-template-columns: 1fr 1.3fr 1.7fr;
-            margin: 12px 0 10px;
-            overflow: hidden;
-        }
-        .summary-col {
-            padding: 9px 12px;
-            border-right: 1px solid #000000;
-            background: #ffffff;
-        }
-        .summary-col:last-child {
-            border-right: none;
-        }
-        .summary-col.highlight {
-            background: #ffffff;
-            border-left: 1px solid #000000;
-        }
-        .summary-col .lbl {
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #000000;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-        }
-        .summary-col .val {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
-            font-weight: 900;
-            color: #000000;
-        }
-        .ply-indicator {
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #000000;
-            text-align: right;
-            margin-bottom: 8px;
-            letter-spacing: 0.3px;
-        }
-
-        /* TANDA TANGAN 3 PIHAK */
-        .signatures {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-            margin-top: 20px;
-            text-align: center;
-            page-break-inside: avoid;
-        }
-        .sign-box {
-            padding: 4px;
-        }
-        .sign-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #000000;
-            margin-bottom: 50px;
-            text-transform: uppercase;
-        }
-        .sign-name {
-            font-weight: 800;
-            font-size: 11.5px;
-            border-top: 1px solid #000000;
-            padding-top: 4px;
-            color: #000000;
-        }
-        .sign-role {
-            font-size: 10px;
-            color: #333333;
-            margin-top: 1px;
-        }
-
-        .table-items tfoot td { white-space: nowrap; }
-
-        /* TOMBOL NAVIGASI SCREEN */
-        .btn-print-bar {
-            max-width: 8.5in;
-            margin: 0 auto 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 12.5px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.15s ease;
-        }
+        .btn-print-bar { max-width: <?= $lebarSheet ?>mm; margin: 0 auto 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 4px; font-weight: 700; font-size: 12.5px; cursor: pointer; text-decoration: none; font-family: inherit; }
         .btn-primary { background: #000000; color: #ffffff; border: 1px solid #000000; }
-        .btn-primary:hover { background: #333333; }
         .btn-outline { background: #ffffff; border: 1px solid #000000; color: #000000; }
-        .btn-outline:hover { background: #f0f0f0; }
+        .info-kertas { font-size: 12px; color: #444444; }
+
+        .sheet { width: <?= $lebarSheet ?>mm; max-width: 100%; height: <?= round($tinggiSheet, 1) ?>mm; margin: 0 auto 14px; background: #ffffff; border: 1px solid #999999; position: relative; overflow: hidden; }
+        .sheet:last-child { margin-bottom: 0; }
+
+        .kop { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000000; padding-bottom: 3px; margin-bottom: 4px; }
+        .kop .nama { font-size: 17px; font-weight: 900; line-height: 1.1; }
+        .kop .judul { font-size: 14px; font-weight: 900; text-transform: uppercase; line-height: 1.15; text-align: center; }
+        .kop .judul small { display: block; font-size: 10.5px; font-weight: 700; text-transform: none; }
+        .kop .kiri { flex: 1; min-width: 0; }
+        .kop .kiri .judul { text-align: left; }
+        .kop .kode { text-align: right; }
+        .kop .kode svg { height: 26px; max-width: 230px; display: block; margin-left: auto; }
+        .kop .kode .no { font-size: 11px; margin-top: 1px; }
+        .kop-lanjut { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000000; padding-bottom: 3px; margin-bottom: 4px; font-weight: 900; font-size: 13px; }
+
+        .info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin-bottom: 4px; }
+        .info > .kotak { min-width: 0; }
+        .kotak { border: 1.5px solid #000000; padding: 3px 7px; }
+        .kotak .jdl { font-size: 11px; font-weight: 900; text-transform: uppercase; border-bottom: 1.5px solid #000000; margin-bottom: 2px; padding-bottom: 1px; }
+        .baris { display: flex; font-size: 11.5px; line-height: 1.3; }
+        .baris .l { width: 118px; flex-shrink: 0; font-weight: 700; }
+        .baris .v { font-weight: 900; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        table.rincian { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+        table.rincian th { border: 1.5px solid #000000; padding: 2px 5px; font-weight: 900; text-transform: uppercase; font-size: 10.5px; height: <?= $kepalaTabelMm ?>mm; }
+        table.rincian td { border: 1.5px solid #000000; padding: 0 5px; height: <?= $barisMm ?>mm; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+        table.rincian tr.total td { font-weight: 900; font-size: 12.5px; border-top: 2.5px solid #000000; }
+        .kanan { text-align: right; }
+        .tengah { text-align: center; }
+
+        .catatan { font-size: 10.5px; font-weight: 700; margin-top: 3px; }
+        .ttd { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 3px; text-align: center; }
+        .ttd .jdl { font-size: 11px; font-weight: 900; text-transform: uppercase; height: 13mm; }
+        .ttd .nama { font-size: 11.5px; font-weight: 900; border-top: 1.5px solid #000000; padding-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ttd .ket { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         @media print {
-            body {
-                background: #ffffff !important;
-                color: #000000 !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            .sj-page {
-                box-shadow: none !important;
-                padding: 0 !important;
-                border: none !important;
-                max-width: 100% !important;
-                width: 100% !important;
-            }
-            .btn-print-bar {
-                display: none !important;
-            }
-            .page-break-divider {
-                display: none !important;
-            }
-            .table-items th {
-                background: #f0f0f0 !important;
-                border: 1px solid #000000 !important;
-                color: #000000 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .table-items td {
-                border: 1px solid #000000 !important;
-                color: #000000 !important;
-            }
-            .table-items tfoot td {
-                background: #f0f0f0 !important;
-                border: 1px solid #000000 !important;
-                border-top: 2px solid #000000 !important;
-                color: #000000 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            .party-card {
-                border: 1px solid #000000 !important;
-                background: #ffffff !important;
-            }
-            .party-card.origin,
-            .party-card.destination {
-                background: #ffffff !important;
-                border: 1px solid #000000 !important;
-            }
-            .party-card-title {
-                color: #000000 !important;
-                border-bottom: 1px solid #000000 !important;
-            }
-            .summary-grand-box {
-                border: 2px solid #000000 !important;
-                background: #ffffff !important;
-            }
-            .summary-col {
-                border-right: 1px solid #000000 !important;
-                background: #ffffff !important;
-            }
-            .summary-col.highlight {
-                background: #ffffff !important;
-                border-left: 1px solid #000000 !important;
-            }
+            body { padding: 0 !important; margin: 0 !important; }
+            .btn-print-bar { display: none !important; }
+            .sheet { border: none !important; margin: 0 !important; width: 100% !important; page-break-after: always; break-after: page; }
+            .sheet:last-child { page-break-after: auto; break-after: auto; }
         }
     </style>
+    <?php if ($lembarTinggi): // lembar tinggi (A4/Letter): huruf dan jarak diperbesar agar mengisi lembar dan lebih jelas di dot matrix ?>
+    <style>
+        .kop .nama { font-size: 22px; }
+        .kop .kiri { flex: 1; min-width: 0; }
+        .kop .judul { font-size: 15px; text-align: left; padding: 2px 0 0; }
+        .kop .judul small { margin-top: 1px; }
+        .kop .judul small { font-size: 11.5px; }
+        .kop .kode svg { height: 34px; max-width: 200px; }
+        .kop .kode .no { font-size: 12px; }
+        .kop, .kop-lanjut { padding-bottom: 5px; margin-bottom: 7px; }
+        .kop-lanjut { font-size: 14px; }
+        .info { gap: 8px; margin-bottom: 7px; }
+        .kotak { padding: 5px 10px; }
+        .kotak .jdl { font-size: 12.5px; margin-bottom: 4px; padding-bottom: 2px; }
+        .baris { font-size: 13px; line-height: 1.45; }
+        .baris .l { width: 126px; }
+        .baris .v { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+        .ringkas { padding: 6px 10px; margin-bottom: 7px; }
+        .ringkas .t { font-size: 11px; }
+        .ringkas .n { font-size: 15px; }
+        .ringkas .n.kecil { font-size: 13px; line-height: 1.35; }
+        table.rincian { font-size: 13.5px; }
+        table.rincian th { font-size: 11.5px; padding: 3px 7px; }
+        table.rincian td { font-size: 12.5px; padding: 0 6px; }
+        table.rincian th { padding: 3px 6px; }
+        table.rincian tr.total td { font-size: 13px; }
+        table.rincian td.mono { font-size: 11.5px; }
+        .catatan { font-size: 11.5px; margin-top: 6px; }
+        .ttd { margin-top: 6px; gap: 18px; }
+        .ttd .jdl { font-size: 12.5px; height: 21mm; }
+        .ttd .nama { font-size: 13px; }
+        .ttd .ket { font-size: 11px; }
+    </style>
+    <?php endif; ?>
     <?php if (!empty($_GET['embed'])): // mode pratinjau (iframe di menu Surat Jalan): tanpa tombol, selebar kertas ?>
     <style media="screen">
         html, body { background: #ffffff !important; }
-        body { padding: 8mm 10mm !important; margin: 0 !important; width: 8.5in; box-sizing: border-box; }
-        .btn-print-bar, .print-actions { display: none !important; }
-        .sj-page { max-width: 100% !important; width: 100% !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+        body { padding: <?= $mAtas ?>mm <?= $mSisi ?>mm !important; margin: 0 !important; width: <?= $lebarMm ?>mm; }
+        .btn-print-bar { display: none !important; }
+        .sheet { border: none !important; margin: 0 0 10mm !important; width: 100% !important; }
     </style>
     <?php endif; ?>
 </head>
 <body>
 
-    <!-- Bar Navigasi (Hanya muncul di Layar Monitor) -->
     <div class="btn-print-bar no-print">
-        <a href="index.php?page=surat_jalan" class="btn btn-outline">
-            Kembali ke Surat Jalan
-        </a>
+        <a href="index.php?page=surat_jalan" class="btn btn-outline">Kembali ke Surat Jalan</a>
 
-        <!-- Pilihan versi cetak -->
         <div style="display: flex; gap: 4px; background: #ffffff; padding: 2px; border: 1px solid #000000; border-radius: 4px;">
-            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=form" class="btn <?= $mode === 'form' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;">
-                Form Rangkap 3 (tanpa harga)
-            </a>
+            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=form" class="btn <?= $mode === 'form' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;">Form Rangkap 3 (tanpa harga)</a>
             <?php if ($bolehInternal): ?>
-            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=internal" class="btn <?= $mode === 'internal' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;">
-                Versi Internal (dengan harga)
-            </a>
+            <a href="index.php?page=surat_jalan_print&id=<?= $id ?>&mode=internal" class="btn <?= $mode === 'internal' ? 'btn-primary' : 'btn-outline' ?>" style="padding: 5px 12px; font-size: 11.5px; height: 32px; border: none;">Versi Internal (dengan harga)</a>
             <?php endif; ?>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-            <button type="button" class="btn btn-primary" onclick="window.print()">
-                Cetak <?= $mode === 'internal' ? 'Versi Internal' : 'Form Rangkap 3' ?>
-            </button>
-        </div>
+        <span class="info-kertas">Kertas <?= $labelKertas ?>, <?= $jumlahLembar ?> lembar<?= $jumlahLembar > 1 ? ' (tabel bersambung)' : '' ?></span>
+        <button type="button" class="btn btn-primary" onclick="window.print()">Cetak <?= $isAdmin ? 'Versi Internal' : 'Form Rangkap 3' ?></button>
     </div>
 
-    <!-- Output: satu lembar sesuai mode -->
-    <?php renderSuratJalanSheet($trx, $items, $noSuratJalan, $barcodeSjSvg, $mode); ?>
+<?php foreach ($lembar as $idx => $lb): $pertama = $idx === 0; $nomor = $lb['awal'] + 1; ?>
+    <div class="sheet">
+        <?php if ($pertama): ?>
+        <div class="kop">
+            <div class="kiri">
+            <div class="nama">AR_BAROKAH</div>
+            <div class="judul">Surat Jalan Pengeluaran Barang<small><?= $isAdmin ? 'SALINAN INTERNAL · Lengkap harga &amp; piutang' : 'Delivery Order · Bukti Serah Terima (tanpa harga)' ?><?= $jumlahLembar > 1 ? ' · Lembar 1/' . $jumlahLembar : '' ?></small></div>
+            </div>
+            <div class="kode">
+                <?= $barcodeSjSvg ?>
+                <div class="no mono"><?= htmlspecialchars($noSuratJalan) ?></div>
+            </div>
+        </div>
+
+        <div class="info">
+            <div class="kotak">
+                <div class="jdl">Asal Pengeluaran (AR_BAROKAH)</div>
+                <div class="baris"><div class="l">Diserahkan Oleh</div><div class="v"><?= htmlspecialchars($penyerah) ?></div></div>
+                <div class="baris"><div class="l">Verifikasi</div><div class="v">Fisik &amp; timbangan OK</div></div>
+                <div class="baris"><div class="l">Waktu Keluar</div><div class="v"><?= date('d/m/Y H:i', strtotime($trx['created_at'])) ?> WIB</div></div>
+                <div class="baris"><div class="l">Status</div><div class="v"><?= $isAdmin ? 'Beli Putus (Piutang Mitra)' : 'Penyerahan Fisik Barang' ?></div></div>
+                <?php if ($adaCatatan): ?><div class="baris"><div class="l">Catatan</div><div class="v"><?= htmlspecialchars($catatan) ?></div></div><?php endif; ?>
+            </div>
+            <div class="kotak">
+                <div class="jdl">Tujuan (Mitra Penerima)</div>
+                <div class="baris"><div class="l">Mitra Penerima</div><div class="v">[<?= htmlspecialchars($trx['kode_mitra'] ?? 'MTR') ?>] <?= htmlspecialchars($trx['nama_mitra'] ?? 'Mitra Bisnis') ?></div></div>
+                <div class="baris"><div class="l">PIC / Penerima</div><div class="v"><?= htmlspecialchars($trx['nama_penerima'] ?: ($trx['pic_mitra'] ?: 'Customer / Pembeli')) ?></div></div>
+                <div class="baris"><div class="l">No. Surat Jalan</div><div class="v mono"><?= htmlspecialchars($noSuratJalan) ?></div></div>
+                <div class="baris"><div class="l">No. Transaksi</div><div class="v mono"><?= htmlspecialchars($trx['no_transaksi']) ?></div></div>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="kop-lanjut">
+            <span>AR_BAROKAH · Surat Jalan Pengeluaran (lanjutan)</span>
+            <span class="mono"><?= htmlspecialchars($noSuratJalan) ?> · Lembar <?= $idx + 1 ?>/<?= $jumlahLembar ?></span>
+        </div>
+        <?php endif; ?>
+
+        <table class="rincian">
+            <colgroup>
+                <col style="width: 34px;">
+                <col style="width: <?= $isAdmin ? '176px' : '200px' ?>;">
+                <col>
+                <col style="width: 88px;">
+                <?php if ($isAdmin): ?>
+                    <col style="width: 82px;"><col style="width: 96px;">
+                <?php else: ?>
+                    <col style="width: 70px;">
+                <?php endif; ?>
+                <col style="width: <?= $isAdmin ? '140px' : '140px' ?>;">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th style="text-align: left;">ID Barcode Kemasan</th>
+                    <th style="text-align: left;">Nama Barang</th>
+                    <th class="kanan">Netto</th>
+                    <?php if ($isAdmin): ?>
+                        <th class="kanan">Harga/Kg</th>
+                        <th class="kanan">Subtotal</th>
+                    <?php else: ?>
+                        <th>Satuan</th>
+                    <?php endif; ?>
+                    <th style="text-align: left;">SJ Asal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!$items && $lb['akhir']): ?>
+                    <tr><td colspan="<?= $isAdmin ? 7 : 6 ?>" class="tengah">Tidak ada rincian kemasan untuk surat jalan ini.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($lb['baris'] as $k => $item):
+                    $hrg = $item['harga_mitra_calc'] ?? 0;
+                    $sub = $item['total_jual_calc'] ?? 0;
+                    $sjAsal = !empty($item['no_surat_jalan']) ? $item['no_surat_jalan'] : (!empty($item['batch_no']) ? $item['batch_no'] : '-');
+                    $satuan = !empty($item['satuan_accurate']) ? strtoupper($item['satuan_accurate']) : (!empty($item['satuan_stok']) ? strtoupper($item['satuan_stok']) : 'DUS');
+                ?>
+                    <tr>
+                        <td class="tengah"><?= $nomor + $k ?></td>
+                        <td class="mono"><?= htmlspecialchars($item['id_label']) ?></td>
+                        <td><?= htmlspecialchars($item['nama_item']) ?><?= !empty($item['nama_jenis']) && !$isAdmin ? ' (' . htmlspecialchars($item['nama_jenis']) . ')' : '' ?></td>
+                        <td class="mono kanan"><?= Helper::formatKg((float)$item['berat_netto']) ?></td>
+                        <?php if ($isAdmin): ?>
+                            <td class="mono kanan"><?= $hrg > 0 ? Helper::formatRupiah($hrg) : '-' ?></td>
+                            <td class="mono kanan"><?= $sub > 0 ? Helper::formatRupiah($sub) : '-' ?></td>
+                        <?php else: ?>
+                            <td class="tengah">1 <?= htmlspecialchars($satuan) ?></td>
+                        <?php endif; ?>
+                        <td class="mono" style="font-size: 10.5px;"><?= htmlspecialchars($sjAsal) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if ($lb['akhir']): ?>
+                    <tr class="total">
+                        <td colspan="3" class="kanan" style="text-transform: uppercase;">Total (<?= count($items) ?> Dus)</td>
+                        <td class="mono kanan"><?= Helper::formatKg($totalNetto) ?></td>
+                        <?php if ($isAdmin): ?>
+                            <td colspan="2" class="mono kanan"><?= Helper::formatRupiah($grandTotalJual) ?></td>
+                        <?php else: ?>
+                            <td class="tengah"><?= count($items) ?> Dus</td>
+                        <?php endif; ?>
+                        <td></td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <?php if ($lb['akhir']): ?>
+        <div class="catatan"><?= $isAdmin
+            ? 'Barang ini sah dicatat sebagai Piutang Dagang Mitra Penerima. Penerima wajib memeriksa kondisi dus dan bobot timbangan saat serah terima.'
+            : 'Barang telah diverifikasi per dus lewat scan barcode. Penerima mohon memeriksa keutuhan dus dan bobot timbangan saat serah terima.' ?></div>
+        <div class="ttd">
+            <div><div class="jdl">Diserahkan Oleh (Gudang)</div><div class="nama">( <?= htmlspecialchars($penyerah) ?> )</div><div class="ket">Operator Outbound Gudang</div></div>
+            <div><div class="jdl">Pembawa / Sopir Ekspedisi</div><div class="nama">( ........................................ )</div><div class="ket">Driver / Ekspedisi Pengantar</div></div>
+            <div><div class="jdl">Diterima Oleh (Mitra Bisnis)</div><div class="nama">( <?= htmlspecialchars($penerima) ?> )</div><div class="ket">Pihak Mitra Bisnis Penerima</div></div>
+        </div>
+        <?php else: ?>
+        <div class="catatan" style="text-align: right;">bersambung ke lembar <?= $idx + 2 ?> ...</div>
+        <?php endif; ?>
+    </div>
+<?php endforeach; ?>
 
 </body>
 </html>
