@@ -1,7 +1,7 @@
 # 🐳 Panduan Penggunaan Docker - Barcode Inventory Multi-Mitra
 
 Proyek ini telah dikonfigurasi penuh agar siap dijalankan menggunakan **Docker** dan **Docker Compose** dengan struktur multi-kontainer:
-1. **`app`**: Web server Apache + PHP 8.2 (lengkap dengan ekstensi PDO MySQL, GD, BCMath, Zip, OPcache).
+1. **`app`**: Web server Apache + PHP 8.5 (ekstensi PDO MySQL, BCMath, OPcache) beserta klien MariaDB untuk fitur Backup data.
 2. **`db`**: Database MariaDB 10.11 (otomatis menjalankan schema & seed data awal dari `database/schema.sql`).
 3. **`phpmyadmin`**: UI web pengelola database MySQL/MariaDB.
 
@@ -25,8 +25,8 @@ Setelah kontainer berjalan:
 
 | Layanan | URL / Host | Kredensial Default |
 |---|---|---|
-| **Aplikasi Barcode Inventory** | [http://localhost:8080](http://localhost:8080) | Login via sistem |
-| **phpMyAdmin** | [http://localhost:8081](http://localhost:8081) | User: `root` / Pass: `secret123` |
+| **Aplikasi Barcode Inventory** | [http://localhost:8085](http://localhost:8085) | Login via sistem |
+| **phpMyAdmin** | [http://localhost:8082](http://localhost:8082) | User: `root` / Pass: `secret123` |
 | **Akses Database Eksternal** *(DBeaver, Navicat, HeidiSQL)* | `localhost:3307` | User: `root` / Pass: `secret123` / DB: `db_barcode_inventory` |
 
 *(Port `3307` sengaja digunakan untuk database agar **tidak bentrok** dengan MySQL XAMPP lokal Anda di port `3306`)*.
@@ -69,13 +69,19 @@ docker compose up -d --build
 
 ---
 
+## 💾 Backup data di Docker
+
+Menu **Pengaturan > Backup** berjalan penuh di Docker. File backup disimpan di volume `backup_data` (folder `/var/backups/inventory` di dalam container), jadi tetap ada saat container dibuat ulang. Perintah `docker compose down -v` ikut menghapus volume ini. Unduh backup penting lebih dulu dari menu Backup sebelum memakai `-v`.
+
+---
+
 ## ⚙️ 4. Pengaturan Lingkungan (.env)
 
 Pengaturan port dan kredensial dapat disesuaikan pada file [`.env`](.env):
 
 ```ini
-APP_PORT=8080
-PMA_PORT=8081
+APP_PORT=8085
+PMA_PORT=8082
 DB_EXTERNAL_PORT=3307
 
 DB_HOST=db

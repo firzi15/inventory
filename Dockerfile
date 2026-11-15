@@ -1,10 +1,13 @@
-FROM php:8.2-apache-bookworm
+FROM php:8.5-apache-bookworm
 
 # Install ekstensi PHP yang dibutuhkan aplikasi (tanpa bergantung repo eksternal)
 RUN docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     bcmath \
     opcache
+
+# Klien MariaDB (mysql dan mysqldump) untuk fitur Backup data: buat, unduh, dan pulihkan
+RUN apt-get update     && apt-get install -y --no-install-recommends mariadb-client     && rm -rf /var/lib/apt/lists/*
 
 # Aktifkan modul Apache rewrite & headers
 RUN a2enmod rewrite headers
@@ -30,6 +33,10 @@ RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
     && chmod +x /usr/local/bin/docker-entrypoint.sh \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/database /var/www/html/app/Config
+
+# Folder backup di luar source code (disimpan di volume Docker agar tidak hilang saat container dibuat ulang)
+ENV BACKUP_DIR=/var/backups/inventory
+RUN mkdir -p /var/backups/inventory && chown -R www-data:www-data /var/backups/inventory
 
 EXPOSE 80
 

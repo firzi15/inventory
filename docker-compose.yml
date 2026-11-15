@@ -13,10 +13,12 @@ services:
       - DB_NAME=${DB_NAME:-db_barcode_inventory}
       - DB_USER=${DB_USER:-root}
       - DB_PASS=${DB_PASS:-secret123}
+      - BACKUP_DIR=/var/backups/inventory
       - TZ=Asia/Jakarta
     volumes:
       - .:/var/www/html
       - /var/www/html/scratch
+      - backup_data:/var/backups/inventory
     depends_on:
       db:
         condition: service_healthy
@@ -57,4 +59,5 @@ services:
 
 volumes:
   mariadb_data:
+  backup_data:
 

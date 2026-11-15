@@ -7,7 +7,9 @@ echo "=========================================================="
 
 # Pastikan direktori writable
 mkdir -p /var/www/html/database /var/www/html/app/Config
-chmod -R 777 /var/www/html/database /var/www/html/app/Config 2>/dev/null || true
+mkdir -p /var/www/html/assets/uploads /var/backups/inventory
+chmod -R 777 /var/www/html/database /var/www/html/app/Config /var/www/html/assets/uploads 2>/dev/null || true
+chown -R www-data:www-data /var/backups/inventory 2>/dev/null || true
 
 # Tunggu service database jika DB_HOST dikonfigurasi
 if [ -n "$DB_HOST" ]; then
