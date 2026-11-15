@@ -1,10 +1,9 @@
 FROM php:8.5-apache-bookworm
 
-# Install ekstensi PHP yang dibutuhkan aplikasi (tanpa bergantung repo eksternal)
+# Install ekstensi PHP yang dibutuhkan aplikasi (opcache sudah bawaan PHP 8.5)
 RUN docker-php-ext-install -j$(nproc) \
     pdo_mysql \
-    bcmath \
-    opcache
+    bcmath
 
 # Klien MariaDB (mysql dan mysqldump) untuk fitur Backup data: buat, unduh, dan pulihkan
 RUN apt-get update     && apt-get install -y --no-install-recommends mariadb-client     && rm -rf /var/lib/apt/lists/*
