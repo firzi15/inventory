@@ -723,6 +723,13 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
 
             <!-- Footer Sidebar: Switcher Tema -->
             <div class="sidebar-footer">
+                <button type="button" class="sidebar-theme-btn" id="btnHubungiDev" title="Kirim pesan ke developer lewat WhatsApp">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="message-circle" style="width: 16px; height: 16px; color: #16a34a;"></i>
+                        <span>Hubungi Developer</span>
+                    </div>
+                    <span class="theme-badge">WhatsApp</span>
+                </button>
                 <button type="button" class="sidebar-theme-btn" id="themeToggle" title="Ganti Mode Gelap / Terang">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <i data-lucide="sun" id="sunIcon" style="width: 16px; height: 16px; color: var(--warn-fg);"></i>
@@ -733,6 +740,42 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                 </button>
             </div>
         </aside>
+        <script>
+        // Form singkat: isi nama dan pesan, lalu dibuka di WhatsApp ke nomor developer
+        (function () {
+            var NOMOR_WA = '6283125856342';
+            var tombol = document.getElementById('btnHubungiDev');
+            if (!tombol) return;
+            var userLogin = <?= json_encode($_SESSION['user_login']['nama_lengkap'] ?? '', JSON_UNESCAPED_UNICODE) ?>;
+            var halaman = <?= json_encode((string)($currentPage ?? ''), JSON_UNESCAPED_UNICODE) ?>;
+            tombol.addEventListener('click', function () {
+                Swal.fire({
+                    title: 'Hubungi Developer',
+                    html: '<div style="text-align:left;font-size:13px;">' +
+                          '<label style="font-weight:700;display:block;margin-bottom:4px;">Nama</label>' +
+                          '<input id="waNama" class="swal2-input" style="margin:0 0 12px;width:100%;" maxlength="60" placeholder="Nama Anda">' +
+                          '<label style="font-weight:700;display:block;margin-bottom:4px;">Pesan</label>' +
+                          '<textarea id="waPesan" class="swal2-textarea" style="margin:0;width:100%;" rows="4" maxlength="800" placeholder="Tulis kendala atau pertanyaan Anda"></textarea>' +
+                          '</div>',
+                    showCancelButton: true,
+                    confirmButtonText: 'Kirim lewat WhatsApp',
+                    cancelButtonText: 'Batal',
+                    focusConfirm: false,
+                    didOpen: function () { document.getElementById('waNama').value = userLogin; document.getElementById('waPesan').focus(); },
+                    preConfirm: function () {
+                        var nama = document.getElementById('waNama').value.trim();
+                        var pesan = document.getElementById('waPesan').value.trim();
+                        if (!pesan) { Swal.showValidationMessage('Pesan belum diisi'); return false; }
+                        return { nama: nama, pesan: pesan };
+                    }
+                }).then(function (r) {
+                    if (!r.isConfirmed) return;
+                    var teks = ['Halo Developer,', r.value.pesan, '', 'Dari: ' + (r.value.nama || '-'), 'Halaman: ' + (halaman || '-')].join(String.fromCharCode(10));
+                    window.open('https://wa.me/' + NOMOR_WA + '?text=' + encodeURIComponent(teks), '_blank', 'noopener');
+                });
+            });
+        })();
+        </script>
 
         <!-- AREA KONTEN KANAN -->
         <div class="app-main-container">
