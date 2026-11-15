@@ -361,26 +361,21 @@ require_once __DIR__ . '/layout/header.php';
                                     <th style="width: 40px; text-align: center;">No</th>
                                     <th>ID Barcode Kemasan</th>
                                     <th>Nama Barang / Produk</th>
-                                    <th>Kategori</th>
-                                    <th style="text-align: right; width: 110px;">Netto (Kg)</th>
+                                    <th style="text-align: right; width: 90px;">Netto (Kg)</th>
+                                    <th style="text-align: right; width: 100px;">Harga/Kg</th>
+                                    <th style="text-align: right; width: 120px;">Nominal (Rp)</th>
                                     <th style="text-align: center; width: 60px; position: sticky; right: 0; background: var(--bg-muted, #f8fafc); z-index: 25; box-shadow: -2px 0 4px rgba(0,0,0,0.04);">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="containerRecentBoxes">
                                 <tr id="emptyInboundRow">
-                                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
                                         <div style="font-weight: 700; font-size: 13.5px; color: var(--text-main);">Belum ada box ditimbang</div>
                                         <div style="font-size: 11.5px; margin-top: 3px;">Timbang box pada formulir di sebelah kiri untuk memasukkan ke sesi ini.</div>
                                     </td>
                                 </tr>
                             </tbody>
-                            <tfoot id="inboundTotalFoot" style="display: none;">
-                                <tr style="background: var(--bg-muted);">
-                                    <td colspan="4" style="text-align: right; font-weight: 700; color: var(--text-muted); font-size: 12.5px;">Total <span id="inboundTotalBoxCount">0</span> box</td>
-                                    <td id="inboundTotalBerat" style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px;">0.00 kg</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
+                            <tfoot id="inboundTotalFoot" style="display: none;"></tfoot>
                         </table>
                     </div>
                 </div>
@@ -1540,14 +1535,33 @@ require_once __DIR__ . '/layout/header.php';
         window.inboundTotalBox = totalBox;
         if (badgePrint) badgePrint.innerText = totalBox + ' Barcode';
 
-        // Baris total di tabel (hanya bila lebih dari 1 box, agar tidak mengulang angka baris tunggal)
+        // Kaki tabel: subtotal per produk (kg dan nominal rupiah) lalu GRAND TOTAL
         const foot = document.getElementById('inboundTotalFoot');
         if (foot) {
-            foot.style.display = totalBox >= 2 ? '' : 'none';
-            const cnt = document.getElementById('inboundTotalBoxCount');
-            const brt = document.getElementById('inboundTotalBerat');
-            if (cnt) cnt.innerText = totalBox;
-            if (brt) brt.innerText = parseFloat(summary.total_berat || 0).toFixed(2) + ' kg';
+            foot.style.display = totalBox >= 1 ? '' : 'none';
+            const rp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(parseFloat(n || 0)));
+            const esc = (t) => String(t == null ? '' : t).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
+            const mono = "text-align: right; font-family: JetBrains Mono, monospace;";
+            let html = '';
+            const tampil = (summary.recent_boxes || []).length;
+            if (totalBox > tampil) {
+                html += '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); font-size: 11.5px;">Menampilkan ' + tampil + ' box terbaru dari ' + totalBox + ' box. Subtotal dan grand total di bawah mencakup semua box.</td></tr>';
+            }
+            (summary.products || []).forEach((p) => {
+                html += '<tr style="background: var(--bg-card);">' +
+                    '<td colspan="3" style="text-align: right; color: var(--text-muted); font-size: 12.5px;">Subtotal <strong style="color: var(--text-main);">' + esc(p.nama_item) + '</strong> (' + esc(p.nama_jenis || '-') + ') &middot; ' + p.box_count + ' box</td>' +
+                    '<td style="' + mono + ' font-weight: 700; font-size: 12.5px;">' + parseFloat(p.total_berat || 0).toFixed(2) + ' kg</td>' +
+                    '<td style="' + mono + ' font-size: 12px; color: var(--text-muted);">' + rp(p.harga_rata) + '</td>' +
+                    '<td style="' + mono + ' font-weight: 700; font-size: 13px;">' + rp(p.total_nilai) + '</td>' +
+                    '<td></td></tr>';
+            });
+            html += '<tr style="background: var(--bg-muted);">' +
+                '<td colspan="3" style="text-align: right; font-weight: 800; color: var(--text-main); font-size: 12.5px; text-transform: uppercase;">Grand total &middot; ' + totalBox + ' box</td>' +
+                '<td style="' + mono + ' font-weight: 800; font-size: 13px;">' + parseFloat(summary.total_berat || 0).toFixed(2) + ' kg</td>' +
+                '<td></td>' +
+                '<td style="' + mono + ' font-weight: 800; font-size: 14px; color: var(--ok-fg);">' + rp(summary.total_nilai) + '</td>' +
+                '<td></td></tr>';
+            foot.innerHTML = html;
         }
 
         // Update enable/disable tombol Cetak Surat Jalan
@@ -1565,7 +1579,7 @@ require_once __DIR__ . '/layout/header.php';
             if (!summary.recent_boxes || !summary.recent_boxes.length) {
                 tbody.innerHTML = `
                     <tr id="emptyInboundRow">
-                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
                             <div style="font-weight: 700; font-size: 13.5px; color: var(--text-main);">Belum ada box ditimbang</div>
                             <div style="font-size: 11.5px; margin-top: 3px;">Timbang box pada formulir di sebelah kiri untuk memasukkan ke sesi ini.</div>
                         </td>
@@ -1577,6 +1591,9 @@ require_once __DIR__ . '/layout/header.php';
                 summary.recent_boxes.forEach((b) => {
                     const netto = parseFloat(b.berat_netto || 0);
                     const row = document.createElement('tr');
+                    const hrg = parseFloat(b.harga_beli_per_kg || 0);
+                    const nominal = parseFloat(b.total_nilai || 0);
+                    const fmtRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
                     row.innerHTML = `
                         <td style="color: var(--text-muted); font-size: 12px; text-align: center;">${index++}</td>
                         <td>
@@ -1586,13 +1603,13 @@ require_once __DIR__ . '/layout/header.php';
                         </td>
                         <td>
                             <strong style="color: var(--text-main); font-size: 13px;">${b.nama_item}</strong>
-                        </td>
-                        <td>
-                            <span class="badge badge-outline" style="font-size: 11px;">${b.nama_jenis || '-'}</span>
+                            <div style="font-size: 11px; color: var(--text-muted);">${b.nama_jenis || '-'}</div>
                         </td>
                         <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ok-fg);">
                             ${netto.toFixed(2)} kg
                         </td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text-muted);">${hrg > 0 ? fmtRp(hrg) : '-'}</td>
+                        <td style="text-align: right; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 13px;">${nominal > 0 ? fmtRp(nominal) : '-'}</td>
                         <td style="text-align: center; position: sticky; right: 0; background: var(--bg-card, #ffffff); z-index: 5; box-shadow: -2px 0 4px rgba(0,0,0,0.04);">
                             <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; color: var(--danger); cursor: pointer;" onclick="handleDeleteInboundBox(${b.id}, '${b.id_label}')" title="Hapus dari sesi">
                                 ✕

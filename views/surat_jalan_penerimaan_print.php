@@ -35,7 +35,11 @@ foreach ($labels as $lbl) {
     }
     $uniqueItems[$itemId]['total_pcs']++;
     $uniqueItems[$itemId]['total_berat'] += (float)($lbl['berat_netto'] ?? 0);
+    $uniqueItems[$itemId]['total_nilai'] = ($uniqueItems[$itemId]['total_nilai'] ?? 0.0) + (float)($lbl['total_nilai'] ?? 0);
+    $grandNilai = ($grandNilai ?? 0.0) + (float)($lbl['total_nilai'] ?? 0);
 }
+$grandNilai = $grandNilai ?? 0.0;
+$rp = fn($n) => 'Rp ' . number_format((float)$n, 0, ',', '.');
 $isMultiItem = count($uniqueItems) > 1;
 
 // Ukuran lembar dan pembagian baris per lembar (satuan mm)
@@ -55,6 +59,7 @@ $dasarMm = $lembarTinggi ? 8.0 : 5.0; // ruang untuk garis dasar lembar
 $barisMm = $lembarTinggi ? 7.4 : 4.9; $kepalaTabelMm = $lembarTinggi ? 8.0 : 5.2; $kakiMm = $lembarTinggi ? 52.0 : 41.0; $kepalaLanjutMm = $lembarTinggi ? 12.0 : 7.0;
 $kepalaAwalMm = ($lembarTinggi ? 60.0 : 42.0) + ($isMultiItem ? 4.2 * (min(count($uniqueItems), 4) - 1) : 0);
 
+if ($isMultiItem) $kakiMm += count($uniqueItems) * $barisMm; // baris subtotal per produk di lembar terakhir
 $lembar = [];
 $i = 0; $n = count($labels); $ke = 0;
 while (true) {
@@ -120,7 +125,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
         .baris .l { width: 118px; flex-shrink: 0; font-weight: 400; }
         .baris .v { font-weight: 400; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .ringkas { border: 1.5px solid #000000; padding: 3px 7px; margin-bottom: 4px; display: grid; grid-template-columns: 2.4fr 1fr 1.2fr 1fr; gap: 8px; align-items: center; }
+        .ringkas { border: 1.5px solid #000000; padding: 3px 7px; margin-bottom: 4px; display: grid; grid-template-columns: 2.2fr 0.9fr 1.1fr 1.3fr; gap: 8px; align-items: center; }
         .ringkas .t { font-size: 10px; font-weight: 400; text-transform: uppercase; }
         .ringkas .n { font-size: 13px; font-weight: 400; line-height: 1.2; }
         .ringkas .n.kecil { font-size: 11.5px; line-height: 1.25; }
@@ -219,6 +224,17 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
         .sheet { border: none !important; margin: 0 0 10mm !important; width: 100% !important; }
     </style>
     <?php endif; ?>
+    <?php if (!$lembarTinggi): ?>
+    <style>
+        /* Satu jenis huruf untuk seluruh dokumen (printer dot matrix): font monospace tercetak putus-putus,
+           jadi ID barcode, angka, dan nomor surat jalan memakai huruf dan ukuran yang sama dengan nama barang */
+        .mono, table.rincian td.mono, .baris .v.mono, .kop .kode .no { font-family: Arial, Helvetica, sans-serif !important; letter-spacing: 0; }
+        table.rincian td.mono, table.rincian td { font-size: 10.5px !important; }
+        .kop .kode .no { font-size: 11px; }
+    </style>
+    <?php else: ?>
+    <style>.mono, table.rincian td.mono, .baris .v.mono, .kop .kode .no { font-family: Arial, Helvetica, sans-serif !important; }</style>
+    <?php endif; ?>
 </head>
 <body>
 
@@ -274,7 +290,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
             </div>
             <div style="text-align: center;"><div class="t">Total Keranjang</div><div class="n"><?= number_format($sjData['total_pcs']) ?> Pcs</div></div>
             <div style="text-align: center;"><div class="t">Total Bobot Riil</div><div class="n mono"><?= number_format($sjData['total_berat'], 2) ?> KG</div></div>
-            <div style="text-align: right;"><div class="t">Rata-rata/Box</div><div class="n mono"><?= number_format($sjData['avg_berat'], 2) ?> KG</div></div>
+            <div style="text-align: right;"><div class="t">Total Nominal</div><div class="n mono"><?= $rp($grandNilai) ?></div></div>
         </div>
         <?php else: ?>
         <div class="kop-lanjut">
@@ -287,30 +303,41 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
             <thead>
                 <tr>
                     <th style="width: 34px;">No</th>
-                    <th style="width: 215px; text-align: left;">ID Barcode Kemasan</th>
+                    <th style="width: 190px; text-align: left;">ID Barcode Kemasan</th>
                     <th style="text-align: left;">Nama Barang / Produk</th>
-                    <th style="width: 140px;">Waktu Timbang</th>
-                    <th style="width: 100px; text-align: right;">Bobot Riil</th>
+                    <th style="width: 92px; text-align: right;">Bobot Riil</th>
+                    <th style="width: 88px; text-align: right;">Harga/Kg</th>
+                    <th style="width: 104px; text-align: right;">Nominal</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!$labels && $lb['akhir']): ?>
-                    <tr><td colspan="5" style="text-align: center;">Tidak ada rincian kemasan barcode untuk Surat Jalan ini.</td></tr>
+                    <tr><td colspan="6" style="text-align: center;">Tidak ada rincian kemasan barcode untuk Surat Jalan ini.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($lb['baris'] as $k => $r): ?>
                     <tr>
                         <td style="text-align: center;"><?= $nomor + $k ?></td>
                         <td class="mono"><?= htmlspecialchars($r['id_label']) ?></td>
                         <td class="nama"><?= htmlspecialchars($r['nama_item'] ?? '-') ?><?= !empty($r['nama_jenis']) ? ' (' . htmlspecialchars($r['nama_jenis']) . ')' : '' ?></td>
-                        <td style="text-align: center;"><?= date('d/m/Y H:i', strtotime($r['updated_at'] ?? $r['created_at'])) ?></td>
                         <td class="mono" style="text-align: right;"><?= number_format((float)($r['berat_netto'] ?? 0), 2) ?> KG</td>
+                        <td class="mono" style="text-align: right;"><?= (float)($r['harga_beli_per_kg'] ?? 0) > 0 ? $rp($r['harga_beli_per_kg']) : '-' ?></td>
+                        <td class="mono" style="text-align: right;"><?= (float)($r['total_nilai'] ?? 0) > 0 ? $rp($r['total_nilai']) : '-' ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if ($lb['akhir']): ?>
+                    <?php if ($isMultiItem): foreach ($uniqueItems as $ui): ?>
+                    <tr>
+                        <td colspan="3" style="text-align: right;">Subtotal <?= htmlspecialchars($ui['nama_item']) ?> (<?= htmlspecialchars($ui['nama_jenis']) ?>) &middot; <?= number_format($ui['total_pcs']) ?> Pcs</td>
+                        <td class="mono" style="text-align: right;"><?= number_format($ui['total_berat'], 2) ?> KG</td>
+                        <td class="mono" style="text-align: right;"><?= $ui['total_berat'] > 0 ? $rp($ui['total_nilai'] / $ui['total_berat']) : '-' ?></td>
+                        <td class="mono" style="text-align: right;"><?= $rp($ui['total_nilai']) ?></td>
+                    </tr>
+                    <?php endforeach; endif; ?>
                     <tr class="total">
-                        <td colspan="3" style="text-align: right; text-transform: uppercase;">Total Penerimaan Bersih (Netto)</td>
-                        <td style="text-align: center;"><?= number_format($sjData['total_pcs']) ?> Pcs</td>
+                        <td colspan="3" style="text-align: right; text-transform: uppercase;">Grand Total &middot; <?= number_format($sjData['total_pcs']) ?> Pcs</td>
                         <td class="mono" style="text-align: right;"><?= number_format($sjData['total_berat'], 2) ?> KG</td>
+                        <td></td>
+                        <td class="mono" style="text-align: right;"><?= $rp($grandNilai) ?></td>
                     </tr>
                 <?php endif; ?>
             </tbody>

@@ -339,7 +339,7 @@ class Label {
         $db = Database::getConnection();
         $stmt = $db->prepare("
             SELECT 
-                l.id, l.id_label, l.berat_netto, l.created_at, l.updated_at,
+                l.id, l.id_label, l.berat_netto, l.harga_beli_per_kg, l.total_nilai, l.created_at, l.updated_at,
                 i.id AS item_id, i.nama_item, i.kode_item,
                 j.nama_jenis,
                 p.nama_pemasok, p.kode_pemasok
@@ -355,6 +355,7 @@ class Label {
 
         $totalBox = count($rows);
         $totalBerat = 0.0;
+        $totalNilai = 0.0;
         $productMap = [];
 
         foreach ($rows as $r) {
@@ -368,17 +369,26 @@ class Label {
                     'kode_item' => $r['kode_item'],
                     'nama_jenis' => $r['nama_jenis'],
                     'box_count' => 0,
-                    'total_berat' => 0.0
+                    'total_berat' => 0.0,
+                    'total_nilai' => 0.0
                 ];
             }
             $productMap[$itId]['box_count']++;
             $productMap[$itId]['total_berat'] += $w;
+            $productMap[$itId]['total_nilai'] += (float)($r['total_nilai'] ?? 0);
+            $totalNilai += (float)($r['total_nilai'] ?? 0);
         }
+        foreach ($productMap as &$pm) {
+            $pm['harga_rata'] = $pm['total_berat'] > 0 ? round($pm['total_nilai'] / $pm['total_berat'], 2) : 0.0;
+            $pm['total_nilai'] = round($pm['total_nilai'], 2);
+        }
+        unset($pm);
 
         return [
             'no_surat_jalan' => $noSj,
             'total_box' => $totalBox,
             'total_berat' => round($totalBerat, 2),
+            'total_nilai' => round($totalNilai, 2),
             'products' => array_values($productMap),
             'recent_boxes' => array_slice($rows, 0, 15)
         ];

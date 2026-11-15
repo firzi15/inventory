@@ -249,6 +249,17 @@ $jmlKolom = $isAdmin ? 7 : 7;
         .sheet { border: none !important; margin: 0 0 10mm !important; width: 100% !important; }
     </style>
     <?php endif; ?>
+    <?php if (!$lembarTinggi): ?>
+    <style>
+        /* Satu jenis huruf untuk seluruh dokumen (printer dot matrix): font monospace tercetak putus-putus,
+           jadi ID barcode, angka, dan nomor surat jalan memakai huruf dan ukuran yang sama dengan nama barang */
+        .mono, table.rincian td.mono, .baris .v.mono, .kop .kode .no { font-family: Arial, Helvetica, sans-serif !important; letter-spacing: 0; }
+        table.rincian td.mono, table.rincian td { font-size: 10.5px !important; }
+        .kop .kode .no { font-size: 11px; }
+    </style>
+    <?php else: ?>
+    <style>.mono, table.rincian td.mono, .baris .v.mono, .kop .kode .no { font-family: Arial, Helvetica, sans-serif !important; }</style>
+    <?php endif; ?>
 </head>
 <body>
 
