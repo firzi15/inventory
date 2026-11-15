@@ -742,6 +742,8 @@ require_once __DIR__ . '/layout/header.php';
         renderCart();
     }
     selectMitra.addEventListener('change', refreshHargaMitra);
+    // Kembali dari tab Master Harga (harga baru disimpan di sana): tarif keranjang diambil ulang otomatis
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && scannedLabels.size) refreshHargaMitra(); });
 
     async function handleScan(barcode) {
         barcode = barcode.trim();
@@ -887,6 +889,7 @@ require_once __DIR__ . '/layout/header.php';
                         <a href="index.php?page=barang_datang&stok=AKTIF&dari=2000-01-01&item=${encodeURIComponent(label.item_id || '')}${label.pemasok_id ? '&pihak=' + encodeURIComponent(label.pemasok_id) : ''}" target="_blank" title="Lihat riwayat harga dan stok aktif ${label.nama_item}" style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; background: var(--bg-muted); color: var(--text-muted); border: 1px solid var(--border); text-decoration: none; transition: all 0.2s;" onmouseover="this.style.color='var(--primary)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)';">
                             <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
+                        <a href="index.php?page=master&tab=harga_mitra&item=${encodeURIComponent(label.item_id || '')}${selectMitra.value ? '&pihak=' + encodeURIComponent(selectMitra.value) : ''}" target="_blank" class="btn-ikon-harga" title="Atur harga jual ${label.nama_item} di Master Harga (tab baru)" style="width: auto; height: 22px; flex-shrink: 0;">Rp &#8599;</a>
                     </div>
                     ${hrgMitra <= 0 && !selectMitra.value
                         ? `<div style="font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 3px;">Pilih mitra penerima untuk melihat tarif jual</div>`

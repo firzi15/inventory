@@ -296,6 +296,7 @@ require_once __DIR__ . '/layout/header.php';
                             <label class="form-label" for="onestop_item_id" style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
                                 <i data-lucide="package" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
                                 <span>Produk <span style="color: var(--bad-fg);">*</span></span>
+                                <a id="linkHargaBeli" href="index.php?page=master&tab=harga_pemasok" target="_blank" class="btn-ikon-harga" style="margin-left: auto;" title="Atur harga beli produk ini di Master Harga (tab baru)">Atur harga &#8599;</a>
                             </label>
                             <select id="onestop_item_id" class="form-control" disabled style="font-weight: 800; height: 42px; font-size: 13.5px;" onchange="onOneStopProductChanged(this.value)">
                                 <option value="">-- Pilih Kategori Dahulu --</option>
@@ -1151,6 +1152,14 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <script>
     const pricesLookup = <?= $allPricesJson ?>;
+    // Pintasan "Atur harga": ikut produk dan pemasok yang sedang dipilih
+    setInterval(function () {
+        var tautan = document.getElementById('linkHargaBeli');
+        if (!tautan) return;
+        var item = (document.getElementById('onestop_item_id') || {}).value || '';
+        var pemasok = (document.getElementById('onestop_pemasok_id') || {}).value || '';
+        tautan.href = 'index.php?page=master&tab=harga_pemasok' + (item ? '&item=' + encodeURIComponent(item) + (pemasok ? '&pihak=' + encodeURIComponent(pemasok) : '') : '');
+    }, 500);
     const masterItemsList = <?= json_encode($itemList) ?>;
 
     // =========================================================================

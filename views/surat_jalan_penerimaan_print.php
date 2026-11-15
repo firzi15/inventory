@@ -20,7 +20,7 @@ if (empty($noSuratJalan)) {
 $sjData = Label::getSuratJalanDetailWithLabels($noSuratJalan);
 
 if (!$sjData) {
-    die("Data Penerimaan untuk Surat Jalan '<strong>" . htmlspecialchars($noSuratJalan) . "</strong>' tidak ditemukan di database.");
+    die("Data Penerimaan untuk Surat Jalan '" . htmlspecialchars($noSuratJalan) . "' tidak ditemukan di database.");
 }
 
 $barcodeSjSvg = BarcodeService::generateCode128Svg($sjData['no_surat_jalan'], 56, 1.6);
@@ -39,17 +39,21 @@ foreach ($labels as $lbl) {
 $isMultiItem = count($uniqueItems) > 1;
 
 // Ukuran lembar dan pembagian baris per lembar (satuan mm)
-// Ukuran kertas: A4 (bawaan, form 3 rangkap ukuran A4), setengah (9 1/2 x 5 1/2), atau penuh (Letter 11 inci)
-$kertas = strtolower($_GET['kertas'] ?? 'a4');
-if (!in_array($kertas, ['a4', 'setengah', 'penuh'], true)) $kertas = 'a4';
-[$lebarMm, $tinggiMm, $mAtas, $mSisi] = ['a4' => [210, 297, 8, 10], 'setengah' => [215.9, 139.7, 6, 8], 'penuh' => [215.9, 279.4, 8, 10]][$kertas];
+// Ukuran kertas: setengah form 9½ x 5½ inci (bawaan), A4 penuh, atau Letter 11 inci
+$kertas = strtolower($_GET['kertas'] ?? 'setengah');
+if (!in_array($kertas, ['a4', 'setengah', 'penuh'], true)) $kertas = 'setengah';
+[$lebarMm, $tinggiMm, $mAtas, $mSisi] = ['a4' => [210, 297, 8, 10], 'setengah' => [241.3, 139.7, 12, 20.6], 'penuh' => [215.9, 279.4, 8, 10]][$kertas];
 $lembarTinggi = $tinggiMm > 200;
-$labelKertas = ['a4' => 'A4 (210 x 297 mm)', 'setengah' => '9½ x 5½ inci', 'penuh' => 'Letter 8½ x 11 inci'][$kertas];
-$tinggiSheet = $tinggiMm - 2 * $mAtas - 2;
-$lebarSheet = $lebarMm - 2 * $mSisi;
-$dasarMm = 8.0; // ruang untuk garis dasar lembar
-$barisMm = $lembarTinggi ? 7.4 : 5.8; $kepalaTabelMm = $lembarTinggi ? 8.0 : 6.5; $kakiMm = $lembarTinggi ? 52.0 : 36.0; $kepalaLanjutMm = $lembarTinggi ? 12.0 : 9.0;
-$kepalaAwalMm = ($lembarTinggi ? 60.0 : 39.0) + ($isMultiItem ? 4.8 * (min(count($uniqueItems), 4) - 1) : 0);
+$labelKertas = ['a4' => 'A4 (210 x 297 mm)', 'setengah' => 'Setengah form (9½ x 5½ inci)', 'penuh' => 'Letter 8½ x 11 inci'][$kertas];
+// Setengah form: margin atas lebih besar (nama perusahaan tidak terpotong), isi digeser ke kiri; margin bawah tipis
+$mBawah = $kertas === 'setengah' ? 4 : $mAtas;
+$mKiri = $kertas === 'setengah' ? 3 : $mSisi;
+$mKanan = $kertas === 'setengah' ? $lebarMm - 184 - 3 : $mSisi;
+$tinggiSheet = $tinggiMm - $mAtas - $mBawah - 2;
+$lebarSheet = $lebarMm - $mKiri - $mKanan;
+$dasarMm = $lembarTinggi ? 8.0 : 5.0; // ruang untuk garis dasar lembar
+$barisMm = $lembarTinggi ? 7.4 : 4.9; $kepalaTabelMm = $lembarTinggi ? 8.0 : 5.2; $kakiMm = $lembarTinggi ? 52.0 : 41.0; $kepalaLanjutMm = $lembarTinggi ? 12.0 : 7.0;
+$kepalaAwalMm = ($lembarTinggi ? 60.0 : 42.0) + ($isMultiItem ? 4.2 * (min(count($uniqueItems), 4) - 1) : 0);
 
 $lembar = [];
 $i = 0; $n = count($labels); $ke = 0;
@@ -60,12 +64,14 @@ while (true) {
     $sisa = $n - $i;
     if ($sisa <= $kapAkhir) { $lembar[] = ['baris' => array_slice($labels, $i), 'awal' => $i, 'akhir' => true]; break; }
     $ambil = min($kapPenuh, $sisa);
-    if ($sisa <= $kapPenuh) $ambil = max(1, $sisa - 1); // sisakan satu baris agar total dan tanda tangan tidak sendirian di lembar baru
     $lembar[] = ['baris' => array_slice($labels, $i, $ambil), 'awal' => $i, 'akhir' => false];
     $i += $ambil; $ke++;
 }
 $jumlahLembar = count($lembar);
-$petugas = $_SESSION['user_login']['nama_lengkap'] ?? 'Petugas Penerimaan Gudang';
+// Petugas penerima = akun yang menimbang/menerima barang ini; bila tidak tercatat, akun yang sedang login
+$petugas = '';
+foreach ($labels as $lbl) { $op = trim((string)($lbl['operator_nama'] ?? '')); if ($op !== '' && $op !== 'Operator Penerimaan') { $petugas = $op; break; } }
+if ($petugas === '') $petugas = $_SESSION['user_login']['nama_lengkap'] ?? 'Petugas Penerimaan Gudang';
 $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] : 'Sopir Pemasok';
 ?>
 <!DOCTYPE html>
@@ -78,14 +84,14 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <style>
         /* Huruf sistem, hitam pekat, garis tebal: hasil paling jelas di printer dot matrix */
-        @page { size: <?= $lebarMm ?>mm <?= $tinggiMm ?>mm; margin: <?= $mAtas ?>mm <?= $mSisi ?>mm; }
+        @page { size: <?= $lebarMm ?>mm <?= $tinggiMm ?>mm; margin: <?= $mAtas ?>mm <?= $mKanan ?>mm <?= $mBawah ?>mm <?= $mKiri ?>mm; }
         * { box-sizing: border-box; }
         body { font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 20px; font-size: 12px; line-height: 1.3; }
-        .mono { font-family: 'Courier New', Courier, monospace; font-weight: 700; }
+        .mono { font-family: 'Courier New', Courier, monospace; }
 
         .print-actions { max-width: <?= $lebarSheet ?>mm; margin: 0 auto 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
         .print-actions .info { font-size: 12px; color: #444444; }
-        .btn-action { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 4px; cursor: pointer; text-decoration: none; border: 1px solid #000000; }
+        .btn-action { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-family: inherit; font-size: 12.5px; font-weight: 400; border-radius: 4px; cursor: pointer; text-decoration: none; border: 1px solid #000000; }
         .btn-print { background: #000000; color: #ffffff; }
         .btn-back { background: #ffffff; color: #000000; }
 
@@ -93,43 +99,45 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
         .sheet:last-child { margin-bottom: 0; }
         /* Garis dasar di ujung bawah setiap lembar: kepala cetak dot matrix harus berjalan sampai batas bawah kertas,
            sehingga kertas berhenti tepat di garis sobekan, bukan di tengah lembar */
-        .dasar { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1.5px dashed #000000; padding-top: 1px; display: flex; justify-content: space-between; font-size: 9.5px; font-weight: 700; line-height: 1.2; }
+        .dasar { position: absolute; left: 0; right: 0; bottom: 0; border-top: 1.5px dashed #000000; padding-top: 1px; display: flex; justify-content: space-between; font-size: 9.5px; font-weight: 400; line-height: 1.2; }
 
         .kop { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000000; padding-bottom: 3px; margin-bottom: 4px; }
-        .kop .nama { font-size: 17px; font-weight: 900; line-height: 1.1; }
-        .kop .judul { font-size: 14px; font-weight: 900; text-transform: uppercase; line-height: 1.15; }
-        .kop .judul small { display: block; font-size: 10.5px; font-weight: 700; text-transform: none; }
+        .kop .nama { font-size: 17px; font-weight: 400; line-height: 1.1; }
+        .kop .judul { font-size: 14px; font-weight: 400; text-transform: uppercase; line-height: 1.15; }
+        .kop .judul small { display: block; font-size: 10.5px; font-weight: 400; text-transform: none; }
         .kop .kiri { flex: 1; min-width: 0; }
         .kop .kiri .judul { text-align: left; }
         .kop .kode { text-align: right; }
         .kop .kode svg { height: 26px; max-width: 230px; display: block; margin-left: auto; }
         .kop .kode .no { font-size: 11px; margin-top: 1px; }
-        .kop-lanjut { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000000; padding-bottom: 3px; margin-bottom: 4px; font-weight: 900; font-size: 13px; }
+        .kop-lanjut { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000000; padding-bottom: 3px; margin-bottom: 4px; font-weight: 400; font-size: 13px; }
 
         .info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin-bottom: 4px; }
         .info > .kotak { min-width: 0; }
         .kotak { border: 1.5px solid #000000; padding: 3px 7px; }
-        .kotak .jdl { font-size: 11px; font-weight: 900; text-transform: uppercase; border-bottom: 1.5px solid #000000; margin-bottom: 2px; padding-bottom: 1px; }
+        .kotak .jdl { font-size: 11px; font-weight: 400; text-transform: uppercase; border-bottom: 1.5px solid #000000; margin-bottom: 2px; padding-bottom: 1px; }
         .baris { display: flex; font-size: 11.5px; line-height: 1.3; }
-        .baris .l { width: 118px; flex-shrink: 0; font-weight: 700; }
-        .baris .v { font-weight: 900; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .baris .l { width: 118px; flex-shrink: 0; font-weight: 400; }
+        .baris .v { font-weight: 400; flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         .ringkas { border: 1.5px solid #000000; padding: 3px 7px; margin-bottom: 4px; display: grid; grid-template-columns: 2.4fr 1fr 1.2fr 1fr; gap: 8px; align-items: center; }
-        .ringkas .t { font-size: 10px; font-weight: 700; text-transform: uppercase; }
-        .ringkas .n { font-size: 13px; font-weight: 900; line-height: 1.2; }
+        .ringkas .t { font-size: 10px; font-weight: 400; text-transform: uppercase; }
+        .ringkas .n { font-size: 13px; font-weight: 400; line-height: 1.2; }
         .ringkas .n.kecil { font-size: 11.5px; line-height: 1.25; }
 
         table.rincian { width: 100%; border-collapse: collapse; font-size: 12px; }
-        table.rincian th { border: 1.5px solid #000000; padding: 2px 6px; font-weight: 900; text-transform: uppercase; font-size: 11px; height: <?= $kepalaTabelMm ?>mm; }
-        table.rincian td { border: 1.5px solid #000000; padding: 0 6px; height: <?= $barisMm ?>mm; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+        table.rincian th { border: 1.5px solid #000000; padding: 2px 6px; font-weight: 400; text-transform: uppercase; font-size: 11px; height: <?= $kepalaTabelMm ?>mm; }
+        table.rincian td { border: 1.5px solid #000000; padding: 0 6px; height: <?= $barisMm ?>mm; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
         table.rincian td.nama { max-width: 190px; }
-        table.rincian tr.total td { font-weight: 900; font-size: 12.5px; border-top: 2.5px solid #000000; }
+        table.rincian tr.total td { font-weight: 400; font-size: 12.5px; border-top: 2.5px solid #000000; }
 
-        .catatan { font-size: 10.5px; font-weight: 700; margin-top: 3px; }
+        .catatan { font-size: 10.5px; font-weight: 400; margin-top: 3px; }
         .ttd { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 3px; text-align: center; }
-        .ttd .jdl { font-size: 11px; font-weight: 900; text-transform: uppercase; height: 13mm; }
-        .ttd .nama { font-size: 11.5px; font-weight: 900; border-top: 1.5px solid #000000; padding-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ttd .ket { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ttd .jdl { font-size: 11px; font-weight: 400; text-transform: uppercase; height: 13mm; }
+        .ttd .nama { font-size: 11.5px; font-weight: 400; border-top: 1.5px solid #000000; padding-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ttd .ket { font-size: 10px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .kaki { position: absolute; left: 0; right: 0; bottom: <?= $dasarMm - 0.5 ?>mm; }
 
         @media print {
             body { padding: 0 !important; margin: 0 !important; }
@@ -170,10 +178,43 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
         .ttd .ket { font-size: 11px; }
     </style>
     <?php endif; ?>
+    <?php if (!$lembarTinggi): // setengah A4: isi dipadatkan, tanpa huruf tebal (printer dot matrix) ?>
+    <style>
+        body { font-size: 10.5px; line-height: 1.25; }
+        .kop { padding-bottom: 2px; margin-bottom: 3px; border-bottom-width: 1px; }
+        .kop .nama { font-size: 14px; }
+        .kop .judul { font-size: 11.5px; }
+        .kop .judul small { font-size: 9.5px; }
+        .kop .kode svg { height: 20px; max-width: 190px; }
+        .kop .kode .no { font-size: 10px; }
+        .kop-lanjut { font-size: 11px; border-bottom-width: 1px; padding-bottom: 2px; margin-bottom: 3px; }
+        .info { gap: 5px; margin-bottom: 3px; }
+        .kotak, .ringkas { border-width: 1px; padding: 2px 6px; }
+        .kotak .jdl { font-size: 10px; border-bottom-width: 1px; margin-bottom: 1px; padding-bottom: 0; }
+        .baris { font-size: 10.5px; line-height: 1.25; }
+        .baris .l { width: 96px; }
+        .ringkas { margin-bottom: 3px; }
+        .ringkas .t { font-size: 9px; }
+        .ringkas .n { font-size: 11px; }
+        .ringkas .n.kecil { font-size: 10px; line-height: 1.2; }
+        table.rincian { font-size: 10.5px; }
+        table.rincian th, table.rincian td { border-width: 1px; }
+        table.rincian th { font-size: 9.5px; padding: 1px 4px; }
+        table.rincian td { font-size: 10.5px; padding: 0 4px; }
+        table.rincian td.mono { font-size: 10px; }
+        table.rincian tr.total td { font-size: 10.5px; border-top-width: 1.5px; }
+        .catatan { font-size: 9.5px; margin-top: 2px; }
+        .ttd { margin-top: 2px; gap: 10px; }
+        .ttd .jdl { font-size: 10px; height: 25mm; }
+        .ttd .nama { font-size: 10.5px; border-top-width: 1px; padding-top: 1px; }
+        .ttd .ket { display: none; }
+        .dasar { font-size: 8.5px; border-top-width: 1px; }
+    </style>
+    <?php endif; ?>
     <?php if (!empty($_GET['embed'])): // mode pratinjau (iframe di menu Surat Jalan): tanpa tombol, selebar kertas ?>
     <style media="screen">
         html, body { background: #ffffff !important; }
-        body { padding: <?= $mAtas ?>mm <?= $mSisi ?>mm !important; margin: 0 !important; width: <?= $lebarMm ?>mm; }
+        body { padding: <?= $mAtas ?>mm <?= $mKanan ?>mm <?= $mBawah ?>mm <?= $mKiri ?>mm !important; margin: 0 !important; width: <?= $lebarMm ?>mm; }
         .print-actions { display: none !important; }
         .sheet { border: none !important; margin: 0 0 10mm !important; width: 100% !important; }
     </style>
@@ -196,7 +237,6 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
             <div class="judul">Surat Jalan Penerimaan Barang Masuk<small>Goods Receipt Note · Berita Acara Penerimaan Keranjang<?= $jumlahLembar > 1 ? ' · Lembar 1/' . $jumlahLembar : '' ?></small></div>
             </div>
             <div class="kode">
-                <?= $barcodeSjSvg ?>
                 <div class="no mono"><?= htmlspecialchars($sjData['no_surat_jalan']) ?></div>
             </div>
         </div>
@@ -229,7 +269,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
                         <?php if (count($uniqueItems) > 4): ?><div>dan <?= count($uniqueItems) - 4 ?> produk lain</div><?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <div class="n"><?= htmlspecialchars($sjData['nama_item']) ?> <span style="font-size: 11px; font-weight: 700;">(<?= htmlspecialchars($sjData['nama_jenis']) ?>)</span></div>
+                    <div class="n"><?= htmlspecialchars($sjData['nama_item']) ?> <span style="font-size: 11px; font-weight: 400;">(<?= htmlspecialchars($sjData['nama_jenis']) ?>)</span></div>
                 <?php endif; ?>
             </div>
             <div style="text-align: center;"><div class="t">Total Keranjang</div><div class="n"><?= number_format($sjData['total_pcs']) ?> Pcs</div></div>
@@ -277,11 +317,13 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
         </table>
 
         <?php if ($lb['akhir']): ?>
-        <div class="catatan">Keranjang di atas diterima di gudang AR_BAROKAH dalam kondisi fisik baik; jumlah dan bobot riil sudah dicocokkan dengan scanner.</div>
+        <div class="kaki">
+        <div class="catatan">Diterima di gudang AR_BAROKAH dalam kondisi baik; jumlah dan bobot sudah dicocokkan dengan scanner.</div>
         <div class="ttd">
             <div><div class="jdl">Pihak Pengirim / Sopir</div><div class="nama">( <?= htmlspecialchars($picPemasok) ?> )</div><div class="ket"><?= htmlspecialchars($sjData['nama_pemasok']) ?></div></div>
             <div><div class="jdl">Petugas Penerima Gudang</div><div class="nama">( <?= htmlspecialchars($petugas) ?> )</div><div class="ket">Operator Inbound AR_BAROKAH</div></div>
             <div><div class="jdl">Mengetahui / Supervisor</div><div class="nama">( ........................................ )</div><div class="ket">Kepala Gudang / Logistik</div></div>
+        </div>
         </div>
         <?php else: ?>
         <div class="catatan" style="text-align: right;">bersambung ke lembar <?= $idx + 2 ?> ...</div>

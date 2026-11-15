@@ -767,7 +767,7 @@ require_once __DIR__ . '/layout/header.php';
                         </tr>
                     <?php else: ?>
                         <?php $pNo = 1; foreach ($priceMatrixPemasok['matrix'] as $row): $it = $row['item']; ?>
-                        <tr>
+                        <tr id="hrow-<?= (int)$it['id'] ?>">
                             <td style="text-align: center; color: var(--text-muted);"><?= $pNo++ ?></td>
                             <td>
                                 <strong style="color: var(--text-main); font-size: 13.5px;"><?= htmlspecialchars($it['nama_item']) ?></strong>
@@ -817,6 +817,7 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </form>
 </div>
+<script src="assets/js/fokus_harga.js"></script>
 
 <!-- ========================================================================= -->
 <!-- TAB: MASTER HARGA MITRA (HARGA JUAL POKOK KE 7 MITRA BISNIS)               -->
@@ -871,7 +872,7 @@ require_once __DIR__ . '/layout/header.php';
                 </thead>
                 <tbody>
                     <?php $no = 1; foreach ($priceMatrix['matrix'] as $row): $it = $row['item']; ?>
-                    <tr>
+                    <tr id="hrow-<?= (int)$it['id'] ?>">
                         <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
                         <td>
                             <strong style="color: var(--text-main); font-size: 13.5px;"><?= htmlspecialchars($it['nama_item']) ?></strong>
@@ -920,6 +921,7 @@ require_once __DIR__ . '/layout/header.php';
         </div>
     </form>
 </div>
+<script src="assets/js/fokus_harga.js"></script>
 
 <!-- ========================================================================= -->
 <!-- TAB 2: MASTER MITRA BISNIS (7 MITRA)                                      -->
