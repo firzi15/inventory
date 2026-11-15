@@ -17,3 +17,6 @@ demo_ui_*.html
 
 # Halaman reset uji coba (berisi hash kata sandi)
 reset.php
+
+# Dokumen Word (manual book dll) tidak ikut repo
+*.docx
