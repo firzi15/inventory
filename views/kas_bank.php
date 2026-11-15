@@ -23,7 +23,7 @@ $akunPilihan = KasService::akunPilihan();
 $rekening = RekeningBank::getAktif();
 
 $role = strtoupper($_SESSION['user_login']['role'] ?? '');
-$bolehCatat = in_array($role, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+$bolehCatat = \App\Core\Akses::boleh($role, ['ADMIN', 'SUPERVISOR', 'FINANCE']);
 
 $rp = fn($n) => Helper::formatRupiah($n);
 $tgl = fn($d) => date('d/m/Y', strtotime($d));

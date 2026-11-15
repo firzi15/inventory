@@ -32,7 +32,7 @@ class Transaksi {
         $stmt = $db->prepare("
             SELECT no_referensi_eksternal 
             FROM transaksi_stok 
-            WHERE jenis_transaksi = 'PENGELUARAN'
+            WHERE jenis_transaksi IN ('PENGELUARAN', 'PENGELUARAN_BATAL')
               AND (no_referensi_eksternal LIKE ? OR no_bast LIKE ?)
             ORDER BY LENGTH(no_referensi_eksternal) DESC, no_referensi_eksternal DESC 
             LIMIT 1
@@ -667,6 +667,7 @@ class Transaksi {
             FROM transaksi_stok t
             JOIN mitra m ON t.mitra_id = m.id
             LEFT JOIN users u ON t.user_id = u.id
+            WHERE t.jenis_transaksi <> 'PENGELUARAN_BATAL'
             ORDER BY t.id DESC
             LIMIT ?
         ";

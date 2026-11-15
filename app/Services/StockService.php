@@ -180,7 +180,7 @@ class StockService {
         $q = $db->query("
             SELECT REPLACE(j.sumber_tipe, '_BALIK', '') AS tipe, COALESCE(SUM(jb.debit - jb.kredit), 0) AS net
             FROM jurnal_baris jb JOIN jurnal j ON j.id = jb.jurnal_id
-            WHERE jb.kode_akun = '1200'
+            WHERE jb.kode_akun = '1200' AND " . \App\Services\JurnalService::AKTIF . "
             GROUP BY REPLACE(j.sumber_tipe, '_BALIK', '')
         ");
         foreach ($q->fetchAll(\PDO::FETCH_ASSOC) as $r) {
@@ -254,7 +254,7 @@ class StockService {
 
         // 2. Transaksi Hari Ini
         $today = date('Y-m-d');
-        $stmtTrx = $db->prepare("SELECT COUNT(*) AS total_trx, COALESCE(SUM(total_kg), 0) AS total_kg FROM transaksi_stok WHERE DATE(created_at) = ?");
+        $stmtTrx = $db->prepare("SELECT COUNT(*) AS total_trx, COALESCE(SUM(total_kg), 0) AS total_kg FROM transaksi_stok WHERE jenis_transaksi <> 'PENGELUARAN_BATAL' AND DATE(created_at) = ?");
         $stmtTrx->execute([$today]);
         $trxToday = $stmtTrx->fetch();
 
@@ -288,7 +288,7 @@ class StockService {
         $stmt = $db->prepare("
             SELECT COUNT(*) AS pcs, COALESCE(SUM(berat_netto), 0) AS kg, COUNT(DISTINCT no_surat_jalan) AS sj
             FROM labels
-            WHERE no_surat_jalan IS NOT NULL AND TRIM(no_surat_jalan) != '' AND DATE(created_at) = ?
+            WHERE status <> 'VOID' AND no_surat_jalan IS NOT NULL AND TRIM(no_surat_jalan) != '' AND DATE(created_at) = ?
         ");
         $stmt->execute([$today]);
         $masuk = $stmt->fetch() ?: [];
@@ -307,7 +307,7 @@ class StockService {
         $stmt = $db->prepare("
             SELECT DATE(created_at) AS d, COALESCE(SUM(berat_netto), 0) AS kg
             FROM labels
-            WHERE no_surat_jalan IS NOT NULL AND TRIM(no_surat_jalan) != '' AND DATE(created_at) >= ?
+            WHERE status <> 'VOID' AND no_surat_jalan IS NOT NULL AND TRIM(no_surat_jalan) != '' AND DATE(created_at) >= ?
             GROUP BY DATE(created_at)
         ");
         $stmt->execute([$start]);
@@ -426,7 +426,7 @@ class StockService {
         $inbound = $db->query("
             SELECT DATE(created_at) as tgl, COUNT(*) as pcs, COALESCE(SUM(berat_netto), 0) as total_kg
             FROM labels
-            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            WHERE status <> 'VOID' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
             GROUP BY DATE(created_at)
         ")->fetchAll();
 

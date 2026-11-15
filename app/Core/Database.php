@@ -47,12 +47,14 @@ class Database {
 
             self::$instance = new PDO($dsn, $user, $pass, $options);
             self::$driverUsed = 'mysql';
+            self::$instance->exec("SET time_zone = '+07:00'");
         } catch (PDOException $e) {
             // Jika Access Denied (1045) di host lokal, coba coba fallback password kosong (standar XAMPP)
             if ($e->getCode() == 1045 && ($host === '127.0.0.1' || $host === 'localhost')) {
                 try {
                     self::$instance = new PDO($dsn, $user, '', $options);
                     self::$driverUsed = 'mysql';
+                    self::$instance->exec("SET time_zone = '+07:00'");
                     return;
                 } catch (\Throwable $ex2) {
                     // Lanjut ke penanganan selanjutnya
@@ -70,6 +72,7 @@ class Database {
                     $initPdo->exec("CREATE DATABASE IF NOT EXISTS `" . $dbname . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
                     self::$instance = new PDO($dsn, $user, $pass, $options);
                     self::$driverUsed = 'mysql';
+                    self::$instance->exec("SET time_zone = '+07:00'");
                     return;
                 } catch (\Throwable $ex) {
                     // Fallback to SQLite

@@ -21,7 +21,7 @@ $pihakId = (int)($_GET['pihak'] ?? 0);
 $tampil = ($_GET['tampil'] ?? 'tabel') === 'grid' ? 'grid' : 'tabel';
 
 $role = strtoupper($_SESSION['user_login']['role'] ?? '');
-$bolehInternal = in_array($role, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+$bolehInternal = \App\Core\Akses::boleh($role, ['ADMIN', 'SUPERVISOR', 'FINANCE']);
 
 // Urutan dan halaman
 $kunciUrut = array_keys(SuratJalanService::URUT_KELUAR);

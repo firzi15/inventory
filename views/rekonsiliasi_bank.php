@@ -19,7 +19,7 @@ $kpi = RekonsiliasiBank::ringkas($semuaHari);
 $hari = $status === '' ? $semuaHari : array_values(array_filter($semuaHari, fn($h) => $h['status_hari'] === $status));
 
 $role = strtoupper($_SESSION['user_login']['role'] ?? '');
-$bolehRekon = in_array($role, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+$bolehRekon = \App\Core\Akses::boleh($role, ['ADMIN', 'SUPERVISOR', 'FINANCE']);
 
 $rp = fn($n) => Helper::formatRupiah($n);
 $tgl = fn($d) => date('d/m/Y', strtotime($d));

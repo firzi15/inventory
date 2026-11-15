@@ -20,6 +20,9 @@ $trx = Transaksi::getByIdWithDetails($id);
 if (!$trx) {
     die("Dokumen Surat Jalan tidak ditemukan. ID Transaksi tidak valid.");
 }
+if (($trx['jenis_transaksi'] ?? '') === 'PENGELUARAN_BATAL') {
+    die("Surat jalan keluar ini sudah dibatalkan dan tidak dapat dicetak.");
+}
 
 $items = $trx['items'] ?? [];
 $noSuratJalan = !empty($trx['no_referensi_eksternal']) ? $trx['no_referensi_eksternal'] : (!empty($trx['no_bast']) ? $trx['no_bast'] : $trx['no_transaksi']);
@@ -28,7 +31,7 @@ $barcodeSjSvg = BarcodeService::generateCode128Svg($noSuratJalan, 60, 1.8);
 $mode = strtolower(trim($_GET['mode'] ?? 'form'));
 if ($mode === 'admin') $mode = 'internal';
 if (!in_array($mode, ['form', 'internal'], true)) $mode = 'form';
-$bolehInternal = in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+$bolehInternal = \App\Core\Akses::boleh(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE']);
 $mode = 'internal';
 $isAdmin = true; // satu versi: harga dan total selalu tampil
 

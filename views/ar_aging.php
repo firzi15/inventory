@@ -275,7 +275,7 @@ require_once __DIR__ . '/layout/header.php';
                             $no = 1;
                             foreach ($notaList as $n): 
                                 $telat = (int)$n['hari_telat'];
-                                $bolehTempo = in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+                                $bolehTempo = \App\Core\Akses::boleh(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE']);
                             ?>
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>

@@ -275,7 +275,7 @@ require_once __DIR__ . '/layout/header.php';
                                         <?php if ($isOverdue): ?>
                                             (Lewat <?= abs((int)$inv['sisa_hari_jatuh_tempo']) ?> hr)
                                         <?php endif; ?>
-                                        <?php if ($inv['status_bayar'] !== 'BATAL' && $inv['status_bayar'] !== 'LUNAS' && in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)): ?>
+                                        <?php if ($inv['status_bayar'] !== 'BATAL' && $inv['status_bayar'] !== 'LUNAS' && \App\Core\Akses::boleh(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'])): ?>
                                             <a href="javascript:void(0)" class="no-print" style="font-size: 10.5px; margin-left: 4px;" onclick='ubahJatuhTempo("FAKTUR", <?= (int)$inv['id'] ?>, <?= json_encode(substr($inv['tanggal_jatuh_tempo'], 0, 10)) ?>, <?= json_encode($inv['no_invoice']) ?>)'>ubah</a>
                                         <?php endif; ?>
                                     </div>
@@ -470,7 +470,7 @@ require_once __DIR__ . '/layout/header.php';
                             <?php 
                             $no = 1;
                             foreach ($sjList as $sj): 
-                                $bolehTempo = in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true);
+                                $bolehTempo = \App\Core\Akses::boleh(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE']);
                             ?>
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>

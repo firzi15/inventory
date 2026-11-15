@@ -217,7 +217,7 @@ class Piutang {
                 (
                     SELECT COUNT(id)
                     FROM ar_alokasi_pembayaran
-                    WHERE transaksi_stok_id = ts.id
+                    WHERE transaksi_stok_id = ts.id AND nominal_alokasi > 0
                 ) as jml_kali_setor
             FROM transaksi_stok ts
             JOIN mitra m ON ts.mitra_id = m.id

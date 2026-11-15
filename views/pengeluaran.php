@@ -285,7 +285,7 @@ require_once __DIR__ . '/layout/header.php';
                 <div>
                     <h2 class="card-title" style="display: flex; align-items: center; gap: 8px;">
                         <i data-lucide="package-check" style="width: 20px; height: 20px; color: var(--success);"></i>
-                        <span>Kemasan Terverifikasi (<span id="cartCount" style="color: var(--primary);">0</span> pcs)</span>
+                        <span>Kemasan Terverifikasi (<span id="cartCount" style="color: var(--primary);">0</span> box)</span>
                     </h2>
                     <div class="card-description">Daftar kemasan fisik siap dikeluarkan dari gudang ke mitra penerima</div>
                 </div>
@@ -422,7 +422,7 @@ require_once __DIR__ . '/layout/header.php';
                                 <div style="font-size: 11.5px; color: var(--text-muted);">PIC: <?= htmlspecialchars($ht['nama_penerima']) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td style="text-align: right;"><?= number_format($ht['total_label']) ?> pcs</td>
+                        <td style="text-align: right;"><?= number_format($ht['total_label']) ?> box</td>
                         <td style="text-align: right; font-weight: 600;"><?= Helper::formatKg($ht['total_kg']) ?></td>
                         <td style="color: var(--text-muted);"><?= htmlspecialchars($ht['operator_name'] ?? 'Petugas Gudang') ?></td>
                         <td>
@@ -435,10 +435,12 @@ require_once __DIR__ . '/layout/header.php';
                         </td>
                         <td style="text-align: center;">
                             <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                                <?php if ($ht['jenis_transaksi'] === 'PENGELUARAN'): ?>
                                 <a href="index.php?page=surat_jalan_print&id=<?= $ht['id'] ?>" target="_blank" class="btn btn-outline btn-sm" style="padding: 5px 9px; font-size: 12px; color: var(--aktif-fg); border-color: var(--border-hover); display: inline-flex; align-items: center; gap: 4px;" title="Cetak Dokumen Surat Jalan Resmi A4">
                                     <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
                                     <span>Cetak</span>
                                 </a>
+                                <?php endif; ?>
                                 <button type="button" class="btn btn-outline btn-sm" onclick="viewOutboundDetail(<?= $ht['id'] ?>)" style="padding: 5px 9px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" title="Lihat Rincian Kemasan">
                                     <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
                                     <span>Rincian</span>
@@ -652,11 +654,11 @@ require_once __DIR__ . '/layout/header.php';
             const totalPcs = parseInt(summary.total_kemasan || 0);
             const totalKg = parseFloat(summary.total_kg || 0);
 
-            pcsEl.innerText = totalPcs + ' Pcs';
+            pcsEl.innerText = totalPcs + ' Box';
             kgEl.innerText = totalKg.toFixed(2) + ' Kg';
 
             if (totalPcs > 0) {
-                badgeEl.innerText = `${totalPcs} Pcs Tersedia di Gudang`;
+                badgeEl.innerText = `${totalPcs} Box Tersedia di Gudang`;
                 badgeEl.style.background = '#059669';
             } else {
                 badgeEl.innerText = 'Stok Fisik Kosong di Gudang';
@@ -675,7 +677,7 @@ require_once __DIR__ . '/layout/header.php';
                         <tr style="border-bottom: 1px dashed var(--border-hover);">
                             <td style="padding: 4px 6px; font-weight: 700; color: var(--ok-fg);">${it.nama_item}</td>
                             <td style="padding: 4px 6px; color: var(--text-muted); font-size: 11px;">(${it.nama_jenis})</td>
-                            <td style="padding: 4px 6px; text-align: right; font-weight: 700; color: var(--aktif-fg);">${it.total_kemasan} Pcs</td>
+                            <td style="padding: 4px 6px; text-align: right; font-weight: 700; color: var(--aktif-fg);">${it.total_kemasan} Box</td>
                             <td style="padding: 4px 6px; text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">${kg} Kg</td>
                         </tr>
                     `;

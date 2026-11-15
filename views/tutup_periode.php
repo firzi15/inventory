@@ -16,8 +16,8 @@ if (!in_array($bulan, $daftarBulan, true)) $bulan = $daftarBulan[0] ?? date('Y-m
 
 $daftar = PeriodeService::daftarHari($bulan);
 $role = strtoupper($_SESSION['user_login']['role'] ?? '');
-$bolehTutup = in_array($role, ['ADMIN', 'FINANCE'], true);
-$bolehBuka = $role === 'ADMIN';
+$bolehTutup = \App\Core\Akses::boleh($role, ['ADMIN', 'FINANCE']);
+$bolehBuka = \App\Core\Akses::boleh($role, ['ADMIN']);
 
 $rp = fn($n) => Helper::formatRupiah($n);
 $jumlahTutup = count(array_filter($daftar, fn($p) => $p['status'] === 'TUTUP'));

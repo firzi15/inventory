@@ -111,7 +111,7 @@ class PeriodeService
         $db = Database::getConnection();
         $hasil = [];
 
-        $st = $db->prepare("SELECT COALESCE(SUM(b.debit), 0) d, COALESCE(SUM(b.kredit), 0) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE j.tanggal = ?");
+        $st = $db->prepare("SELECT COALESCE(SUM(b.debit), 0) d, COALESCE(SUM(b.kredit), 0) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE j.tanggal = ? AND " . JurnalService::AKTIF);
         $st->execute([$tanggal]);
         $t = $st->fetch(PDO::FETCH_ASSOC);
         if (abs((float)$t['d'] - (float)$t['k']) > 0.01) {
@@ -165,7 +165,7 @@ class PeriodeService
     private static function saldoAkhir(string $sampai): array
     {
         $db = Database::getConnection();
-        $st = $db->prepare("SELECT b.kode_akun, SUM(b.debit) d, SUM(b.kredit) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE j.tanggal <= ? AND b.kode_akun IN ('1000','1100','1200','2000') GROUP BY b.kode_akun");
+        $st = $db->prepare("SELECT b.kode_akun, SUM(b.debit) d, SUM(b.kredit) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE j.tanggal <= ? AND b.kode_akun IN ('1000','1100','1200','2000') AND " . JurnalService::AKTIF . " GROUP BY b.kode_akun");
         $st->execute([$sampai]);
         $o = ['1000' => 0.0, '1100' => 0.0, '1200' => 0.0, '2000' => 0.0];
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -196,7 +196,7 @@ class PeriodeService
         $st->execute([$awal, $akhir]);
         $status = [];
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) $status[$r['tanggal']] = $r;
-        $jml = $db->prepare("SELECT tanggal, COUNT(*) n FROM jurnal WHERE tanggal BETWEEN ? AND ? GROUP BY tanggal");
+        $jml = $db->prepare("SELECT j.tanggal, COUNT(*) n FROM jurnal j WHERE j.tanggal BETWEEN ? AND ? AND " . JurnalService::AKTIF . " GROUP BY j.tanggal");
         $jml->execute([$awal, $akhir]);
         $aktif = $jml->fetchAll(PDO::FETCH_KEY_PAIR);
 
@@ -253,7 +253,7 @@ class PeriodeService
         if (!$awal || $awal > $sampai) throw new Exception('Tidak ada hari yang perlu ditutup.');
 
         $db = Database::getConnection();
-        $st = $db->prepare("SELECT j.tanggal, ABS(SUM(b.debit) - SUM(b.kredit)) selisih FROM jurnal j JOIN jurnal_baris b ON b.jurnal_id = j.id WHERE j.tanggal BETWEEN ? AND ? GROUP BY j.tanggal");
+        $st = $db->prepare("SELECT j.tanggal, ABS(SUM(b.debit) - SUM(b.kredit)) selisih FROM jurnal j JOIN jurnal_baris b ON b.jurnal_id = j.id WHERE j.tanggal BETWEEN ? AND ? AND " . JurnalService::AKTIF . " GROUP BY j.tanggal");
         $st->execute([$awal, $sampai]);
         $tidakSeimbang = [];
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) if ((float)$r['selisih'] > 0.01) $tidakSeimbang[$r['tanggal']] = true;

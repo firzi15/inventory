@@ -390,7 +390,7 @@ class Label {
             'total_berat' => round($totalBerat, 2),
             'total_nilai' => round($totalNilai, 2),
             'products' => array_values($productMap),
-            'recent_boxes' => array_slice($rows, 0, 15)
+            'recent_boxes' => $rows
         ];
     }
 
@@ -481,6 +481,11 @@ class Label {
             } elseif ($filters['status'] === 'KELUAR') {
                 $where[] = "l.status = 'KELUAR'";
             }
+        }
+
+        // Keranjang dari penerimaan yang dibatalkan (VOID) tidak ikut daftar, kecuali diminta khusus
+        if (empty($filters['termasuk_batal'])) {
+            $where[] = "l.status <> 'VOID'";
         }
 
         if (!empty($filters['weighed_status'])) {
@@ -611,6 +616,11 @@ class Label {
             } elseif ($filters['status'] === 'KELUAR') {
                 $where[] = "l.status = 'KELUAR'";
             }
+        }
+
+        // Keranjang dari penerimaan yang dibatalkan (VOID) tidak ikut daftar, kecuali diminta khusus
+        if (empty($filters['termasuk_batal'])) {
+            $where[] = "l.status <> 'VOID'";
         }
 
         if (!empty($filters['weighed_status'])) {
@@ -1618,6 +1628,14 @@ class Label {
             return [
                 'success' => false,
                 'message' => "Barcode '{$barcode}' tidak terdaftar di sistem inventory!"
+            ];
+        }
+
+        // Keranjang dari penerimaan yang dibatalkan bukan stok fisik
+        if ($label['status'] === 'VOID') {
+            return [
+                'success' => false,
+                'message' => "Barcode '{$label['id_label']}' ({$label['nama_item']}) berasal dari penerimaan yang sudah dibatalkan, jadi bukan stok gudang."
             ];
         }
 

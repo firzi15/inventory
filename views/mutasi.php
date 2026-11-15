@@ -221,7 +221,7 @@ require_once __DIR__ . '/layout/header.php';
             <div>
                 <h2 class="card-title">
                     <i data-lucide="file-check" style="width: 18px; height: 18px; color: var(--purple);"></i>
-                    <span>Kemasan Masuk Dokumen BAST (<span id="mutasiCartCount" style="color: var(--primary);">0</span> pcs)</span>
+                    <span>Kemasan Masuk Dokumen BAST (<span id="mutasiCartCount" style="color: var(--primary);">0</span> box)</span>
                 </h2>
                 <div class="card-description">Daftar kemasan fisik yang masuk dalam berita acara serah terima</div>
             </div>
@@ -1113,7 +1113,7 @@ require_once __DIR__ . '/layout/header.php';
                         <div style="text-align: left; font-size: 13.5px;">
                             <p style="margin-bottom: 6px;"><strong>No. BAST:</strong> <code>${data.no_bast}</code></p>
                             <p style="margin-bottom: 6px;"><strong>No. Transaksi:</strong> <code>${data.no_transaksi}</code></p>
-                            <p style="margin-bottom: 6px;"><strong>Total Muatan:</strong> ${data.total_label} pcs (${parseFloat(data.total_kg).toFixed(2)} kg)</p>
+                            <p style="margin-bottom: 6px;"><strong>Total Muatan:</strong> ${data.total_label} box (${parseFloat(data.total_kg).toFixed(2)} kg)</p>
                             <p style="margin-bottom: 12px;"><strong>Diterima Oleh:</strong> ${penerima}</p>
                             <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ok-solid); padding: 10px; border-radius: 6px;">
                                 Dokumen Berita Acara Serah Terima (BAST) siap dicetak. Apakah Anda ingin membukanya sekarang?

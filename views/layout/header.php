@@ -309,7 +309,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $tabMasterKini = $_GET['tab'] ?? 'pemasok';
             $isPengaturanActive = in_array($currentPage, ['backup', 'accurate_sync'], true) || ($currentPage === 'master' && in_array($tabMasterKini, ['log_harga', 'accurate'], true));
             $isMasterActive = !$isPengaturanActive && in_array($currentPage, ['master', 'master_mitra', 'master_produk', 'master_harga', 'master_harga_pemasok', 'master_harga_mitra']);
-            $bolehBackup = strtoupper($_SESSION['user_login']['role'] ?? '') === 'ADMIN';
+            $bolehBackup = \App\Core\Akses::boleh($_SESSION['user_login']['role'] ?? '', ['ADMIN']);
             ?>
             <!-- Navigasi Menu Vertikal -->
             <nav class="sidebar-nav">

@@ -271,7 +271,7 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-top: 4px;">
                         <span style="color: var(--text-muted);">Kemasan:</span>
-                        <span style="font-weight: 700; color: var(--text-main);"><?= Helper::formatNumber($ms['total_kemasan']) ?> pcs <span style="color: var(--text-muted);">(<?= $ms['total_sku'] ?> SKU)</span></span>
+                        <span style="font-weight: 700; color: var(--text-main);"><?= Helper::formatNumber($ms['total_kemasan']) ?> box <span style="color: var(--text-muted);">(<?= $ms['total_sku'] ?> SKU)</span></span>
                     </div>
                 </div>
             </div>
@@ -474,7 +474,7 @@ require_once __DIR__ . '/layout/header.php';
                     <th style="min-width: 200px;">Nama Komoditas / Barang</th>
                     <th style="min-width: 130px;">Kategori</th>
                     <th style="text-align: right; min-width: 120px;">Jumlah Kemasan</th>
-                    <th style="text-align: right; min-width: 130px;">Rata-rata/Pcs</th>
+                    <th style="text-align: right; min-width: 130px;">Rata-rata/Box</th>
                     <th style="text-align: right; min-width: 140px; background: rgba(2, 132, 199, 0.05);">Total Netto (Kg)</th>
                     <th style="text-align: right; min-width: 160px; background: rgba(16, 185, 129, 0.08);">HPP Rata-rata</th>
                     <th style="text-align: right; min-width: 180px; background: rgba(16, 185, 129, 0.16); color: var(--ok-fg); font-weight: 800;">Nilai Persediaan (Rp)</th>
@@ -523,7 +523,7 @@ require_once __DIR__ . '/layout/header.php';
                             </span>
                         </td>
                         <td style="text-align: right; font-weight: 800;">
-                            <?= Helper::formatNumber($row['total_label']) ?> <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">pcs</span>
+                            <?= Helper::formatNumber($row['total_label']) ?> <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">box</span>
                         </td>
                         <td style="text-align: right; color: var(--text-muted); font-size: 12px;">
                             <?= Helper::formatKg($row['rata_rata_kg']) ?>
@@ -672,7 +672,7 @@ require_once __DIR__ . '/layout/header.php';
                         <td style="text-align: right;">
                             <?php if ($cell && $cell['label'] > 0): ?>
                                 <div style="font-weight: 800; font-size: 13.5px; color: var(--ok-fg);"><?= Helper::formatKg($cell['kg']) ?></div>
-                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;"><?= Helper::formatNumber($cell['label']) ?> pcs</div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;"><?= Helper::formatNumber($cell['label']) ?> box</div>
                             <?php else: ?>
                                 <span style="color: var(--text-muted); opacity: 0.35;">-</span>
                             <?php endif; ?>

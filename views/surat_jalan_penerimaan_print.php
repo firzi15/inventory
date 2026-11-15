@@ -22,6 +22,11 @@ $sjData = Label::getSuratJalanDetailWithLabels($noSuratJalan);
 if (!$sjData) {
     die("Data Penerimaan untuk Surat Jalan '" . htmlspecialchars($noSuratJalan) . "' tidak ditemukan di database.");
 }
+$semuaBatal = !empty($sjData['all_labels']);
+foreach (($sjData['all_labels'] ?? []) as $lbCek) { if (($lbCek['status'] ?? '') !== 'VOID') { $semuaBatal = false; break; } }
+if ($semuaBatal) {
+    die("Penerimaan untuk surat jalan '" . htmlspecialchars($noSuratJalan) . "' sudah dibatalkan dan tidak dapat dicetak.");
+}
 
 $barcodeSjSvg = BarcodeService::generateCode128Svg($sjData['no_surat_jalan'], 56, 1.6);
 $labels = $sjData['all_labels'] ?? [];
@@ -288,7 +293,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
                     <div class="n"><?= htmlspecialchars($sjData['nama_item']) ?> <span style="font-size: 11px; font-weight: 400;">(<?= htmlspecialchars($sjData['nama_jenis']) ?>)</span></div>
                 <?php endif; ?>
             </div>
-            <div style="text-align: center;"><div class="t">Total Keranjang</div><div class="n"><?= number_format($sjData['total_pcs']) ?> Pcs</div></div>
+            <div style="text-align: center;"><div class="t">Total Keranjang</div><div class="n"><?= number_format($sjData['total_pcs']) ?> Box</div></div>
             <div style="text-align: center;"><div class="t">Total Bobot Riil</div><div class="n mono"><?= number_format($sjData['total_berat'], 2) ?> KG</div></div>
             <div style="text-align: right;"><div class="t">Total Nominal</div><div class="n mono"><?= $rp($grandNilai) ?></div></div>
         </div>
@@ -327,14 +332,14 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
                 <?php if ($lb['akhir']): ?>
                     <?php if ($isMultiItem): foreach ($uniqueItems as $ui): ?>
                     <tr>
-                        <td colspan="3" style="text-align: right;">Subtotal <?= htmlspecialchars($ui['nama_item']) ?> (<?= htmlspecialchars($ui['nama_jenis']) ?>) &middot; <?= number_format($ui['total_pcs']) ?> Pcs</td>
+                        <td colspan="3" style="text-align: right;">Subtotal <?= htmlspecialchars($ui['nama_item']) ?> (<?= htmlspecialchars($ui['nama_jenis']) ?>) &middot; <?= number_format($ui['total_pcs']) ?> Box</td>
                         <td class="mono" style="text-align: right;"><?= number_format($ui['total_berat'], 2) ?> KG</td>
                         <td class="mono" style="text-align: right;"><?= $ui['total_berat'] > 0 ? $rp($ui['total_nilai'] / $ui['total_berat']) : '-' ?></td>
                         <td class="mono" style="text-align: right;"><?= $rp($ui['total_nilai']) ?></td>
                     </tr>
                     <?php endforeach; endif; ?>
                     <tr class="total">
-                        <td colspan="3" style="text-align: right; text-transform: uppercase;">Grand Total &middot; <?= number_format($sjData['total_pcs']) ?> Pcs</td>
+                        <td colspan="3" style="text-align: right; text-transform: uppercase;">Grand Total &middot; <?= number_format($sjData['total_pcs']) ?> Box</td>
                         <td class="mono" style="text-align: right;"><?= number_format($sjData['total_berat'], 2) ?> KG</td>
                         <td></td>
                         <td class="mono" style="text-align: right;"><?= $rp($grandNilai) ?></td>

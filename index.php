@@ -5,6 +5,9 @@
  * Mendukung Pergerakan Barang (Pengepul -> Gudang -> Office -> Pembeli POS) & BAST
  */
 
+// Zona waktu aplikasi: WIB, tidak bergantung pada php.ini server (XAMPP bawaan memakai Europe/Berlin)
+date_default_timezone_set('Asia/Jakarta');
+
 session_start();
 
 // PSR-4 Autoloader Sederhana untuk namespace App\
@@ -166,6 +169,12 @@ if ($action) {
                         'success' => false,
                         'message' => "Barcode '{$barcode}' tidak terdaftar di sistem!"
                     ], 404);
+                }
+                if (($label['status'] ?? '') === 'VOID') {
+                    Helper::jsonResponse([
+                        'success' => false,
+                        'message' => "Kemasan '{$label['id_label']}' berasal dari penerimaan yang sudah dibatalkan, jadi tidak dapat dikeluarkan."
+                    ], 409);
                 }
 
                 // Hitung estimasi harga beli pemasok & harga jual mitra jika parameter diberikan
@@ -850,7 +859,7 @@ if ($action) {
                 $roleBatal = strtoupper($_SESSION['user_login']['role'] ?? '');
                 $boleh = ['ADMIN', 'SUPERVISOR'];
                 if (in_array($action, ['batal_purchase_invoice', 'batal_bayar_ap', 'batal_setoran_ar', 'batal_kas'], true)) $boleh[] = 'FINANCE';
-                if (!in_array($roleBatal, $boleh, true)) {
+                if (!\App\Core\Akses::boleh($roleBatal, $boleh)) {
                     throw new Exception("Akun Anda tidak memiliki izin untuk membatalkan dokumen ini.");
                 }
                 $uidBatal = (int)($_SESSION['user_login']['id'] ?? 0);
@@ -1154,7 +1163,7 @@ if ($action) {
             // T. Ubah jatuh tempo faktur pemasok / nota mitra (ADMIN, SUPERVISOR, FINANCE)
             case 'ubah_jatuh_tempo':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
-                if (!in_array(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)) {
+                if (!\App\Core\Akses::boleh(strtoupper($_SESSION['user_login']['role'] ?? ''), ['ADMIN', 'SUPERVISOR', 'FINANCE'])) {
                     Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin, Supervisor, atau Finance yang dapat mengubah jatuh tempo.'], 403);
                     exit;
                 }
@@ -1174,7 +1183,7 @@ if ($action) {
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $rolePer = strtoupper($_SESSION['user_login']['role'] ?? '');
                 $bolehPer = $action === 'buka_periode' ? ['ADMIN'] : ['ADMIN', 'FINANCE'];
-                if (!in_array($rolePer, $bolehPer, true)) {
+                if (!\App\Core\Akses::boleh($rolePer, $bolehPer)) {
                     Helper::jsonResponse(['success' => false, 'message' => $action === 'buka_periode' ? 'Hanya Admin yang dapat membuka kembali hari yang sudah ditutup.' : 'Hanya Admin atau Finance yang dapat menutup hari.'], 403);
                     exit;
                 }
@@ -1238,7 +1247,7 @@ if ($action) {
             case 'simpan_kas':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $roleKas = strtoupper($_SESSION['user_login']['role'] ?? '');
-                if (!in_array($roleKas, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)) {
+                if (!\App\Core\Akses::boleh($roleKas, ['ADMIN', 'SUPERVISOR', 'FINANCE'])) {
                     Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin, Supervisor, atau Finance yang dapat mencatat transaksi kas.'], 403);
                     exit;
                 }
@@ -1251,7 +1260,7 @@ if ($action) {
             case 'buka_rekonsiliasi_harian':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $roleRek = strtoupper($_SESSION['user_login']['role'] ?? '');
-                if (!in_array($roleRek, ['ADMIN', 'SUPERVISOR', 'FINANCE'], true)) {
+                if (!\App\Core\Akses::boleh($roleRek, ['ADMIN', 'SUPERVISOR', 'FINANCE'])) {
                     Helper::jsonResponse(['success' => false, 'message' => 'Hanya Admin, Supervisor, atau Finance yang dapat melakukan rekonsiliasi.'], 403);
                     exit;
                 }

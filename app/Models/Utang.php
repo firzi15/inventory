@@ -206,7 +206,7 @@ class Utang {
                 (
                     SELECT COUNT(id)
                     FROM ap_alokasi_pembayaran
-                    WHERE no_surat_jalan = l.no_surat_jalan
+                    WHERE no_surat_jalan = l.no_surat_jalan AND nominal_alokasi > 0
                 ) as jml_kali_bayar
             FROM labels l
             JOIN pemasok p ON l.pemasok_id = p.id

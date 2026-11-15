@@ -205,18 +205,22 @@ class JurnalService
 
     /** Total debit dan kredit per akun: [kode => [debit, kredit]] */
     /** [kode akun => [debit, kredit]]; dengan $dari/$sampai hanya jurnal pada rentang tanggal itu (salah satunya boleh null). */
+    /** Kondisi SQL (alias j = jurnal): hanya jurnal dokumen yang masih berlaku. Jurnal yang dibalik dan jurnal pembaliknya
+     *  sama-sama dikeluarkan, sehingga dokumen yang dibatalkan tidak muncul di laporan mana pun, apa pun tanggal pembatalannya. */
+    public const AKTIF = "j.status = 'POSTED' AND RIGHT(j.sumber_tipe, 6) <> '_BALIK'";
+
     public static function totalsPerAkun(?string $dari = null, ?string $sampai = null): array
     {
         self::ensureTables();
         $db = Database::getConnection();
         $out = [];
         if ($dari === null && $sampai === null) {
-            $rows = $db->query("SELECT kode_akun, SUM(debit) d, SUM(kredit) k FROM jurnal_baris GROUP BY kode_akun")->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $db->query("SELECT b.kode_akun, SUM(b.debit) d, SUM(b.kredit) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE " . self::AKTIF . " GROUP BY b.kode_akun")->fetchAll(PDO::FETCH_ASSOC);
         } else {
             $kond = []; $p = [];
             if ($dari !== null)   { $kond[] = 'j.tanggal >= ?'; $p[] = $dari; }
             if ($sampai !== null) { $kond[] = 'j.tanggal <= ?'; $p[] = $sampai; }
-            $st = $db->prepare("SELECT b.kode_akun, SUM(b.debit) d, SUM(b.kredit) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE " . implode(' AND ', $kond) . " GROUP BY b.kode_akun");
+            $st = $db->prepare("SELECT b.kode_akun, SUM(b.debit) d, SUM(b.kredit) k FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id WHERE " . implode(' AND ', $kond) . " AND " . self::AKTIF . " GROUP BY b.kode_akun");
             $st->execute($p);
             $rows = $st->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -234,7 +238,7 @@ class JurnalService
         $st = $db->prepare("
             SELECT j.tanggal, b.kode_akun, c.tipe, SUM(b.debit) d, SUM(b.kredit) k
             FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id JOIN coa_akun c ON c.kode = b.kode_akun
-            WHERE j.tanggal BETWEEN ? AND ? AND c.tipe IN ('REVENUE','COGS','EXPENSE')
+            WHERE j.tanggal BETWEEN ? AND ? AND c.tipe IN ('REVENUE','COGS','EXPENSE') AND " . self::AKTIF . "
             GROUP BY j.tanggal, b.kode_akun, c.tipe
             ORDER BY b.kode_akun");
         $st->execute([$dari, $sampai]);
@@ -287,7 +291,7 @@ class JurnalService
         $st = $db->prepare("
             SELECT MONTH(j.tanggal) m, c.tipe, SUM(b.debit) d, SUM(b.kredit) k
             FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id JOIN coa_akun c ON c.kode = b.kode_akun
-            WHERE YEAR(j.tanggal) = ? AND c.tipe IN ('REVENUE','COGS','EXPENSE')
+            WHERE YEAR(j.tanggal) = ? AND c.tipe IN ('REVENUE','COGS','EXPENSE') AND " . self::AKTIF . "
             GROUP BY MONTH(j.tanggal), c.tipe");
         $st->execute([$tahun]);
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -305,7 +309,7 @@ class JurnalService
         $st = $db->prepare("
             SELECT MONTH(j.tanggal) m, b.kode_akun, c.tipe, SUM(b.debit) d, SUM(b.kredit) k
             FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id JOIN coa_akun c ON c.kode = b.kode_akun
-            WHERE YEAR(j.tanggal) = ? AND c.tipe IN ('REVENUE','COGS','EXPENSE')
+            WHERE YEAR(j.tanggal) = ? AND c.tipe IN ('REVENUE','COGS','EXPENSE') AND " . self::AKTIF . "
             GROUP BY MONTH(j.tanggal), b.kode_akun, c.tipe
             ORDER BY b.kode_akun");
         $st->execute([$tahun]);
@@ -326,7 +330,7 @@ class JurnalService
         $st = $db->prepare("
             SELECT c.tipe, SUM(b.debit) d, SUM(b.kredit) k
             FROM jurnal_baris b JOIN jurnal j ON j.id = b.jurnal_id JOIN coa_akun c ON c.kode = b.kode_akun
-            WHERE j.tanggal BETWEEN ? AND ? AND c.tipe IN ('REVENUE','COGS','EXPENSE')
+            WHERE j.tanggal BETWEEN ? AND ? AND c.tipe IN ('REVENUE','COGS','EXPENSE') AND " . self::AKTIF . "
             GROUP BY c.tipe");
         $st->execute([$dari, $sampai]);
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -347,7 +351,7 @@ class JurnalService
             JOIN jurnal j ON j.id = b.jurnal_id
             JOIN transaksi_stok t ON t.id = j.sumber_id
             LEFT JOIN mitra m ON m.id = t.mitra_id
-            WHERE j.sumber_tipe IN ('PENGELUARAN','PENGELUARAN_BALIK')
+            WHERE j.sumber_tipe IN ('PENGELUARAN','PENGELUARAN_BALIK') AND " . self::AKTIF . "
               AND b.kode_akun IN ('4000','5000') AND j.tanggal BETWEEN ? AND ?
             GROUP BY m.id, m.nama_mitra, b.kode_akun");
         $st->execute([$dari, $sampai]);
@@ -371,7 +375,7 @@ class JurnalService
             JOIN jurnal j ON j.id = b.jurnal_id
             JOIN purchase_invoices pi ON pi.id = j.sumber_id
             JOIN coa_akun c ON c.kode = b.kode_akun AND c.tipe IN ('EXPENSE','COGS')
-            WHERE j.sumber_tipe IN ('PURCHASE_INV','PURCHASE_INV_BALIK')
+            WHERE j.sumber_tipe IN ('PURCHASE_INV','PURCHASE_INV_BALIK') AND " . self::AKTIF . "
               AND j.tanggal BETWEEN ? AND ?
             GROUP BY nama");
         $st->execute([$dari, $sampai]);
