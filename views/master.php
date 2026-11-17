@@ -818,6 +818,7 @@ require_once __DIR__ . '/layout/header.php';
     </form>
 </div>
 <script src="assets/js/fokus_harga.js"></script>
+<script src="assets/js/harga_diff.js"></script>
 
 <!-- ========================================================================= -->
 <!-- TAB: MASTER HARGA MITRA (HARGA JUAL POKOK KE 7 MITRA BISNIS)               -->
@@ -922,6 +923,7 @@ require_once __DIR__ . '/layout/header.php';
     </form>
 </div>
 <script src="assets/js/fokus_harga.js"></script>
+<script src="assets/js/harga_diff.js"></script>
 
 <!-- ========================================================================= -->
 <!-- TAB 2: MASTER MITRA BISNIS (7 MITRA)                                      -->
