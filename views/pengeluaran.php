@@ -190,29 +190,17 @@ require_once __DIR__ . '/layout/header.php';
                         <i data-lucide="settings-2" style="width: 18px; height: 18px; color: var(--primary);"></i>
                         <span>Parameter Pengeluaran</span>
                     </h2>
-                    <div class="card-description">Pilih pemasok asal stok & mitra tujuan sebelum scan</div>
+                    <div class="card-description">Pilih mitra tujuan, lalu scan barcode box (pemasok boleh campur)</div>
                 </div>
             </div>
 
             <form id="formOutbound" onsubmit="return false;">
-                <!-- 1. Pemasok Asal Stok -->
+                <!-- 1. Asal stok: otomatis dari barcode, boleh campur pemasok -->
                 <div class="form-group" style="margin-bottom: 14px;">
-                    <label class="form-label" for="outbound_pemasok_id" style="font-weight: 800; display: flex; align-items: center; gap: 6px;">
-                        <span>1. Pemasok Asal Stok</span>
-                        <span style="color:red;">*</span>
-                    </label>
-                    <select name="pemasok_id" id="outbound_pemasok_id" class="form-control" required disabled style="font-weight: 700; height: 42px;">
-                        <option value="" selected>Otomatis dari barcode yang di-scan</option>
-                        <?php foreach ($pemasokList as $p): ?>
-                            <option value="<?= $p['id'] ?>" data-kode="<?= htmlspecialchars($p['kode_pemasok']) ?>" data-nama="<?= htmlspecialchars($p['nama_pemasok']) ?>">
-                                [<?= htmlspecialchars($p['kode_pemasok']) ?>] <?= htmlspecialchars($p['nama_pemasok']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div style="margin-top: 5px;">
-                        <span style="font-size: 11px; color: var(--text-muted);">
-                            Otomatis mengikuti barcode yang di-scan.
-                        </span>
+                    <div class="form-label" style="font-weight: 800;">1. Pemasok Asal Stok</div>
+                    <div id="infoPemasokAsal" style="font-weight: 700; font-size: 13.5px; min-height: 24px; color: var(--text-muted);">Belum ada box discan</div>
+                    <div style="margin-top: 3px; font-size: 11px; color: var(--text-muted);">
+                        Tidak perlu dipilih. Asal tiap box dibaca dari barcodenya; satu surat jalan boleh berisi box dari beberapa pemasok.
                     </div>
                 </div>
 
@@ -313,7 +301,7 @@ require_once __DIR__ . '/layout/header.php';
                         <tr id="emptyCartRow">
                             <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 50px 20px;">
                                 <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">Belum ada kemasan yang discan</div>
-                                <div style="font-size: 12px; margin-top: 4px;">Pilih pemasok & mitra di sebelah kiri, lalu arahkan scanner ke barcode kemasan fisik.</div>
+                                <div style="font-size: 12px; margin-top: 4px;">Pilih mitra di sebelah kiri, lalu arahkan scanner ke barcode kemasan fisik.</div>
                             </td>
                         </tr>
                     </tbody>
@@ -415,7 +403,7 @@ require_once __DIR__ . '/layout/header.php';
                             <div style="font-size: 11.5px; color: var(--text-muted);"><?= htmlspecialchars($ht['no_transaksi']) ?></div>
                         </td>
                         <td style="color: var(--text-muted);"><?= date('d/m/Y H:i', strtotime($ht['created_at'])) ?></td>
-                        <td><?= htmlspecialchars($ht['nama_pemasok'] ?? 'Pemasok') ?></td>
+                        <td><?= htmlspecialchars($ht['nama_pemasok'] ?? 'Beberapa pemasok') ?></td>
                         <td>
                             <?= htmlspecialchars($ht['nama_mitra'] ?? 'Mitra') ?>
                             <?php if (!empty($ht['nama_penerima']) && stripos($ht['nama_penerima'], (string)($ht['nama_mitra'] ?? '')) === false): ?>
@@ -587,7 +575,6 @@ require_once __DIR__ . '/layout/header.php';
 <script>
     const scannedLabels = new Map();
     const inputScan = document.getElementById('inputBarcodeScan');
-    const selectPemasok = document.getElementById('outbound_pemasok_id');
     const selectMitra = document.getElementById('outbound_mitra_id');
     // Fokus otomatis saat halaman dibuka. Di HP/tablet (layar sentuh) keyboard layar ditahan dengan inputmode=none,
     // sehingga scanner bawaan tetap bisa mengetik; keyboard baru muncul bila kolom diketuk langsung.
@@ -618,97 +605,6 @@ require_once __DIR__ . '/layout/header.php';
         }
     }
 
-    // Mengambil dan menampilkan informasi stok fisik pemasok di gudang
-    async function fetchPemasokStock() {
-        if (!document.getElementById('boxPemasokStock')) return;
-        const pemasokId = selectPemasok.value;
-        const mitraId = selectMitra.value;
-        if (!pemasokId) return;
-
-        const pmsOpt = selectPemasok.options[selectPemasok.selectedIndex];
-        const pmsNama = pmsOpt ? pmsOpt.getAttribute('data-nama') : '';
-        document.getElementById('pmsHeaderNama').innerText = pmsNama || 'Pemasok Terpilih';
-
-        const badgeEl = document.getElementById('stockPmsBadge');
-        const pcsEl = document.getElementById('pmsTotalPcs');
-        const kgEl = document.getElementById('pmsTotalKg');
-        const itemsEl = document.getElementById('pmsItemsContainer');
-        const chipsEl = document.getElementById('pmsBarcodesChips');
-
-        badgeEl.innerText = 'Memuat stok...';
-        badgeEl.style.background = '#64748b';
-
-        try {
-            const resp = await fetch(`index.php?action=get_pemasok_warehouse_stock&pemasok_id=${pemasokId}&mitra_id=${mitraId}`);
-            const data = await resp.json();
-
-            if (!data.success || !data.stock) {
-                badgeEl.innerText = 'Gagal memuat stok';
-                badgeEl.style.background = '#dc2626';
-                itemsEl.innerHTML = '<div style="color: var(--bad-fg); padding: 4px;">Gagal memuat persediaan gudang.</div>';
-                return;
-            }
-
-            const stock = data.stock;
-            const summary = stock.summary || {};
-            const totalPcs = parseInt(summary.total_kemasan || 0);
-            const totalKg = parseFloat(summary.total_kg || 0);
-
-            pcsEl.innerText = totalPcs + ' Box';
-            kgEl.innerText = totalKg.toFixed(2) + ' Kg';
-
-            if (totalPcs > 0) {
-                badgeEl.innerText = `${totalPcs} Box Tersedia di Gudang`;
-                badgeEl.style.background = '#059669';
-            } else {
-                badgeEl.innerText = 'Stok Fisik Kosong di Gudang';
-                badgeEl.style.background = '#f59e0b';
-            }
-
-            // Render daftar breakdown item
-            const items = stock.items || [];
-            if (items.length === 0) {
-                itemsEl.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 8px;">Tidak ada stok aktif di gudang untuk pemasok ini.</div>';
-            } else {
-                let html = '<table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">';
-                items.forEach(it => {
-                    const kg = parseFloat(it.total_kg || 0).toFixed(2);
-                    html += `
-                        <tr style="border-bottom: 1px dashed var(--border-hover);">
-                            <td style="padding: 4px 6px; font-weight: 700; color: var(--ok-fg);">${it.nama_item}</td>
-                            <td style="padding: 4px 6px; color: var(--text-muted); font-size: 11px;">(${it.nama_jenis})</td>
-                            <td style="padding: 4px 6px; text-align: right; font-weight: 700; color: var(--aktif-fg);">${it.total_kemasan} Box</td>
-                            <td style="padding: 4px 6px; text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">${kg} Kg</td>
-                        </tr>
-                    `;
-                });
-                html += '</table>';
-                itemsEl.innerHTML = html;
-            }
-
-            // Render chips barcode aktif yang bisa diklik langsung untuk simulasi scan
-            const labels = stock.labels || [];
-            if (labels.length === 0) {
-                chipsEl.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">Tidak ada barcode aktif</span>';
-            } else {
-                let chipsHtml = '';
-                labels.slice(0, 10).forEach(lbl => {
-                    chipsHtml += `
-                        <button type="button" class="btn btn-outline btn-sm" onclick="triggerSimulatedScan('${lbl.id_label}')" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 7px; background: var(--bg-card); border-color: var(--border-hover); color: var(--ok-fg);" title="Klik untuk scan ${lbl.id_label} (${lbl.nama_item})">
-                            + ${lbl.id_label} (${parseFloat(lbl.berat_netto).toFixed(1)}kg)
-                        </button>
-                    `;
-                });
-                chipsEl.innerHTML = chipsHtml;
-            }
-
-        } catch (e) {
-            console.error(e);
-            badgeEl.innerText = 'Error Koneksi';
-            badgeEl.style.background = '#dc2626';
-        }
-    }
-
     // Scan & verifikasi barcode kemasan
     // Ubah pilihan <select> sesuai barcode yang discan dan picu event change (stok & no. surat jalan ikut diperbarui)
     function syncSelect(sel, value) {
@@ -721,31 +617,43 @@ require_once __DIR__ . '/layout/header.php';
 
     // Tarif jual mitra diambil dari Master Harga untuk mitra yang sedang dipilih. Dihitung ulang tiap kali mitra berganti
     // atau barcode baru discan, karena mitra bisa dipilih sesudah scan.
-    async function refreshHargaMitra() {
+    // Harga jual per produk untuk mitra terpilih disimpan sementara (cache) supaya scan berikutnya tidak memanggil server lagi
+    // untuk produk yang sama. Hanya satu panggilan per PRODUK (bukan per box); force=true mengambil ulang (mis. setelah
+    // harga diubah di tab Master Harga).
+    const cacheHarga = new Map();
+    async function refreshHargaMitra(force) {
         const mitraId = parseInt(selectMitra.value || 0, 10);
         if (!mitraId) {
             scannedLabels.forEach(l => { l.harga_mitra = 0; l.subtotal_jual = 0; });
             renderCart();
             return;
         }
-        await Promise.all(Array.from(scannedLabels.keys()).map(async bc => {
+        if (force === true) cacheHarga.clear();
+        const perItem = new Map();   // item_id -> barcode wakil
+        scannedLabels.forEach((l, bc) => {
+            const k = mitraId + ':' + l.item_id;
+            if (!cacheHarga.has(k) && !perItem.has(k)) perItem.set(k, bc);
+        });
+        await Promise.all(Array.from(perItem.entries()).map(async ([k, bc]) => {
             try {
                 const resp = await fetch(`index.php?action=verify_label&barcode=${encodeURIComponent(bc)}&mitra_id=${mitraId}`);
                 const d = await resp.json();
-                const lbl = scannedLabels.get(bc);
-                if (d.success && lbl) {
-                    lbl.harga_mitra = d.label.harga_mitra;
-                    lbl.subtotal_jual = d.label.subtotal_jual;
-                    lbl.harga_pemasok = d.label.harga_pemasok;
-                    lbl.profit = d.label.profit;
-                }
+                if (d.success) cacheHarga.set(k, parseFloat(d.label.harga_mitra || 0));
             } catch (e) { /* tarif tetap seperti sebelumnya */ }
         }));
+        scannedLabels.forEach(l => {
+            const k = mitraId + ':' + l.item_id;
+            if (cacheHarga.has(k)) {
+                l.harga_mitra = cacheHarga.get(k);
+                l.subtotal_jual = Math.round(parseFloat(l.berat_netto || 0) * l.harga_mitra * 100) / 100;
+                l.profit = l.subtotal_jual - parseFloat(l.subtotal_beli || 0);
+            }
+        });
         renderCart();
     }
-    selectMitra.addEventListener('change', refreshHargaMitra);
+    selectMitra.addEventListener('change', () => refreshHargaMitra());
     // Kembali dari tab Master Harga (harga baru disimpan di sana): tarif keranjang diambil ulang otomatis
-    document.addEventListener('visibilitychange', () => { if (!document.hidden && scannedLabels.size) refreshHargaMitra(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && scannedLabels.size) refreshHargaMitra(true); });
 
     async function handleScan(barcode) {
         barcode = barcode.trim();
@@ -758,7 +666,8 @@ require_once __DIR__ . '/layout/header.php';
         }
 
         try {
-            const url = `index.php?action=verify_label&barcode=${encodeURIComponent(barcode)}`;
+            const mitraScan = parseInt(selectMitra.value || 0, 10);
+            const url = `index.php?action=verify_label&barcode=${encodeURIComponent(barcode)}${mitraScan ? '&mitra_id=' + mitraScan : ''}`;
             const resp = await fetch(url);
             const data = await resp.json();
 
@@ -768,6 +677,7 @@ require_once __DIR__ . '/layout/header.php';
             }
 
             const label = data.label;
+            if (mitraScan && label.item_id) cacheHarga.set(mitraScan + ':' + label.item_id, parseFloat(label.harga_mitra || 0));
 
             // Validasi status
             if (label.status !== 'AKTIF') {
@@ -777,18 +687,6 @@ require_once __DIR__ . '/layout/header.php';
 
             // Sinkronkan Pemasok & Mitra dengan barcode yang discan
             const syncNotes = [];
-            const firstInCart = scannedLabels.size > 0 ? scannedLabels.values().next().value : null;
-
-            if (label.pemasok_id) {
-                if (firstInCart && firstInCart.pemasok_id && firstInCart.pemasok_id != label.pemasok_id) {
-                    const namaPms = label.nama_pemasok ? `[${label.kode_pemasok}] ${label.nama_pemasok}` : 'pemasok lain';
-                    showAlert(`Barcode ${barcode} berasal dari ${namaPms}. Satu surat jalan hanya untuk satu pemasok; selesaikan atau kosongkan sesi ini dulu.`, false);
-                    return;
-                }
-                if (String(selectPemasok.value) !== String(label.pemasok_id) && syncSelect(selectPemasok, label.pemasok_id)) {
-                    syncNotes.push('pemasok');
-                }
-            }
 
             if (label.mitra_id) {
                 if (String(selectMitra.value) !== String(label.mitra_id) && syncSelect(selectMitra, label.mitra_id)) {
@@ -799,6 +697,7 @@ require_once __DIR__ . '/layout/header.php';
             scannedLabels.set(barcode, label);
             renderCart();
             refreshHargaMitra();
+            perbaruiAsalPemasok();
 
             if (data.fifo_info && data.fifo_info.has_older_stock) {
                 // Notifikasi reguler scan berhasil di alert box atas
@@ -818,7 +717,7 @@ require_once __DIR__ . '/layout/header.php';
                         }
                     });
 
-                    const pmsId = label.pemasok_id || selectPemasok.value || '';
+                    const pmsId = label.pemasok_id || '';
                     const itmId = label.item_id || '';
                     const stockUrl = `index.php?page=barang_datang&stok=AKTIF&dari=2000-01-01&item=${encodeURIComponent(itmId)}${pmsId ? '&pihak=' + encodeURIComponent(pmsId) : ''}`;
 
@@ -859,7 +758,7 @@ require_once __DIR__ . '/layout/header.php';
                 <tr id="emptyCartRow">
                     <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">
                         <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">Belum ada kemasan yang discan</div>
-                        <div style="font-size: 12px; margin-top: 4px;">Pilih pemasok & mitra di samping, lalu scan barcode kemasan fisik di atas.</div>
+                        <div style="font-size: 12px; margin-top: 4px;">Pilih mitra di samping, lalu scan barcode kemasan fisik di atas.</div>
                     </td>
                 </tr>
             `;
@@ -908,6 +807,7 @@ require_once __DIR__ . '/layout/header.php';
                 </td>
                 <td>
                     <code style="font-size: 11px;">${label.no_surat_jalan || label.batch_no || '-'}</code>
+                    <div style="font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 2px;">${label.nama_pemasok ? '[' + label.kode_pemasok + '] ' + label.nama_pemasok : ''}</div>
                 </td>
                 <td style="text-align: center; position: sticky; right: 0; background: var(--bg-card, #ffffff); z-index: 5; box-shadow: -2px 0 4px rgba(0,0,0,0.04);">
                     <button type="button" class="btn btn-outline btn-sm" style="padding: 2px 7px; color: var(--danger);" onclick="removeLabel('${barcode}')" title="Hapus dari sesi">
@@ -926,6 +826,7 @@ require_once __DIR__ . '/layout/header.php';
         if (scannedLabels.has(barcode)) {
             scannedLabels.delete(barcode);
             renderCart();
+            perbaruiAsalPemasok();
             showAlert(`Barcode ${barcode} dikeluarkan dari daftar.`, true);
         }
     }
@@ -988,6 +889,7 @@ require_once __DIR__ . '/layout/header.php';
             if (res.isConfirmed) {
                 scannedLabels.clear();
                 renderCart();
+                perbaruiAsalPemasok();
                 showAlert('Sesi scan dikosongkan.', true);
             }
         }
@@ -1000,17 +902,10 @@ require_once __DIR__ . '/layout/header.php';
             return;
         }
 
-        const pemasokId = selectPemasok.value;
         const mitraId = selectMitra.value;
         const noRef = document.getElementById('no_referensi').value.trim();
         const namaPenerima = document.getElementById('nama_penerima') ? document.getElementById('nama_penerima').value.trim() : '';
         const ket = document.getElementById('keterangan') ? document.getElementById('keterangan').value.trim() : '';
-
-        if (!pemasokId) {
-            showAlert('Pilih pemasok asal stok terlebih dahulu.', false);
-            selectPemasok.focus();
-            return;
-        }
 
         if (!mitraId) {
             showAlert('Pilih mitra tujuan pengeluaran terlebih dahulu.', false);
@@ -1024,7 +919,6 @@ require_once __DIR__ . '/layout/header.php';
         }
 
         const payload = {
-            pemasok_id: parseInt(pemasokId),
             mitra_id: parseInt(mitraId),
             no_referensi: noRef,
             nama_penerima: namaPenerima,
@@ -1114,61 +1008,61 @@ require_once __DIR__ . '/layout/header.php';
         }
     });
 
-    // Otomatis update info stok & nomor Surat Jalan saat Pemasok diganti
-    selectPemasok.addEventListener('change', async function() {
-        const pmsId = this.value;
-        const opt = this.options[this.selectedIndex];
-        const kode = opt.getAttribute('data-kode') || '';
-        
-        fetchPemasokStock();
-        if (document.getElementById('panelFifoGuide') && document.getElementById('panelFifoGuide').style.display !== 'none') {
-            fetchFifoGuide();
+    // Ringkasan asal pemasok dari box yang discan, dan nomor surat jalan mengikuti: satu pemasok -> kode pemasok,
+    // campur pemasok -> kode mitra penerima. Nomor hanya diambil ulang bila kodenya berganti.
+    let kodeSjTerakhir = null;
+    async function ambilNomorSj(tampilkan) {
+        const set = new Map();
+        scannedLabels.forEach(l => { if (l.pemasok_id) set.set(String(l.pemasok_id), l); });
+        let kode = '';
+        if (set.size === 1) kode = Array.from(set.values())[0].kode_pemasok || '';
+        if (!kode) {
+            const o = selectMitra.options[selectMitra.selectedIndex];
+            kode = (o && o.getAttribute('data-kode')) || '';
         }
-
-        // Update No Surat Jalan
+        if (!kode) return;
+        if (!tampilkan && kode === kodeSjTerakhir) return;
         try {
-            const resp = await fetch(`index.php?action=get_next_outbound_sj&pemasok_id=${pmsId}&kode=${encodeURIComponent(kode)}`);
+            const resp = await fetch(`index.php?action=get_next_outbound_sj&kode=${encodeURIComponent(kode)}`);
             const data = await resp.json();
             if (data.success && data.no_surat_jalan) {
+                kodeSjTerakhir = kode;
                 document.getElementById('no_referensi').value = data.no_surat_jalan;
+                if (tampilkan) showAlert('Nomor surat jalan diperbarui menjadi ' + data.no_surat_jalan, true);
             }
-        } catch (e) {
-            console.error(e);
+        } catch (e) { console.error(e); }
+    }
+
+    function perbaruiAsalPemasok() {
+        const el = document.getElementById('infoPemasokAsal');
+        const set = new Map();
+        scannedLabels.forEach(l => {
+            const k = l.pemasok_id ? '[' + l.kode_pemasok + '] ' + l.nama_pemasok : 'Tanpa pemasok';
+            set.set(k, (set.get(k) || 0) + 1);
+        });
+        if (el) {
+            if (!set.size) { el.style.color = 'var(--text-muted)'; el.textContent = 'Belum ada box discan'; }
+            else {
+                el.style.color = 'var(--text-main)';
+                el.innerHTML = Array.from(set.entries()).map(([k, n]) => k.replace(/</g, '&lt;') + ' <span style="font-weight:600;color:var(--text-muted);">(' + n + ' box)</span>').join('<br>');
+            }
         }
-    });
+        ambilNomorSj(false);
+    }
+    selectMitra.addEventListener('change', () => ambilNomorSj(false));
 
     // Tombol Generate Ulang Surat Jalan
-    document.getElementById('btnRefreshSj')?.addEventListener('click', async function() {
-        const pmsId = selectPemasok.value;
-        const opt = selectPemasok.options[selectPemasok.selectedIndex];
-        const kode = opt.getAttribute('data-kode') || '';
-        try {
-            const resp = await fetch(`index.php?action=get_next_outbound_sj&pemasok_id=${pmsId}&kode=${encodeURIComponent(kode)}`);
-            const data = await resp.json();
-            if (data.success && data.no_surat_jalan) {
-                document.getElementById('no_referensi').value = data.no_surat_jalan;
-                showAlert('Nomor surat jalan diperbarui menjadi ' + data.no_surat_jalan, true);
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    });
+    document.getElementById('btnRefreshSj')?.addEventListener('click', () => ambilNomorSj(true));
 
     // Panduan Antrean FIFO Stok Tertua
     async function fetchFifoGuide() {
-        const pemasokId = selectPemasok.value;
         const container = document.getElementById('fifoGuideListContainer');
         if (!container) return;
-
-        if (!pemasokId) {
-            container.innerHTML = '<div style="padding: 10px; text-align: center; font-size: 11.5px; color: var(--text-muted);">Pilih pemasok terlebih dahulu.</div>';
-            return;
-        }
 
         container.innerHTML = '<div style="padding: 10px; text-align: center; font-size: 11.5px; color: var(--text-muted);">Memuat antrean FIFO...</div>';
 
         try {
-            const resp = await fetch(`index.php?action=get_pemasok_fifo_stock&pemasok_id=${pemasokId}`);
+            const resp = await fetch(`index.php?action=get_pemasok_fifo_stock`);
             const data = await resp.json();
 
             if (!data.success || !data.fifo_list || data.fifo_list.length === 0) {
@@ -1339,10 +1233,6 @@ require_once __DIR__ . '/layout/header.php';
         if (window.lucide) window.lucide.createIcons();
     }
 
-    // Inisialisasi stok awal saat halaman dimuat
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchPemasokStock();
-    });
 </script>
 
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

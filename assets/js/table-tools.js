@@ -6,6 +6,8 @@
  * Sort    : klik judul kolom (asc -> desc -> kembali ke urutan awal).
  *           Nilai khusus per sel: atribut data-sort pada <td>.
  * Catatan : filter bekerja pada baris yang sedang tampil di halaman (client-side).
+ * Halaman : tambahkan data-halaman="25" pada <table> untuk membagi baris per halaman (pilihan jumlah baris tersedia).
+             Berlaku bersama pencarian dan pengurutan; saat dicetak semua baris tetap ikut tercetak.
  */
 (function () {
     'use strict';
@@ -104,7 +106,8 @@
         table.__ttDone = true;
         table.classList.add('tt-enabled');
 
-        var state = { col: -1, dir: 0, query: '' };
+        var state = { col: -1, dir: 0, query: '', page: 1, per: parseInt(table.getAttribute('data-halaman'), 10) || 0 };
+        var pagerEl = null;
         var busy = false;
         var observer = null;
         var originalOrder = built.groups.map(function (g) { return g.rows[0]; });
@@ -202,6 +205,7 @@
             detectTypes(buildGroups().groups);
             applySort();
             updateHeaders();
+            if (table.hasAttribute('data-halaman')) { state.page = 1; applyFilter(); }
         }
 
         ths.forEach(function (th, i) {
@@ -233,17 +237,83 @@
 
         var countEl = null, input = null, noMatch = null;
 
+        // ---------- Halaman (opsional: data-halaman) ----------
+        function applyPaging(groups, cocok) {
+            var dasar = parseInt(table.getAttribute('data-halaman'), 10);
+            if (!(dasar > 0)) return;
+            var per = state.per;                       // 0 = tampilkan semua
+            var total = cocok.length;
+            var maks = per > 0 ? Math.max(1, Math.ceil(total / per)) : 1;
+            state.page = Math.min(Math.max(1, state.page), maks);
+            var dari = per > 0 ? (state.page - 1) * per : 0;
+            var sampai = per > 0 ? dari + per : total;
+            withoutObserving(function () {
+                groups.forEach(function (g) { g.rows.forEach(function (r) { r.classList.remove('tt-page-hidden'); }); });
+                cocok.forEach(function (g, i) {
+                    var sembunyi = i < dari || i >= sampai;
+                    g.rows.forEach(function (r) { r.classList.toggle('tt-page-hidden', sembunyi); });
+                });
+            });
+            renderPager(dasar, total, maks, dari, Math.min(sampai, total));
+        }
+
+        function renderPager(dasar, total, maks, dari, sampai) {
+            if (!pagerEl) {
+                pagerEl = document.createElement('div');
+                pagerEl.className = 'sj-halaman no-print tt-pager';
+                var anchor = (table.closest('.table-responsive') || table);
+                anchor.parentNode.insertBefore(pagerEl, anchor.nextSibling);
+                pagerEl.addEventListener('click', function (e) {
+                    var a = e.target.closest('[data-hal]');
+                    if (!a) return;
+                    e.preventDefault();
+                    if (a.classList.contains('mati')) return;
+                    state.page = parseInt(a.getAttribute('data-hal'), 10);
+                    applyFilter();
+                });
+                pagerEl.addEventListener('change', function (e) {
+                    if (!e.target.classList.contains('tt-per')) return;
+                    state.per = parseInt(e.target.value, 10) || 0;
+                    state.page = 1;
+                    applyFilter();
+                });
+            }
+            // Sedikit baris dan belum diubah pengguna: tidak perlu bilah halaman
+            if (total <= dasar && state.per === dasar) { pagerEl.style.display = 'none'; return; }
+            pagerEl.style.display = '';
+            var h = state.page;
+            function t(n, label, aktif, mati) {
+                return '<a href="#" class="sj-hal' + (aktif ? ' aktif' : '') + (mati ? ' mati' : '') + '" data-hal="' + n + '">' + label + '</a>';
+            }
+            var nomor = t(1, '&laquo;', false, h <= 1) + t(h - 1, '&lsaquo;', false, h <= 1);
+            var m = Math.max(1, h - 2), a = Math.min(maks, h + 2);
+            if (m > 1) nomor += t(1, '1') + (m > 2 ? '<span class="sj-hal mati">&hellip;</span>' : '');
+            for (var i = m; i <= a; i++) nomor += t(i, String(i), i === h);
+            if (a < maks) nomor += (a < maks - 1 ? '<span class="sj-hal mati">&hellip;</span>' : '') + t(maks, String(maks));
+            nomor += t(h + 1, '&rsaquo;', false, h >= maks) + t(maks, '&raquo;', false, h >= maks);
+            var opsi = [dasar, dasar * 2, dasar * 4, 0].map(function (v) {
+                return '<option value="' + v + '"' + (v === state.per ? ' selected' : '') + '>' + (v ? v + ' baris' : 'Semua') + '</option>';
+            }).join('');
+            pagerEl.innerHTML =
+                '<div class="sj-halaman-info">Menampilkan ' + (total ? dari + 1 : 0) + '-' + sampai + ' dari ' + total + ' baris</div>' +
+                '<div class="sj-halaman-nomor">' + nomor + '</div>' +
+                '<div class="sj-halaman-per">Tampil <select class="tt-per" data-native>' + opsi + '</select></div>';
+        }
+
+
         function applyFilter() {
             var q = state.query.trim().toLowerCase();
             var groups = buildGroups().groups, shown = 0;
+            var cocok = [];
             withoutObserving(function () {
                 groups.forEach(function (g) {
                     var text = g.rows.map(function (r) { return r.textContent; }).join(' ').toLowerCase();
                     var ok = !q || text.indexOf(q) !== -1;
                     g.rows.forEach(function (r) { r.classList.toggle('tt-hidden', !ok); });
-                    if (ok) shown++;
+                    if (ok) { shown++; cocok.push(g); }
                 });
             });
+            applyPaging(groups, cocok);
             if (countEl) countEl.textContent = q ? (shown + ' dari ' + groups.length + ' baris') : (groups.length + ' baris');
             if (noMatch) noMatch.style.display = (q && shown === 0) ? '' : 'none';
         }
@@ -259,9 +329,9 @@
             host.parentNode.insertBefore(bar, host);
             input = bar.querySelector('.tt-input');
             countEl = bar.querySelector('.tt-count');
-            input.addEventListener('input', function () { state.query = input.value; applyFilter(); });
+            input.addEventListener('input', function () { state.query = input.value; state.page = 1; applyFilter(); });
             input.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') { input.value = ''; state.query = ''; applyFilter(); }
+                if (e.key === 'Escape') { input.value = ''; state.query = ''; state.page = 1; applyFilter(); }
             });
 
             noMatch = document.createElement('div');

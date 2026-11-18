@@ -10,6 +10,11 @@ date_default_timezone_set('Asia/Jakarta');
 
 session_start();
 
+// Kompres halaman HTML (bukan aksi API/unduhan): halaman besar seperti matriks Master Harga turun dari ~2 MB menjadi puluhan KB
+if (empty($_GET['action']) && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+    ob_start('ob_gzhandler');
+}
+
 // PSR-4 Autoloader Sederhana untuk namespace App\
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
@@ -213,9 +218,6 @@ if ($action) {
             case 'get_pemasok_fifo_stock':
                 $pemasokId = (int)($_GET['pemasok_id'] ?? 0);
                 $itemId    = !empty($_GET['item_id']) ? (int)$_GET['item_id'] : null;
-                if ($pemasokId <= 0) {
-                    throw new Exception("Pemasok ID tidak valid");
-                }
                 $fifoList = Label::getFifoActiveList($pemasokId, $itemId, 20);
                 Helper::jsonResponse([
                     'success'   => true,
@@ -253,9 +255,6 @@ if ($action) {
             case 'get_pemasok_warehouse_stock':
                 $pemasokId = (int)($_GET['pemasok_id'] ?? 0);
                 $mitraId   = (int)($_GET['mitra_id'] ?? 0);
-                if ($pemasokId <= 0) {
-                    throw new Exception("Pemasok ID tidak valid");
-                }
                 $stockData = \App\Services\StockService::getStockGudangPerPemasok($pemasokId, $mitraId ?: null);
                 Helper::jsonResponse([
                     'success'    => true,
@@ -318,14 +317,12 @@ if ($action) {
                 $barcodes     = (array)($payload['barcodes'] ?? []);
                 $userId       = (int)($_SESSION['user_login']['id'] ?? 4);
 
-                if ($pemasokId <= 0) {
-                    throw new Exception("Pemasok asal stok wajib dipilih!");
-                }
                 if ($mitraId <= 0) {
                     throw new Exception("Mitra penerima barang wajib dipilih!");
                 }
 
-                $result = Transaksi::processPengeluaran($pemasokId, $mitraId, $barcodes, $noReferensi, $keterangan, $userId, $namaPenerima, $terminHari);
+                // Pemasok tidak lagi dipilih: asal tiap box dibaca dari labelnya, satu dokumen boleh campur pemasok
+                $result = Transaksi::processPengeluaran($mitraId, $barcodes, [], $noReferensi, $keterangan, $userId, $namaPenerima, $terminHari);
                 Helper::jsonResponse($result);
                 break;
 
@@ -805,6 +802,25 @@ if ($action) {
                     'invoice_id'       => $invoiceId,
                     'next_surat_jalan' => $nextNoSj,
                     'print_bast_url'   => "index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=" . urlencode($noSj)
+                ]);
+                exit;
+
+            // O4. Selesaikan Surat Jalan penerimaan yang tertinggal (box sudah ditimbang, faktur belum terbentuk)
+            case 'selesaikan_sj_tertinggal':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode harus POST");
+                $noSj = trim($_POST['no_surat_jalan'] ?? '');
+                if ($noSj === '') throw new Exception("Nomor Surat Jalan wajib diisi.");
+                $ada = array_filter(\App\Models\Label::getSuratJalanBelumDifaktur(), fn($r) => $r['no_surat_jalan'] === $noSj);
+                if (!$ada) throw new Exception("Surat Jalan {$noSj} tidak ditemukan di daftar yang belum diselesaikan (mungkin sudah diselesaikan atau dibatalkan).");
+                $row = reset($ada);
+                \App\Models\Label::markSuratJalanTimbangSelesai($noSj);
+                $invoiceId = \App\Models\PurchaseInvoice::createFromSuratJalan($noSj, (int)$row['pemasok_id']);
+                if (!$invoiceId) throw new Exception("Faktur untuk {$noSj} gagal dibuat.");
+                Helper::jsonResponse([
+                    'success'        => true,
+                    'message'        => "Surat Jalan {$noSj} diselesaikan dan faktur penerimaan terbentuk.",
+                    'invoice_id'     => $invoiceId,
+                    'print_bast_url' => "index.php?page=surat_jalan_penerimaan_print&no_surat_jalan=" . urlencode($noSj)
                 ]);
                 exit;
 

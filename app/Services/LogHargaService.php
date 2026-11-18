@@ -86,7 +86,7 @@ class LogHargaService
         if (!empty($f['jenis']))    { $sql .= " AND l.jenis = ?";    $p[] = $f['jenis']; }
         if (!empty($f['pihak_id'])) { $sql .= " AND l.pihak_id = ?"; $p[] = (int)$f['pihak_id']; }
         if (!empty($f['item_id']))  { $sql .= " AND l.item_id = ?";  $p[] = (int)$f['item_id']; }
-        if (empty($f['dengan_awal'])) { $sql .= " AND NOT (l.harga_lama IS NULL AND l.alasan LIKE 'Harga awal%')"; }
+        if (empty($f['dengan_awal'])) { $sql .= " AND NOT (l.harga_lama IS NULL AND COALESCE(l.alasan, '') LIKE 'Harga awal%')"; }
         if (!empty($f['dari']))     { $sql .= " AND DATE(l.created_at) >= ?"; $p[] = $f['dari']; }
         if (!empty($f['sampai']))   { $sql .= " AND DATE(l.created_at) <= ?"; $p[] = $f['sampai']; }
         $sql .= " ORDER BY l.created_at DESC, l.id DESC LIMIT " . (int)($f['limit'] ?? 500);

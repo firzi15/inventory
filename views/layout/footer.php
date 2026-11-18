@@ -5,7 +5,6 @@
     <!-- Driver & Utility Scripts -->
     <script src="assets/js/scale.js"></script>
     <script src="assets/js/scanner.js"></script>
-    <script src="assets/js/xlsx.full.min.js"></script>
     <script src="assets/js/chart.umd.min.js"></script>
     <script src="assets/js/table-tools.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/table-tools.js') ?>"></script>
     <script src="assets/js/salin.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/salin.js') ?>"></script>

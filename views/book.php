@@ -44,13 +44,27 @@ usort($rowsTampil, function ($a, $b) use ($kunciUrut, $arah) {
     if ($c === 0) $c = strcmp($a['tanggal'], $b['tanggal']);
     return $arah === 'turun' ? -$c : $c;
 });
+// Halaman: 25 / 50 / 100 / 200 baris, atau Semua (per=0). KPI, ringkasan per pemasok, dan grafik tetap memakai seluruh data.
+$opsiPer = [25, 50, 100, 200, 0];
+$perGet = isset($_GET['per']) ? (int)$_GET['per'] : 50;
+$per = in_array($perGet, $opsiPer, true) ? $perGet : 50;
+$total = count($rowsTampil);
+$perEf = $per === 0 ? max(1, $total) : $per;
+$halMax = max(1, (int)ceil($total / $perEf));
+$hal = min($halMax, max(1, (int)($_GET['hal'] ?? 1)));
+$rowsHalaman = array_slice($rowsTampil, ($hal - 1) * $perEf, $perEf);
+$qs = function (array $x) {
+    $q = array_merge($_GET, $x);
+    return htmlspecialchars(http_build_query(array_filter($q, fn($v) => $v !== null && $v !== '')));
+};
+
 // Pengurutan per pemasok / mitra / artikel menampilkan TOTAL tiap kelompok; urutan lain datar
 $grupTampil = [];
 if ($urut === 'pihak' || $urut === 'artikel') {
     $kg_ = $urut === 'pihak' ? 'pihak' : 'nama_item';
-    foreach ($rowsTampil as $r) { $grupTampil[$r[$kg_]][] = $r; }
+    foreach ($rowsHalaman as $r) { $grupTampil[$r[$kg_]][] = $r; }
 } else {
-    $grupTampil[''] = $rowsTampil;
+    $grupTampil[''] = $rowsHalaman;
 }
 $perPihak = $itemId ? BukuService::perPihak($rows) : [];
 $kolomUb = ['pihak', 'transaksi', 'qty', 'nilai', 'min', 'max', 'rata', 'terakhir'];
@@ -62,7 +76,7 @@ else { uasort($perPihak, fn($a, $b) => $ab === 'turun' ? $b[$ub] <=> $a[$ub] : $
 // Judul kolom yang bisa diklik: tautan mempertahankan semua filter yang sedang aktif
 $tautanUrut = function (string $kunciParam, string $kunciArah, string $kolom, string $label, string $sekarang, string $arahSekarang) {
     $baru = ($sekarang === $kolom && $arahSekarang === 'naik') ? 'turun' : 'naik';
-    $q = array_merge($_GET, [$kunciParam => $kolom, $kunciArah => $baru]);
+    $q = array_merge($_GET, [$kunciParam => $kolom, $kunciArah => $baru, 'hal' => 1]);
     $aktif = $sekarang === $kolom;
     return '<a class="th-sort ' . ($aktif ? 'aktif' : '') . '" href="index.php?' . htmlspecialchars(http_build_query($q)) . '">' . $label
          . '<span class="panah">' . ($aktif ? ($arahSekarang === 'naik' ? '&#9650;' : '&#9660;') : '&#8645;') . '</span></a>';
@@ -215,6 +229,7 @@ require_once __DIR__ . '/layout/header.php';
             <table class="table-custom" data-no-tools>
                 <thead>
                     <tr>
+                        <th style="width: 44px; text-align: center;">No</th>
                         <?= $thUrut('tanggal', 'Tanggal') ?>
                         <?= $thUrut('pihak', $labelPihak) ?>
                         <?= $thUrut('artikel', 'Artikel') ?>
@@ -229,12 +244,14 @@ require_once __DIR__ . '/layout/header.php';
                 </thead>
                 <tbody>
                     <?php if (!$rows): ?>
-                        <tr><td colspan="10" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada data pada filter ini</td></tr>
+                        <tr><td colspan="11" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada data pada filter ini</td></tr>
                     <?php endif; ?>
                     <?php
+                    $no = ($hal - 1) * $perEf;
                     foreach ($grupTampil as $namaGrup => $listGrup):
                         foreach ($listGrup as $r): ?>
                         <tr>
+                            <td style="text-align: center; color: var(--text-muted);"><?= ++$no ?></td>
                             <td><?= $tglFmt($r['tanggal']) ?></td>
                             <td><?= htmlspecialchars($r['pihak']) ?></td>
                             <td style="font-weight: 600;"><?= htmlspecialchars($r['nama_item']) ?></td>
@@ -256,6 +273,28 @@ require_once __DIR__ . '/layout/header.php';
                     ?>
                 </tbody>
             </table>
+        </div>
+        <div class="sj-halaman no-print">
+            <div class="sj-halaman-info">Menampilkan <?= $total ? ($hal - 1) * $perEf + 1 : 0 ?>-<?= min($total, $hal * $perEf) ?> dari <?= $total ?> baris</div>
+            <div class="sj-halaman-nomor">
+                <?php
+                $tautan = function ($h, $label, $aktif = false, $mati = false) use ($qs) {
+                    if ($mati) return '<span class="sj-hal mati">' . $label . '</span>';
+                    return '<a class="sj-hal ' . ($aktif ? 'aktif' : '') . '" href="index.php?' . $qs(['hal' => $h]) . '">' . $label . '</a>';
+                };
+                echo $tautan(1, '&laquo;', false, $hal <= 1) . $tautan($hal - 1, '&lsaquo;', false, $hal <= 1);
+                $mulai = max(1, $hal - 2); $akhir = min($halMax, $hal + 2);
+                if ($mulai > 1) echo $tautan(1, '1') . ($mulai > 2 ? '<span class="sj-hal mati">&hellip;</span>' : '');
+                for ($i = $mulai; $i <= $akhir; $i++) echo $tautan($i, (string)$i, $i === $hal);
+                if ($akhir < $halMax) echo ($akhir < $halMax - 1 ? '<span class="sj-hal mati">&hellip;</span>' : '') . $tautan($halMax, (string)$halMax);
+                echo $tautan($hal + 1, '&rsaquo;', false, $hal >= $halMax) . $tautan($halMax, '&raquo;', false, $hal >= $halMax);
+                ?>
+            </div>
+            <div class="sj-halaman-per"><label for="bkPer">Per halaman</label>
+                <select id="bkPer" class="form-control" style="width: auto; display: inline-block;" onchange="location.href=this.value">
+                    <?php foreach ($opsiPer as $o): ?><option value="index.php?<?= $qs(['per' => $o, 'hal' => 1]) ?>" <?= $o === $per ? 'selected' : '' ?>><?= $o === 0 ? 'Semua' : $o ?></option><?php endforeach; ?>
+                </select>
+            </div>
         </div>
     </div>
 

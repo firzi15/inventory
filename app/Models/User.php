@@ -82,6 +82,18 @@ class User {
                 ]
             ];
 
+            // Sinkronisasi penuh me-hash/memverifikasi bcrypt tiap akun (+/- 230 ms per akun) dan sebelumnya berjalan di
+            // SETIAP request. Sekarang dilewati bila cap akun di database (profil + hash) sama dengan cap terakhir
+            // yang sudah disinkronkan; bila database diganti atau akun berubah, sinkronisasi penuh berjalan lagi.
+            $berkasCap = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'users_sync_' . md5(__DIR__ . '|' . \App\Config\Config::getDbName()) . '.sig';
+            $hitungCap = function () use ($db, $defaultAccounts) {
+                $rows = $db->query("SELECT id, username, nama_lengkap, role, is_active, password_hash FROM users WHERE id IN (1,2,3) ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
+                return md5(json_encode([$rows, $defaultAccounts]));
+            };
+            if (is_file($berkasCap) && @file_get_contents($berkasCap) === $hitungCap()) {
+                return;
+            }
+
             foreach ($defaultAccounts as $acc) {
                 // Cek berdasarkan Username (UNIQUE)
                 $stmt = $db->prepare("SELECT id, username, password_hash FROM users WHERE username = :username LIMIT 1");
@@ -125,6 +137,7 @@ class User {
                     ]);
                 }
             }
+            @file_put_contents($berkasCap, $hitungCap());
         } catch (Throwable $e) {
             error_log("Error User::syncDefaultUsers: " . $e->getMessage());
         }

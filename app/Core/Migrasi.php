@@ -9,10 +9,39 @@ class Migrasi
 {
     private static bool $done = false;
 
+    /** Naikkan angka ini setiap menambah langkah migrasi baru supaya semua server menjalankannya sekali lagi. */
+    private const VERSI = 1;
+
+    private static function berkasPenanda(): string
+    {
+        return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'migrasi_' . md5(__DIR__ . '|' . \App\Config\Config::getDbName()) . '_v' . self::VERSI . '.ok';
+    }
+
+    /**
+     * Migrasi memeriksa skema lewat puluhan SHOW COLUMNS / SHOW TABLES (lambat, ratusan ms) dan sebelumnya
+     * dijalankan di SETIAP request. Sekarang cukup sekali: sesudahnya ada berkas penanda, dan tiap request hanya
+     * memastikan kolom/tabel hasil migrasi masih ada (SELECT ... LIMIT 0, cepat). Bila database diganti dengan
+     * versi lama, probe gagal dan migrasi penuh berjalan lagi.
+     */
+    private static function sudahMutakhir(\PDO $db): bool
+    {
+        if (!is_file(self::berkasPenanda())) return false;
+        try {
+            $db->query("SELECT alasan_batal, dibatalkan_at, dibatalkan_oleh, termin_hari, tanggal_jatuh_tempo FROM transaksi_stok LIMIT 0");
+            $db->query("SELECT status, jumlah_asal FROM ap_pembayaran LIMIT 0");
+            $db->query("SELECT status, jumlah_asal FROM ar_pembayaran LIMIT 0");
+            $db->query("SELECT id FROM log_harga LIMIT 0");
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
     public static function jalankan(): void
     {
         if (self::$done) return;
         $db = Database::getConnection();
+        if (self::sudahMutakhir($db)) { self::$done = true; return; }
 
         // Pengeluaran yang dibatalkan: jenis berubah ke PENGELUARAN_BATAL sehingga otomatis keluar dari
         // semua laporan yang memfilter jenis_transaksi = 'PENGELUARAN'; baris tetap ada sebagai jejak.
@@ -54,6 +83,7 @@ class Migrasi
         \App\Services\PeriodeService::ensureTable();
 
         self::$done = true;
+        @file_put_contents(self::berkasPenanda(), date('c'));
     }
 
     private static function kolom(\PDO $db, string $tabel, string $kolom, string $definisi): void

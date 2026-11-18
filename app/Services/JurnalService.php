@@ -399,7 +399,7 @@ class JurnalService
             SELECT t.id trx_id, COALESCE(t.no_referensi_eksternal, t.no_bast, t.no_transaksi) sj, DATE(t.created_at) tanggal,
                    t.mitra_id, COALESCE(m.nama_mitra, '-') mitra,
                    i.id item_id, i.nama_item produk, i.jenis_id, COALESCE(jb.nama_jenis, '-') jenis,
-                   l.pemasok_id, COALESCE(p.nama_pemasok, '-') pemasok,
+                   l.pemasok_id, COALESCE(CONCAT('[', p.kode_pemasok, '] ', p.nama_pemasok), '-') pemasok,
                    COUNT(*) kemasan, SUM(d.berat_netto) qty, SUM(d.total_jual) jual, SUM(d.total_beli) hpp
             FROM transaksi_stok t
             JOIN transaksi_stok_detail d ON d.transaksi_id = t.id

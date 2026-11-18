@@ -248,7 +248,7 @@ require_once __DIR__ . '/layout/header.php';
             </form>
 
             <div class="table-responsive">
-                <table class="table-custom">
+                <table class="table-custom" data-halaman="25">
                     <thead>
                         <tr>
                             <th style="width: 35px; text-align: center;">No</th>
@@ -361,7 +361,7 @@ require_once __DIR__ . '/layout/header.php';
             </div>
 
             <div class="table-responsive">
-                <table class="table-custom">
+                <table class="table-custom" data-halaman="25">
                     <thead>
                         <tr>
                             <th style="width: 35px; text-align: center;">No</th>

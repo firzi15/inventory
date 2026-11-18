@@ -8,8 +8,8 @@ RUN docker-php-ext-install -j$(nproc) \
 # Klien MariaDB (mysql dan mysqldump) untuk fitur Backup data: buat, unduh, dan pulihkan
 RUN apt-get update     && apt-get install -y --no-install-recommends mariadb-client     && rm -rf /var/lib/apt/lists/*
 
-# Aktifkan modul Apache rewrite & headers
-RUN a2enmod rewrite headers
+# Aktifkan modul Apache rewrite, headers & deflate (kompresi CSS/JS)
+RUN a2enmod rewrite headers deflate
 
 # Konfigurasi custom PHP
 RUN { \

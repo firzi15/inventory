@@ -108,8 +108,27 @@
         else alert(pesan);
     }
 
+    // Pustaka Excel (+/- 930 KB) dimuat hanya saat tombol ekspor dipakai, bukan di setiap halaman
+    var muatanXlsx = null;
+    function muatXlsx() {
+        if (typeof XLSX !== 'undefined') return Promise.resolve();
+        if (!muatanXlsx) {
+            muatanXlsx = new Promise(function (ok, gagal) {
+                var s = document.createElement('script');
+                s.src = 'assets/js/xlsx.full.min.js';
+                s.onload = ok;
+                s.onerror = function () { muatanXlsx = null; gagal(new Error('gagal memuat')); };
+                document.head.appendChild(s);
+            });
+        }
+        return muatanXlsx;
+    }
+
     window.eksporExcel = function (nama, id) {
-        if (typeof XLSX === 'undefined') { peringatan('Pustaka Excel belum siap, coba lagi sesaat.'); return; }
+        muatXlsx().then(function () { eksporExcelSiap(nama, id); }, function () { peringatan('Pustaka Excel gagal dimuat, coba lagi.'); });
+    };
+
+    function eksporExcelSiap(nama, id) {
         var data = kumpulkan(id);
         if (!data.length) { peringatan('Tidak ada data yang tampil untuk diekspor.'); return; }
         var wb = XLSX.utils.book_new(), dipakai = {};
@@ -129,7 +148,7 @@
         var file = nama + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
         XLSX.writeFile(wb, file);
         if (window.showToast) window.showToast('Berhasil mengekspor ' + file, 'success');
-    };
+    }
 
     function esc(s) {
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

@@ -95,6 +95,8 @@ class Transaksi {
             $totalNilaiJual = 0.0;
             $totalProfit = 0.0;
             $verifiedLabels = [];
+            $pemasokSet = [];
+            $sudahDiscan = [];
 
             // 1. Validasi setiap barcode yang discan
             foreach ($barcodeList as $barcode) {
@@ -110,16 +112,13 @@ class Transaksi {
                     throw new Exception("Barcode '{$barcode}' tidak dapat dikeluarkan karena berstatus '{$label['status']}'!");
                 }
 
-                // Jika pemasokId belum ditentukan (signature lama), ambil dari label pertama
-                if ($pemasokId <= 0 && !empty($label['pemasok_id'])) {
-                    $pemasokId = (int)$label['pemasok_id'];
+                // Satu dokumen boleh berisi box dari beberapa pemasok; asal dicatat per box (labels.pemasok_id)
+                $pemasokLabel = (int)($label['pemasok_id'] ?? 0);
+                if ($pemasokLabel > 0) $pemasokSet[$pemasokLabel] = true;
+                if (!empty($label['id']) && isset($sudahDiscan[(int)$label['id']])) {
+                    throw new Exception("Barcode '{$barcode}' discan lebih dari sekali dalam dokumen ini.");
                 }
-
-                // Validasi asal kepemilikan pemasok
-                if ($pemasokId > 0 && (int)($label['pemasok_id'] ?? 0) !== $pemasokId) {
-                    $namaPmsAsal = $label['nama_pemasok'] ?: 'Pemasok Lain';
-                    throw new Exception("PELANGGARAN STOK! Barcode '{$barcode}' berasal dari {$namaPmsAsal}, BUKAN dari pemasok yang dipilih untuk pengeluaran ini!");
-                }
+                $sudahDiscan[(int)$label['id']] = true;
 
                 $netto = (float)$label['berat_netto'];
                 $itemId = (int)$label['item_id'];
@@ -127,8 +126,8 @@ class Transaksi {
                 // Dapatkan harga beli pemasok & harga jual ke mitra
                 // HPP memakai biaya beli yang dibekukan saat penerimaan; master harga hanya cadangan untuk label lama
                 $hargaPemasok = (float)($label['harga_beli_per_kg'] ?? 0);
-                if ($hargaPemasok <= 0) {
-                    $hargaPemasok = MasterHargaPemasok::getHargaByPemasokAndItem($pemasokId, $itemId);
+                if ($hargaPemasok <= 0 && $pemasokLabel > 0) {
+                    $hargaPemasok = MasterHargaPemasok::getHargaByPemasokAndItem($pemasokLabel, $itemId);
                 }
                 $hargaMitra = MasterHarga::getHargaByMitraAndItem($mitraId, $itemId);
 
@@ -155,6 +154,8 @@ class Transaksi {
                 throw new Exception("Tidak ada label valid untuk diproses.");
             }
 
+            // Header menyimpan pemasok hanya bila semua box dari satu pemasok; campuran = NULL (rincian per box di detail)
+            $pemasokId = count($pemasokSet) === 1 ? (int)array_key_first($pemasokSet) : 0;
             $pemasok = $pemasokId > 0 ? Pemasok::findById($pemasokId) : null;
             $kodeRefAsal = $pemasok['kode_pemasok'] ?? $mitra['kode_mitra'];
 
@@ -261,7 +262,7 @@ class Transaksi {
                 'total_nilai_beli'  => $totalNilaiBeli,
                 'total_nilai_jual'  => $totalNilaiJual,
                 'total_profit'      => $totalProfit,
-                'pemasok'           => $pemasok['nama_pemasok'] ?? 'Gudang Utama',
+                'pemasok'           => $pemasok['nama_pemasok'] ?? (count($pemasokSet) > 1 ? 'Beberapa pemasok' : 'Gudang Utama'),
                 'mitra'             => $mitra['nama_mitra'],
                 'kode_mitra'        => $mitra['kode_mitra'],
                 'tujuan'            => $namaPenerima,
@@ -291,7 +292,8 @@ class Transaksi {
         $params = [];
 
         if (!empty($filters['pemasok_id'])) {
-            $where[] = "t.pemasok_id = ?";
+            $where[] = "(t.pemasok_id = ? OR EXISTS (SELECT 1 FROM transaksi_stok_detail dx JOIN labels lx ON lx.id = dx.label_id WHERE dx.transaksi_id = t.id AND lx.pemasok_id = ?))";
+            $params[] = (int)$filters['pemasok_id'];
             $params[] = (int)$filters['pemasok_id'];
         }
 
@@ -361,7 +363,8 @@ class Transaksi {
         $params = [];
 
         if (!empty($filters['pemasok_id'])) {
-            $where[] = "t.pemasok_id = ?";
+            $where[] = "(t.pemasok_id = ? OR EXISTS (SELECT 1 FROM transaksi_stok_detail dx JOIN labels lx ON lx.id = dx.label_id WHERE dx.transaksi_id = t.id AND lx.pemasok_id = ?))";
+            $params[] = (int)$filters['pemasok_id'];
             $params[] = (int)$filters['pemasok_id'];
         }
 

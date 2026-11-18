@@ -104,7 +104,7 @@ require_once __DIR__ . '/layout/header.php';
 
     <div class="card">
         <div class="table-responsive">
-            <table class="table-custom" data-no-tools>
+            <table class="table-custom" data-halaman="25">
                 <thead>
                     <tr>
                         <th>Tanggal</th>

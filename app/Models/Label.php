@@ -238,7 +238,7 @@ class Label {
                 $suratJalan,
                 $tglProd,
                 $operatorId,
-                "Batch Barcode Penerimaan ({$qty} pcs)"
+                "Batch Barcode Penerimaan ({$qty} box)"
             ]);
 
             $lbl = self::findByBarcode($idLabel);
@@ -787,13 +787,15 @@ class Label {
                 ma.nama_mitra AS nama_mitra_asal,
                 mt.kode_mitra AS kode_mitra_tujuan,
                 mt.nama_mitra AS nama_mitra_tujuan,
-                p.nama_pemasok,
+                COALESCE(p.nama_pemasok, lp.nama_pemasok) AS nama_pemasok,
                 u.nama_lengkap AS operator_pemroses
             FROM transaksi_stok_detail d
             JOIN transaksi_stok t ON d.transaksi_id = t.id
             LEFT JOIN mitra ma ON t.mitra_asal_id = ma.id
             LEFT JOIN mitra mt ON t.mitra_tujuan_id = mt.id
             LEFT JOIN pemasok p ON t.pemasok_id = p.id
+            LEFT JOIN labels lb ON lb.id = d.label_id
+            LEFT JOIN pemasok lp ON lp.id = lb.pemasok_id
             LEFT JOIN users u ON t.user_id = u.id
             WHERE d.label_id = ? 
               AND (t.jenis_transaksi = 'MUTASI' OR t.no_bast IS NOT NULL OR t.alur_pergerakan IS NOT NULL)
@@ -1352,13 +1354,15 @@ class Label {
                 td.berat_netto AS berat_saat_transaksi,
                 ma.kode_mitra AS kode_mitra_asal, ma.nama_mitra AS nama_mitra_asal,
                 mt.kode_mitra AS kode_mitra_tujuan, mt.nama_mitra AS nama_mitra_tujuan,
-                p.nama_pemasok,
+                COALESCE(p.nama_pemasok, lp.nama_pemasok) AS nama_pemasok,
                 u.nama_lengkap AS operator_nama
             FROM transaksi_stok_detail td
             JOIN transaksi_stok t ON td.transaksi_id = t.id
             LEFT JOIN mitra ma ON t.mitra_asal_id = ma.id
             LEFT JOIN mitra mt ON t.mitra_tujuan_id = mt.id
             LEFT JOIN pemasok p ON t.pemasok_id = p.id
+            LEFT JOIN labels lb ON lb.id = td.label_id
+            LEFT JOIN pemasok lp ON lp.id = lb.pemasok_id
             LEFT JOIN users u ON t.user_id = u.id
             WHERE td.label_id = ?
             ORDER BY t.id ASC
@@ -1502,6 +1506,32 @@ class Label {
     /**
      * Menandai proses penimbangan untuk nomor Surat Jalan telah selesai oleh operator.
      */
+    /**
+     * Surat Jalan penerimaan yang sudah ada box aktifnya tetapi belum punya faktur (sesi tidak diselesaikan).
+     * Barangnya sudah dihitung sebagai stok, tetapi faktur dan jurnalnya belum terbentuk.
+     */
+    public static function getSuratJalanBelumDifaktur(): array {
+        $db = Database::getConnection();
+        return $db->query("
+            SELECT l.no_surat_jalan, l.pemasok_id, p.nama_pemasok,
+                   COUNT(*) AS jumlah_box,
+                   SUM(l.berat_netto) AS total_kg,
+                   SUM(l.berat_netto * l.harga_beli_per_kg) AS total_nilai,
+                   MIN(l.created_at) AS mulai
+            FROM labels l
+            LEFT JOIN pemasok p ON p.id = l.pemasok_id
+            WHERE l.status = 'AKTIF'
+              AND l.pemasok_id IS NOT NULL AND l.mitra_id IS NULL
+              AND l.no_surat_jalan IS NOT NULL AND l.no_surat_jalan <> ''
+              AND NOT EXISTS (
+                  SELECT 1 FROM purchase_invoices pi
+                  WHERE pi.no_surat_jalan = l.no_surat_jalan AND pi.tipe_invoice = 'STOK' AND pi.status_bayar <> 'BATAL'
+              )
+            GROUP BY l.no_surat_jalan, l.pemasok_id, p.nama_pemasok
+            ORDER BY mulai
+        ")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public static function markSuratJalanTimbangSelesai(string $noSj): bool {
         $db = Database::getConnection();
         $stmt = $db->prepare("UPDATE labels SET is_timbang_selesai = 1 WHERE no_surat_jalan = ?");

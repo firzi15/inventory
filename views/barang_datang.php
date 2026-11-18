@@ -207,6 +207,7 @@ require_once __DIR__ . '/layout/header.php';
             <table class="table-custom" data-no-tools>
                 <thead>
                     <tr>
+                        <th style="width: 44px; text-align: center;">No</th>
                         <?= $thU('tanggal', 'Tanggal') ?>
                         <?= $thU('pihak', 'Pemasok') ?>
                         <?= $thU('kode', 'Kode') ?>
@@ -225,9 +226,10 @@ require_once __DIR__ . '/layout/header.php';
                 </thead>
                 <tbody>
                     <?php if (!$rows): ?>
-                        <tr><td colspan="14" style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada barang datang pada filter ini</td></tr>
+                        <tr><td colspan="15" style="text-align: center; padding: 30px; color: var(--text-muted);">Tidak ada barang datang pada filter ini</td></tr>
                     <?php endif; ?>
                     <?php
+                    $no = ($hal - 1) * $per;
                     foreach ($grupTampil as $nama => $g):
                         // dalam satu kelompok, barang diurutkan per kategori agar TOTAL tiap jenis barang berdampingan
                         $baris = $g['rows'];
@@ -236,7 +238,7 @@ require_once __DIR__ . '/layout/header.php';
                         foreach ($baris as $r) { $perKat[$r['kategori']][] = $r; }
                     ?>
                         <tr style="background: var(--bg-muted); font-weight: 800;">
-                            <td colspan="14"><?= $namaKelompok ?>: <?= htmlspecialchars($nama) ?></td>
+                            <td colspan="15"><?= $namaKelompok ?>: <?= htmlspecialchars($nama) ?></td>
                         </tr>
                         <?php foreach ($perKat as $namaKat => $listKat):
                             $kq = array_sum(array_column($listKat, 'qty'));
@@ -245,6 +247,7 @@ require_once __DIR__ . '/layout/header.php';
                             foreach ($listKat as $r):
                                 $sb = $labelStatus[$r['status_bayar']] ?? null; ?>
                             <tr>
+                                <td style="text-align: center; color: var(--text-muted);"><?= ++$no ?></td>
                                 <td><?= $tgl($r['tanggal']) ?></td>
                                 <td><?= htmlspecialchars($r['pihak']) ?></td>
                                 <td><?= htmlspecialchars($r['kode_item']) ?></td>

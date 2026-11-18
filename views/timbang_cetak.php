@@ -23,6 +23,7 @@ $itemList = Item::getAll();
 $jenisList = Item::getAllJenis();
 $allPricesJson = MasterHarga::getAllPricesJson();
 $suratJalanWeighList = Label::getSuratJalanListForWeighing();
+$sjTertinggal = Label::getSuratJalanBelumDifaktur();
 
 // Default Surat Jalan untuk Pemasok Pertama
 $firstPemasokKode = $pemasokList[0]['kode_pemasok'] ?? 'PMS-01';
@@ -229,6 +230,64 @@ require_once __DIR__ . '/layout/header.php';
 <!-- SUB-MENU UTAMA: PENERIMAAN & TIMBANG SATU PINTU (ONE-STOP WEIGH & PRINT)   -->
 <!-- ========================================================================= -->
 <div id="sectionOneStopWeigh" style="<?= $activeTab === 'timbang_cetak' ? 'display: block;' : 'display: none;' ?>">
+    <?php if ($sjTertinggal): ?>
+    <!-- Surat Jalan yang box-nya sudah ditimbang tetapi sesinya tidak diselesaikan (faktur belum terbentuk) -->
+    <div class="card no-print" style="border: 1.5px solid var(--warn-solid); margin-bottom: 20px;">
+        <div class="card-header" style="border-bottom: 1px solid var(--border);">
+            <h2 class="card-title" style="font-size: 15px; color: var(--warn-fg);">
+                <?= count($sjTertinggal) ?> Surat Jalan belum diselesaikan
+            </h2>
+            <div class="card-description">Barangnya sudah masuk stok, tetapi faktur dan jurnalnya belum terbentuk. Klik <strong>Selesaikan</strong> bila barangnya benar-benar diterima, atau <strong>Batalkan</strong> bila salah/percobaan.</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead><tr>
+                    <th>Surat Jalan</th><th>Pemasok</th><th style="text-align:right;">Box</th><th style="text-align:right;">Berat (kg)</th><th style="text-align:right;">Nilai</th><th>Ditimbang</th><th style="text-align:right;">Aksi</th>
+                </tr></thead>
+                <tbody>
+                <?php foreach ($sjTertinggal as $st): $sjEsc = htmlspecialchars($st['no_surat_jalan'], ENT_QUOTES); ?>
+                    <tr>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;"><?= $sjEsc ?></td>
+                        <td><?= htmlspecialchars($st['nama_pemasok'] ?? '-') ?></td>
+                        <td style="text-align:right;"><?= (int)$st['jumlah_box'] ?></td>
+                        <td style="text-align:right;"><?= Helper::formatNumber((float)$st['total_kg']) ?></td>
+                        <td style="text-align:right; font-weight:700;"><?= Helper::formatRupiah((float)$st['total_nilai']) ?></td>
+                        <td><?= date('d/m/Y H:i', strtotime($st['mulai'])) ?></td>
+                        <td style="text-align:right; white-space: nowrap;">
+                            <button type="button" class="btn btn-success btn-sm" onclick="selesaikanSjTertinggal('<?= $sjEsc ?>', <?= (int)$st['jumlah_box'] ?>)">Selesaikan</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="batalDokumen('batal_penerimaan', { no_surat_jalan: '<?= $sjEsc ?>' }, 'penerimaan <?= $sjEsc ?>')" style="color: var(--bad-fg); border-color: rgba(220,38,38,0.35);">Batalkan</button>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+    async function selesaikanSjTertinggal(noSj, jmlBox) {
+        const ok = await window.showAppConfirm({
+            title: 'Selesaikan Surat Jalan ini?',
+            html: 'Surat Jalan <strong>' + noSj + '</strong> (' + jmlBox + ' box) akan diselesaikan dan faktur penerimaan dibuat.',
+            confirmButtonText: 'Ya, Selesaikan'
+        });
+        if (!ok.isConfirmed) return;
+        try {
+            const fd = new FormData();
+            fd.append('no_surat_jalan', noSj);
+            const resp = await fetch('index.php?action=selesaikan_sj_tertinggal', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (data && data.success) {
+                if (data.print_bast_url) window.open(data.print_bast_url, '_blank');
+                location.reload();
+            } else {
+                alert('Gagal menyelesaikan: ' + ((data && data.message) || 'Error'));
+            }
+        } catch (e) {
+            alert('Kesalahan jaringan: ' + e.message);
+        }
+    }
+    </script>
+    <?php endif; ?>
     <!-- Grid Desktop 2-Kolom: Form Timbang & Stiker di Kiri, Live Rekap Surat Jalan di Kanan -->
     <div style="display: grid; grid-template-columns: minmax(340px, 4fr) minmax(420px, 6fr); gap: 24px; align-items: start; margin-bottom: 30px;">
         

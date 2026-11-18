@@ -152,7 +152,7 @@ require_once __DIR__ . '/layout/header.php';
     </form>
 
     <div class="table-responsive">
-        <table class="table-custom" id="tableLogHarga" data-no-tools>
+        <table class="table-custom" id="tableLogHarga" data-halaman="25">
             <thead>
                 <tr>
                     <th>Waktu</th>

@@ -249,7 +249,7 @@ require_once __DIR__ . '/layout/header.php';
     </div>
 
     <div class="table-responsive">
-        <table class="table-custom" id="tableAccurateSync">
+        <table class="table-custom" id="tableAccurateSync" data-halaman="25">
             <thead>
                 <tr>
                     <th>ID Antrean</th>
