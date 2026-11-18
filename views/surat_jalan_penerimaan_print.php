@@ -290,7 +290,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
                         <?php if (count($uniqueItems) > 4): ?><div>dan <?= count($uniqueItems) - 4 ?> produk lain</div><?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <div class="n"><?= htmlspecialchars($sjData['nama_item']) ?> <span style="font-size: 11px; font-weight: 400;">(<?= htmlspecialchars($sjData['nama_jenis']) ?>)</span></div>
+                    <div class="n"><?= htmlspecialchars($sjData['nama_item']) ?></div>
                 <?php endif; ?>
             </div>
             <div style="text-align: center;"><div class="t">Total Keranjang</div><div class="n"><?= number_format($sjData['total_pcs']) ?> Box</div></div>
@@ -323,7 +323,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
                     <tr>
                         <td style="text-align: center;"><?= $nomor + $k ?></td>
                         <td class="mono"><?= htmlspecialchars($r['id_label']) ?></td>
-                        <td class="nama"><?= htmlspecialchars($r['nama_item'] ?? '-') ?><?= !empty($r['nama_jenis']) ? ' (' . htmlspecialchars($r['nama_jenis']) . ')' : '' ?></td>
+                        <td class="nama"><?= htmlspecialchars($r['nama_item'] ?? '-') ?></td>
                         <td class="mono" style="text-align: right;"><?= number_format((float)($r['berat_netto'] ?? 0), 2) ?> KG</td>
                         <td class="mono" style="text-align: right;"><?= (float)($r['harga_beli_per_kg'] ?? 0) > 0 ? $rp($r['harga_beli_per_kg']) : '-' ?></td>
                         <td class="mono" style="text-align: right;"><?= (float)($r['total_nilai'] ?? 0) > 0 ? $rp($r['total_nilai']) : '-' ?></td>
@@ -332,7 +332,7 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
                 <?php if ($lb['akhir']): ?>
                     <?php if ($isMultiItem): foreach ($uniqueItems as $ui): ?>
                     <tr>
-                        <td colspan="3" style="text-align: right;">Subtotal <?= htmlspecialchars($ui['nama_item']) ?> (<?= htmlspecialchars($ui['nama_jenis']) ?>) &middot; <?= number_format($ui['total_pcs']) ?> Box</td>
+                        <td colspan="3" style="text-align: right;">Subtotal <?= htmlspecialchars($ui['nama_item']) ?> &middot; <?= number_format($ui['total_pcs']) ?> Box</td>
                         <td class="mono" style="text-align: right;"><?= number_format($ui['total_berat'], 2) ?> KG</td>
                         <td class="mono" style="text-align: right;"><?= $ui['total_berat'] > 0 ? $rp($ui['total_nilai'] / $ui['total_berat']) : '-' ?></td>
                         <td class="mono" style="text-align: right;"><?= $rp($ui['total_nilai']) ?></td>

@@ -60,12 +60,12 @@ $grup = [];
 foreach ($items as $it) {
     $j = trim((string)($it['nama_item'] ?? ''));
     if ($j === '') $j = 'Tanpa nama';
-    $jj = trim((string)($it['nama_jenis'] ?? ''));
-    if ($jj !== '') $j .= ' (' . $jj . ')';
-    if (!isset($grup[$j])) $grup[$j] = ['jenis' => $j, 'dus' => 0, 'netto' => 0.0, 'sub' => 0.0];
-    $grup[$j]['dus']++;
-    $grup[$j]['netto'] += (float)$it['berat_netto'];
-    $grup[$j]['sub'] += (float)$it['total_jual_calc'];
+    // Yang tampil hanya nama barang (tanpa jenis); kunci tetap memuat jenis agar produk bernama sama tidak tergabung
+    $kunci = $j . '|' . trim((string)($it['nama_jenis'] ?? ''));
+    if (!isset($grup[$kunci])) $grup[$kunci] = ['jenis' => $j, 'dus' => 0, 'netto' => 0.0, 'sub' => 0.0];
+    $grup[$kunci]['dus']++;
+    $grup[$kunci]['netto'] += (float)$it['berat_netto'];
+    $grup[$kunci]['sub'] += (float)$it['total_jual_calc'];
 }
 $grup = array_values($grup);
 
