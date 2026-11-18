@@ -16,11 +16,11 @@ class Utang {
     /**
      * Mengambil Ringkasan KPI Utang & Pembayaran Keseluruhan
      */
-    public static function getSummaryKpi(): array {
+    public static function getSummaryKpi(int $pemasokId = 0): array {
         $pdo = Database::getConnection();
 
         // 1. Ambil seluruh Surat Jalan Penerimaan dari labels
-        $sjList = self::getSuratJalanList();
+        $sjList = self::getSuratJalanList(['pemasok_id' => $pemasokId]);
 
         $totalSj = count($sjList);
         $totalUtangTerbit = 0.0;
@@ -39,12 +39,14 @@ class Utang {
         }
 
         // 2. Ambil Total Kas Keluar dari ap_pembayaran
-        $stmtBayar = $pdo->query("
+        $stmtBayar = $pdo->prepare("
             SELECT 
                 COALESCE(SUM(jumlah_bayar), 0) as total_kas_keluar,
                 COUNT(CASE WHEN status = 'AKTIF' THEN 1 END) as total_transaksi_bayar
             FROM ap_pembayaran
+            WHERE (:pid = 0 OR pemasok_id = :pid2)
         ");
+        $stmtBayar->execute([':pid' => $pemasokId, ':pid2' => $pemasokId]);
         $resBayar = $stmtBayar->fetch(PDO::FETCH_ASSOC);
         $totalPembayaranKeluar = (float)$resBayar['total_kas_keluar'];
 
@@ -68,14 +70,14 @@ class Utang {
     /**
      * Mengambil Matriks Ringkasan Umur Utang per Pemasok (Aging Buckets)
      */
-    public static function getAgingSummaryPerPemasok(): array {
+    public static function getAgingSummaryPerPemasok(int $pemasokId = 0): array {
         $pdo = Database::getConnection();
 
         // Ambil seluruh pemasok aktif
         $stmtPemasok = $pdo->query("
             SELECT id, kode_pemasok, nama_pemasok, pic_nama, telepon, alamat
             FROM pemasok
-            WHERE is_active = 1
+            WHERE is_active = 1" . ($pemasokId > 0 ? " AND id = " . (int)$pemasokId : "") . "
             ORDER BY id ASC
         ");
         $pemasokList = $stmtPemasok->fetchAll(PDO::FETCH_ASSOC);
@@ -119,7 +121,7 @@ class Utang {
         }
 
         // Ambil seluruh surat jalan masuk
-        $sjList = self::getSuratJalanList();
+        $sjList = self::getSuratJalanList(['pemasok_id' => $pemasokId]);
         foreach ($sjList as $sj) {
             $pId = (int)$sj['pemasok_id'];
             if (!isset($pemasokMap[$pId])) continue;

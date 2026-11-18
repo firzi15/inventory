@@ -16,26 +16,29 @@ class Piutang {
     /**
      * Mengambil Ringkasan KPI Piutang & Setoran Keseluruhan
      */
-    public static function getSummaryKpi(): array {
+    public static function getSummaryKpi(int $mitraId = 0): array {
         $pdo = Database::getConnection();
 
         // 1. Total Belanja / Piutang Terbit dari seluruh transaksi pengeluaran
-        $stmtBeli = $pdo->query("
+        $stmtBeli = $pdo->prepare("
             SELECT 
                 COUNT(id) as total_nota,
                 COALESCE(SUM(total_nilai_jual), 0) as total_piutang_terbit
             FROM transaksi_stok
-            WHERE jenis_transaksi = 'PENGELUARAN'
+            WHERE jenis_transaksi = 'PENGELUARAN' AND (:mid = 0 OR mitra_id = :mid2)
         ");
+        $stmtBeli->execute([':mid' => $mitraId, ':mid2' => $mitraId]);
         $resBeli = $stmtBeli->fetch(PDO::FETCH_ASSOC);
 
         // 2. Total Setoran Uang Masuk yang telah dibukukan
-        $stmtSetor = $pdo->query("
+        $stmtSetor = $pdo->prepare("
             SELECT 
                 COALESCE(SUM(jumlah_bayar), 0) as total_setoran_masuk,
                 COUNT(CASE WHEN status = 'AKTIF' THEN 1 END) as total_transaksi_setor
             FROM ar_pembayaran
+            WHERE (:mid = 0 OR mitra_id = :mid2)
         ");
+        $stmtSetor->execute([':mid' => $mitraId, ':mid2' => $mitraId]);
         $resSetor = $stmtSetor->fetch(PDO::FETCH_ASSOC);
 
         $totalPiutangTerbit = (float)$resBeli['total_piutang_terbit'];
@@ -43,7 +46,7 @@ class Piutang {
         $sisaPiutangAktif   = max(0, round($totalPiutangTerbit - $totalSetoranMasuk, 2));
 
         // 3. Klasifikasi Umur Piutang yang masih belum lunas
-        $notasList = self::getNotaList(['status' => 'BELUM_LUNAS']);
+        $notasList = self::getNotaList(['status' => 'BELUM_LUNAS', 'mitra_id' => $mitraId]);
         
         $ag = \App\Services\AgingService::kosong();
 
@@ -71,19 +74,19 @@ class Piutang {
     /**
      * Mengambil Matriks Ringkasan Umur Piutang per Mitra (7 Mitra)
      */
-    public static function getAgingSummaryPerMitra(): array {
+    public static function getAgingSummaryPerMitra(int $mitraId = 0): array {
         $pdo = Database::getConnection();
 
         // Ambil seluruh mitra bisnis aktif
         $stmtMitra = $pdo->query("
             SELECT id, kode_mitra, nama_mitra, pic_nama, pic_telepon
-            FROM mitra
+            FROM mitra" . ($mitraId > 0 ? " WHERE id = " . (int)$mitraId : "") . "
             ORDER BY id ASC
         ");
         $mitraList = $stmtMitra->fetchAll(PDO::FETCH_ASSOC);
 
         // Ambil seluruh nota belum lunas untuk kalkulasi aging per mitra
-        $unpaidNotas = self::getNotaList(['status' => 'BELUM_LUNAS']);
+        $unpaidNotas = self::getNotaList(['status' => 'BELUM_LUNAS', 'mitra_id' => $mitraId]);
         
         $mitraAgingMap = [];
         foreach ($mitraList as $m) {

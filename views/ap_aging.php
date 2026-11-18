@@ -26,17 +26,29 @@ $pemasokList          = Pemasok::getAll();
 $vendorNonPemasokList = VendorNonPemasok::getAllActive();
 $tipeBiayaList        = TipeBiaya::getAllActive();
 $akunFaktur           = \App\Services\CoaService::akunFaktur();
-$kpi          = Utang::getSummaryKpi();
-$kpiInvoice   = PurchaseInvoice::getSummaryKpi();
-$agingPemasok = Utang::getAgingSummaryPerPemasok();
+$selectedPemasokId = (int)($_GET['pemasok_id'] ?? 0);
+$tampil = ($_GET['tampil'] ?? 'sj') === 'pemasok' ? 'pemasok' : 'sj';
+$kpi          = Utang::getSummaryKpi($selectedPemasokId);
+$kpiInvoice   = PurchaseInvoice::getSummaryKpi($selectedPemasokId);
+$agingPemasok = Utang::getAgingSummaryPerPemasok($selectedPemasokId);
 // Satu sumber angka: utang stok dari surat jalan + faktur operasional (faktur STOK hanya cerminan surat jalan)
 $totalTagihan = (float)$kpi['total_utang_terbit'] + (float)$kpiInvoice['total_operasional'];
 $sisaUtang    = (float)$kpi['sisa_utang_aktif'] + (float)$kpiInvoice['sisa_operasional'];
 $sjBelumLunas = array_sum(array_column($agingPemasok, 'sj_terbuka'));
 $pemasokBerutang = count(array_filter($agingPemasok, fn($x) => (float)$x['sisa_utang'] > 0.01));
 
+// Tampilan matriks per surat jalan: hanya yang masih terutang, paling telat di atas
+$agRows = [];
+if ($activeTab === 'matriks' && $tampil === 'sj') {
+    $sjAging = Utang::getSuratJalanList(['pemasok_id' => $selectedPemasokId, 'status' => 'BELUM_LUNAS']);
+    usort($sjAging, fn($a, $b) => $b['hari_telat'] <=> $a['hari_telat'] ?: strcmp($a['tanggal_masuk'], $b['tanggal_masuk']));
+    foreach ($sjAging as $sj) {
+        $agRows[] = ['no_dok' => $sj['no_surat_jalan'], 'tanggal' => $sj['tanggal_masuk'], 'pihak' => '[' . $sj['kode_pemasok'] . '] ' . $sj['nama_pemasok'],
+            'tempo' => $sj['jatuh_tempo'], 'tagihan' => $sj['total_nilai_beli'], 'bayar' => $sj['total_bayar'], 'sisa' => $sj['sisa_utang'], 'telat' => $sj['hari_telat']];
+    }
+}
+
 // Filter Umum (Pemasok, Status, Keyword, Tipe)
-$selectedPemasokId = (int)($_GET['pemasok_id'] ?? 0);
 $selectedTipe      = trim($_GET['tipe'] ?? 'SEMUA');
 $selectedStatus    = trim($_GET['status'] ?? 'SEMUA');
 $searchKeyword     = trim($_GET['search'] ?? '');
@@ -125,7 +137,7 @@ require_once __DIR__ . '/layout/header.php';
             <div class="kpi-body">
                 <div class="kpi-label">Pemasok Berutang</div>
                 <div class="kpi-value"><?= number_format($pemasokBerutang) ?></div>
-                <div class="kpi-sub">dari <?= number_format(count($agingPemasok)) ?> pemasok aktif</div>
+                <div class="kpi-sub"><?= $selectedPemasokId > 0 ? 'pemasok terpilih' : 'dari ' . number_format(count($agingPemasok)) . ' pemasok aktif' ?></div>
             </div>
             <div class="kpi-icon-pod"><i data-lucide="users" style="width: 18px; height: 18px;"></i></div>
         </div>
@@ -338,8 +350,37 @@ require_once __DIR__ . '/layout/header.php';
     <!-- ========================================================================= -->
     <?php if ($activeTab === 'matriks'): ?>
         <div class="card" style="padding: 20px;">
+            <form method="GET" action="index.php" class="no-print" style="background: var(--bg-muted); padding: 14px 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                <input type="hidden" name="page" value="ap_aging">
+                <input type="hidden" name="tab" value="matriks">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Pemasok / Supplier</label>
+                    <select name="pemasok_id" class="form-control" style="font-size: 12.5px;" onchange="this.form.submit()">
+                        <option value="0">-- Seluruh Pemasok --</option>
+                        <?php foreach ($pemasokList as $pm): ?>
+                            <option value="<?= $pm['id'] ?>" <?= $selectedPemasokId === (int)$pm['id'] ? 'selected' : '' ?>>
+                                [<?= htmlspecialchars($pm['kode_pemasok']) ?>] <?= htmlspecialchars($pm['nama_pemasok']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div style="width: 180px;">
+                    <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Tampilan</label>
+                    <select name="tampil" class="form-control" style="font-size: 12.5px;" onchange="this.form.submit()">
+                        <option value="sj" <?= $tampil === 'sj' ? 'selected' : '' ?>>Per Surat Jalan</option>
+                        <option value="pemasok" <?= $tampil === 'pemasok' ? 'selected' : '' ?>>Per Pemasok</option>
+                    </select>
+                </div>
+                <?php if ($selectedPemasokId > 0): ?>
+                    <a href="index.php?page=ap_aging&tab=matriks&tampil=<?= $tampil ?>" class="btn btn-outline" style="font-size: 12px; padding: 8px 12px;">Reset</a>
+                <?php endif; ?>
+            </form>
+            <?php if ($tampil === 'sj'):
+                $agLabelDok = 'No. Surat Jalan'; $agLabelPihak = 'Pemasok'; $agLabelTagihan = 'Tagihan'; $agLabelBayar = 'Dibayar'; $agLabelSisa = 'Sisa Utang';
+                include __DIR__ . '/layout/aging_dokumen.php';
+            else: ?>
             <div class="table-responsive">
-                <table class="table-custom">
+                <table class="table-custom" data-halaman="25">
                     <thead>
                         <tr>
                             <th style="width: 40px; text-align: center;">No</th>
@@ -391,6 +432,7 @@ require_once __DIR__ . '/layout/header.php';
                     </tbody>
                 </table>
             </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

@@ -1363,6 +1363,12 @@ if ($page === 'mutasi') {
     $page = 'profit_loss';
 }
 
+// Menu Laba Rugi hanya untuk akun tertentu (lihat Akses::AKUN_LABA_RUGI)
+if (in_array($page, ['profit_loss', 'coa', 'tutup_periode'], true) && !\App\Core\Akses::lihatLabaRugi()) {
+    header('Location: index.php?page=dashboard');
+    exit;
+}
+
 $allowedPages = [
     'login'                        => __DIR__ . '/views/login.php',
     'dashboard'                    => __DIR__ . '/views/dashboard.php',

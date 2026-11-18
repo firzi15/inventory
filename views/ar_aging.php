@@ -15,11 +15,23 @@ if (!in_array($activeTab, ['matriks', 'nota', 'riwayat_setoran'])) {
 }
 
 $mitraList = Mitra::getAll();
-$kpi = Piutang::getSummaryKpi();
-$agingMitra = Piutang::getAgingSummaryPerMitra();
+$selectedMitraId = (int)($_GET['mitra_id'] ?? 0);
+$tampil = ($_GET['tampil'] ?? 'nota') === 'mitra' ? 'mitra' : 'nota';
+$kpi = Piutang::getSummaryKpi($selectedMitraId);
+$agingMitra = Piutang::getAgingSummaryPerMitra($selectedMitraId);
+
+// Tampilan matriks per nota: hanya yang masih terutang, paling telat di atas
+$agRows = [];
+if ($activeTab === 'matriks' && $tampil === 'nota') {
+    $notaAging = Piutang::getNotaList(['mitra_id' => $selectedMitraId, 'status' => 'BELUM_LUNAS']);
+    usort($notaAging, fn($a, $b) => $b['hari_telat'] <=> $a['hari_telat'] ?: strcmp($a['created_at'], $b['created_at']));
+    foreach ($notaAging as $n) {
+        $agRows[] = ['no_dok' => $n['no_surat_jalan'], 'tanggal' => $n['created_at'], 'pihak' => '[' . $n['kode_mitra'] . '] ' . $n['nama_mitra'],
+            'tempo' => $n['jatuh_tempo'], 'tagihan' => $n['total_nilai_jual'], 'bayar' => $n['total_bayar'], 'sisa' => $n['sisa_piutang'], 'telat' => $n['hari_telat']];
+    }
+}
 
 // Filter untuk Tab Nota
-$selectedMitraId = (int)($_GET['mitra_id'] ?? 0);
 $selectedStatus  = trim($_GET['status'] ?? 'SEMUA');
 $searchKeyword   = trim($_GET['search'] ?? '');
 
@@ -106,15 +118,44 @@ require_once __DIR__ . '/layout/header.php';
     <!-- ========================================================================= -->
     <?php if ($activeTab === 'matriks'): ?>
         <div class="card" style="padding: 20px;">
+            <form method="GET" action="index.php" class="no-print" style="margin-bottom: 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                <input type="hidden" name="page" value="ar_aging">
+                <input type="hidden" name="tab" value="matriks">
+                <div style="flex: 1; min-width: 180px;">
+                    <label class="form-label" style="font-size: 11.5px; font-weight: 700;">Filter Mitra:</label>
+                    <select name="mitra_id" class="form-control" onchange="this.form.submit()" style="height: 38px;">
+                        <option value="0">-- Semua Mitra Bisnis --</option>
+                        <?php foreach ($mitraList as $m): ?>
+                            <option value="<?= $m['id'] ?>" <?= $selectedMitraId === (int)$m['id'] ? 'selected' : '' ?>>
+                                [<?= htmlspecialchars($m['kode_mitra']) ?>] <?= htmlspecialchars($m['nama_mitra']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div style="width: 180px;">
+                    <label class="form-label" style="font-size: 11.5px; font-weight: 700;">Tampilan:</label>
+                    <select name="tampil" class="form-control" onchange="this.form.submit()" style="height: 38px;">
+                        <option value="nota" <?= $tampil === 'nota' ? 'selected' : '' ?>>Per Nota</option>
+                        <option value="mitra" <?= $tampil === 'mitra' ? 'selected' : '' ?>>Per Mitra</option>
+                    </select>
+                </div>
+                <?php if ($selectedMitraId > 0): ?>
+                    <div><a href="index.php?page=ar_aging&tab=matriks&tampil=<?= $tampil ?>" class="btn btn-outline" style="height: 38px; display: inline-flex; align-items: center;">Reset Filter</a></div>
+                <?php endif; ?>
+            </form>
+            <?php if ($tampil === 'nota'):
+                $agLabelDok = 'No. Surat Jalan / Bon'; $agLabelPihak = 'Mitra'; $agLabelTagihan = 'Total Belanja'; $agLabelBayar = 'Total Setoran'; $agLabelSisa = 'Sisa Piutang';
+                include __DIR__ . '/layout/aging_dokumen.php';
+            else: ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h2 class="card-title" style="margin: 0; font-size: 16px;">Rekapitulasi Umur Piutang 7 Mitra Bisnis</h2>
+                    <h2 class="card-title" style="margin: 0; font-size: 16px;"><?= $selectedMitraId > 0 ? 'Umur Piutang Mitra Terpilih' : 'Rekapitulasi Umur Piutang Mitra Bisnis' ?></h2>
                     <p class="card-description" style="margin: 2px 0 0 0; font-size: 12.5px;">Klasifikasi sisa tagihan per mitra berdasarkan jatuh tempo nota: belum jatuh tempo, dan terlambat 1-7, 8-14, 15-30, atau lebih dari 30 hari.</p>
                 </div>
             </div>
 
             <div class="table-responsive">
-                <table class="table-custom">
+                <table class="table-custom" data-halaman="25">
                     <thead>
                         <tr>
                             <th style="width: 40px; text-align: center;">No</th>
@@ -196,6 +237,7 @@ require_once __DIR__ . '/layout/header.php';
                     </tbody>
                 </table>
             </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

@@ -535,6 +535,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                     </li>
 
                     <!-- LABA RUGI (SUBMENU) -->
+                    <?php if (\App\Core\Akses::lihatLabaRugi()): ?>
                     <li class="nav-has-submenu <?= $isProfitActive ? 'is-open' : '' ?>" id="menuProfit" data-active-page="<?= $isProfitActive ? '1' : '' ?>">
                         <a href="javascript:void(0)" class="nav-item <?= $isProfitActive ? 'active' : '' ?>" onclick="toggleSidebarSubmenu('menuProfit', event)" role="button" aria-expanded="<?= $isProfitActive ? 'true' : 'false' ?>" title="Klik untuk menampilkan / menyembunyikan menu Laba Rugi">
                             <div class="nav-item-icon icon-green" style="background: rgba(16, 185, 129, 0.15); color: var(--ok-fg);">
@@ -575,6 +576,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             </li>
                         </ul>
                     </li>
+                    <?php endif; ?>
 
                     <!-- TRANSAKSI KAS & BANK -->
                     <li>

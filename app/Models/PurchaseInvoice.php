@@ -659,7 +659,7 @@ class PurchaseInvoice {
     /**
      * Rekap Statistik Finansial Purchase Invoice untuk Dashboard KPI
      */
-    public static function getSummaryKpi(): array {
+    public static function getSummaryKpi(int $pemasokId = 0): array {
         $pdo = Database::getConnection();
 
         $sql = "
@@ -674,9 +674,11 @@ class PurchaseInvoice {
                 COUNT(CASE WHEN status_bayar = 'LUNAS' THEN 1 END) AS count_lunas,
                 COUNT(CASE WHEN status_bayar NOT IN ('LUNAS','BATAL') THEN 1 END) AS count_belum_lunas
             FROM purchase_invoices
-            WHERE status_bayar <> 'BATAL'
+            WHERE status_bayar <> 'BATAL' AND (:pid = 0 OR pemasok_id = :pid2)
         ";
-        $row = $pdo->query($sql)->fetch(PDO::FETCH_ASSOC);
+        $st = $pdo->prepare($sql);
+        $st->execute([':pid' => $pemasokId, ':pid2' => $pemasokId]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
 
         return [
             'total_invoice'     => (int)($row['total_invoice'] ?? 0),
