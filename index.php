@@ -1157,6 +1157,16 @@ if ($action) {
                 ]);
                 exit;
 
+            // Rincian per box satu produk untuk menu Stock On Hand (sisa di gudang dan yang sudah keluar)
+            case 'stock_on_hand_rincian':
+                $itemSoh = (int)($_GET['item'] ?? 0);
+                if ($itemSoh <= 0) throw new Exception("Produk tidak valid.");
+                $tglSoh = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) ? $v : '';
+                Helper::jsonResponse(['success' => true, 'box' => \App\Services\StockOnHandService::rincian($itemSoh, [
+                    'pemasok_id' => (int)($_GET['pemasok'] ?? 0), 'dari' => $tglSoh($_GET['dari'] ?? ''), 'sampai' => $tglSoh($_GET['sampai'] ?? ''),
+                ])]);
+                exit;
+
             // Rincian per box untuk satu Surat Jalan dan artikel (laporan Barang Datang)
             case 'rincian_box_penerimaan':
                 $sjBox = trim($_GET['sj'] ?? '');
@@ -1391,6 +1401,7 @@ $allowedPages = [
     'coa'                          => __DIR__ . '/views/coa.php',
     'purchase_book'                => __DIR__ . '/views/book.php',
     'barang_datang'                => __DIR__ . '/views/barang_datang.php',
+    'stock_on_hand'                => __DIR__ . '/views/stock_on_hand.php',
     'stok_mitra'                   => __DIR__ . '/views/stok_mitra.php',
     'stok_opname'                  => __DIR__ . '/views/stok_opname.php',
     'accurate_sync'                => __DIR__ . '/views/accurate_sync.php',

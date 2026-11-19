@@ -49,6 +49,7 @@ $pageInfoMap = [
     'backup'               => ['title' => 'Backup Data', 'desc' => 'Simpan salinan database dan bukti setoran; unduh untuk disimpan di luar komputer ini'],
     'kas_bank'             => ['title' => 'Transaksi Kas & Bank', 'desc' => 'Catat biaya tunai/transfer, setoran modal, dan prive; jurnal terbit otomatis'],
     'rekonsiliasi_bank'    => ['title' => 'Rekonsiliasi Bank', 'desc' => 'Audit harian total setoran mitra dengan uang masuk di bank, lengkap dengan lampiran screenshot'],
+    'stock_on_hand'        => ['title' => 'Stock On Hand', 'desc' => 'Sisa barang di gudang per jenis dan produk, beserta masuk dan keluar'],
     'barang_datang'        => ['title' => 'Barang Datang', 'desc' => 'Barang yang diterima gudang dari pemasok dan total nilai pembelian'],
     'purchase_book'        => ['title' => 'Purchase Book', 'desc' => 'Riwayat harga beli per artikel dari pemasok'],
     'coa'                  => ['title' => 'COA', 'desc' => 'Daftar akun dan saldo dari data sumber'],
@@ -294,7 +295,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $currentTab = $_GET['tab'] ?? '';
             $isPenerimaanActive = ($currentPage === 'timbang_cetak');
             $isOutboundActive = ($currentPage === 'pengeluaran');
-            $isStokGudangActive = in_array($currentPage, ['stok_opname', 'barang_datang', 'purchase_book'], true);
+            $isStokGudangActive = in_array($currentPage, ['stock_on_hand', 'stok_opname', 'barang_datang', 'purchase_book'], true);
             $isArAgingActive = ($currentPage === 'ar_aging' && $currentTab !== 'nota');
             $isSalesInvActive = ($currentPage === 'ar_aging' && $currentTab === 'nota');
             $isApAgingActive = ($currentPage === 'ap_aging' && $currentTab !== 'invoices');
@@ -411,7 +412,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                             </div>
                             <div class="nav-item-text">
                                 <span class="nav-item-title">Stok Barang Gudang</span>
-                                <span class="nav-item-desc">Barang datang, opname & harga beli</span>
+                                <span class="nav-item-desc">Sisa stok, barang datang & opname</span>
                             </div>
                             <div class="nav-item-chevron">
                                 <i data-lucide="chevron-down" style="width: 15px; height: 15px;"></i>
@@ -419,6 +420,12 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         </a>
                         <!-- Sub Menu Stok Gudang & Opname -->
                         <ul class="nav-sub-list">
+                            <li>
+                                <a href="index.php?page=stock_on_hand" class="nav-sub-item <?= ($currentPage === 'stock_on_hand') ? 'active' : '' ?>" title="Sisa barang di gudang per jenis dan produk">
+                                    <i data-lucide="warehouse" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
+                                    <span>Stock On Hand</span>
+                                </a>
+                            </li>
                             <li>
                                 <a href="index.php?page=stok_opname" id="sidebarSubStockOpname" class="nav-sub-item <?= ($currentPage === 'stok_opname') ? 'active' : '' ?>" title="Stock opname barcode & audit fisik gudang">
                                     <i data-lucide="clipboard-check" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
