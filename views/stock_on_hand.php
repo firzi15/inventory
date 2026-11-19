@@ -17,7 +17,6 @@ $f = [
     'pemasok_id' => (int)($_GET['pemasok'] ?? 0),
     'dari'       => $tglValid($_GET['dari'] ?? ''),
     'sampai'     => $tglValid($_GET['sampai'] ?? ''),
-    'tampil'     => in_array($_GET['tampil'] ?? '', ['sisa'], true) ? $_GET['tampil'] : '',
 ];
 // Satu tabel; tampilannya dipilih lewat dropdown: per produk (bawaan) atau per jenis
 $lihat = ($_GET['lihat'] ?? '') === 'jenis' ? 'jenis' : 'produk';
@@ -28,7 +27,7 @@ $tot     = StockOnHandService::total($produk);
 $jenisList   = BukuService::daftarKategori();
 $artikelList = BukuService::daftarArtikel();
 $pemasokList = \App\Models\Pemasok::getAll();
-$adaFilter = $f['jenis_id'] || $f['item_id'] || $f['pemasok_id'] || $f['dari'] || $f['sampai'] || $f['tampil'] || $lihat === 'jenis';
+$adaFilter = $f['jenis_id'] || $f['item_id'] || $f['pemasok_id'] || $f['dari'] || $f['sampai'] || $lihat === 'jenis';
 
 $kg  = fn($n) => Helper::formatKg($n);
 $rp  = fn($n) => Helper::formatRupiah($n);
@@ -36,7 +35,7 @@ $box = fn($n) => number_format((int)$n, 0, ',', '.') . ' box';
 $persen = $tot['masuk_box'] > 0 ? $tot['keluar_box'] / $tot['masuk_box'] * 100 : 0;
 $linkJenis = function (int $id) use ($f) {
     return 'index.php?' . http_build_query(array_filter(['page' => 'stock_on_hand', 'lihat' => 'produk', 'jenis' => $id, 'pemasok' => $f['pemasok_id'] ?: null,
-        'dari' => $f['dari'] ?: null, 'sampai' => $f['sampai'] ?: null, 'tampil' => $f['tampil'] ?: null]));
+        'dari' => $f['dari'] ?: null, 'sampai' => $f['sampai'] ?: null]));
 };
 
 require_once __DIR__ . '/layout/header.php';
@@ -119,13 +118,6 @@ require_once __DIR__ . '/layout/header.php';
             <select name="item" class="form-control" onchange="this.form.submit()">
                 <option value="0">Semua produk</option>
                 <?php foreach ($artikelList as $a): ?><option value="<?= $a['id'] ?>" <?= $f['item_id'] === (int)$a['id'] ? 'selected' : '' ?>><?= htmlspecialchars($a['nama'] . ' (' . $a['kode'] . ')') ?></option><?php endforeach; ?>
-            </select>
-        </div>
-        <div style="min-width: 170px;">
-            <label class="form-label">Tampilkan</label>
-            <select name="tampil" class="form-control" onchange="this.form.submit()">
-                <option value="" <?= $f['tampil'] === '' ? 'selected' : '' ?>>Semua produk</option>
-                <option value="sisa" <?= $f['tampil'] === 'sisa' ? 'selected' : '' ?>>Masih ada sisa</option>
             </select>
         </div>
         <div style="min-width: 170px;">
