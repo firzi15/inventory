@@ -1157,6 +1157,14 @@ if ($action) {
                 ]);
                 exit;
 
+            // Kartu piutang satu mitra untuk menu AR Ledger (saldo awal, nota, setoran, saldo berjalan)
+            case 'ar_ledger_kartu':
+                $mitraKartu = (int)($_GET['mitra'] ?? 0);
+                if ($mitraKartu <= 0) throw new Exception("Mitra tidak valid.");
+                [$dariKartu, $sampaiKartu] = \App\Core\Periode::baca($_GET, 'bulan');
+                Helper::jsonResponse(['success' => true, 'kartu' => \App\Services\ArLedgerService::kartu($mitraKartu, $dariKartu, $sampaiKartu)]);
+                exit;
+
             // Rincian per box satu produk untuk menu Stock On Hand (sisa di gudang dan yang sudah keluar)
             case 'stock_on_hand_rincian':
                 $itemSoh = (int)($_GET['item'] ?? 0);
@@ -1391,6 +1399,7 @@ $allowedPages = [
     'surat_jalan_penerimaan_print' => __DIR__ . '/views/surat_jalan_penerimaan_print.php',
     'pengeluaran'                  => __DIR__ . '/views/pengeluaran.php',
     'ar_aging'                     => __DIR__ . '/views/ar_aging.php',
+    'ar_ledger'                    => __DIR__ . '/views/ar_ledger.php',
     'ap_aging'                     => __DIR__ . '/views/ap_aging.php',
     'rekonsiliasi_bank'            => __DIR__ . '/views/rekonsiliasi_bank.php',
     'kas_bank'                     => __DIR__ . '/views/kas_bank.php',

@@ -42,6 +42,7 @@ $pageInfoMap = [
     'dashboard'            => ['title' => 'Dashboard Ringkasan', 'desc' => 'Pantauan cepat stok dan aktivitas gudang'],
     'timbang_cetak'        => ['title' => 'Penerimaan Barang', 'desc' => 'Buat barcode keranjang dan timbang barang masuk dari pemasok'],
     'pengeluaran'          => ['title' => 'Pengeluaran Barang ke Mitra', 'desc' => 'Keluarkan stok fisik pemasok dari gudang ke mitra bisnis'],
+    'ar_ledger'            => ['title' => 'AR Ledger', 'desc' => 'Saldo awal, debit, kredit, dan saldo akhir piutang per mitra'],
     'ar_aging'             => ['title' => 'AR Aging', 'desc' => 'Pelacakan umur piutang, setoran cicilan parsial, dan buku kas masuk mitra'],
     'ap_aging'             => ['title' => 'AP Aging', 'desc' => 'Utang surat jalan masuk dan pembayaran kas keluar ke pemasok'],
     'tutup_periode'        => ['title' => 'Tutup Harian', 'desc' => 'Kunci angka tiap hari setelah dicek; hari yang ditutup tidak menerima transaksi atau pembatalan'],
@@ -296,7 +297,7 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
             $isPenerimaanActive = ($currentPage === 'timbang_cetak');
             $isOutboundActive = ($currentPage === 'pengeluaran');
             $isStokGudangActive = in_array($currentPage, ['stock_on_hand', 'stok_opname', 'barang_datang', 'purchase_book'], true);
-            $isArAgingActive = ($currentPage === 'ar_aging' && $currentTab !== 'nota');
+            $isArAgingActive = ($currentPage === 'ar_aging' && $currentTab !== 'nota') || $currentPage === 'ar_ledger';
             $isSalesInvActive = ($currentPage === 'ar_aging' && $currentTab === 'nota');
             $isApAgingActive = ($currentPage === 'ap_aging' && $currentTab !== 'invoices');
             $isPurchInvActive = ($currentPage === 'ap_aging' && $currentTab === 'invoices');
@@ -499,9 +500,15 @@ $todayText = $hariIndo[date('w')] . ', ' . date('j') . ' ' . $bulanIndo[(int)dat
                         </a>
                         <ul class="nav-sub-list">
                             <li>
-                                <a href="index.php?page=ar_aging&tab=matriks" class="nav-sub-item <?= ($isArAgingActive && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
+                                <a href="index.php?page=ar_aging&tab=matriks" class="nav-sub-item <?= ($currentPage === 'ar_aging' && ($currentTab === 'matriks' || empty($currentTab))) ? 'active' : '' ?>">
                                     <i data-lucide="bar-chart-3" style="width: 14px; height: 14px; color: var(--aktif-fg);"></i>
                                     <span>Ringkasan per Mitra</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="index.php?page=ar_ledger" class="nav-sub-item <?= $currentPage === 'ar_ledger' ? 'active' : '' ?>" title="Saldo awal, debit, kredit, dan saldo akhir piutang per mitra">
+                                    <i data-lucide="book-open-check" style="width: 14px; height: 14px; color: var(--ok-fg);"></i>
+                                    <span>AR Ledger</span>
                                 </a>
                             </li>
                             <li>
