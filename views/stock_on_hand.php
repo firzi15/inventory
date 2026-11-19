@@ -17,7 +17,7 @@ $f = [
     'pemasok_id' => (int)($_GET['pemasok'] ?? 0),
     'dari'       => $tglValid($_GET['dari'] ?? ''),
     'sampai'     => $tglValid($_GET['sampai'] ?? ''),
-    'tampil'     => in_array($_GET['tampil'] ?? '', ['sisa', 'habis'], true) ? $_GET['tampil'] : '',
+    'tampil'     => in_array($_GET['tampil'] ?? '', ['sisa'], true) ? $_GET['tampil'] : '',
 ];
 // Satu tabel; tampilannya dipilih lewat dropdown: per produk (bawaan) atau per jenis
 $lihat = ($_GET['lihat'] ?? '') === 'jenis' ? 'jenis' : 'produk';
@@ -126,7 +126,6 @@ require_once __DIR__ . '/layout/header.php';
             <select name="tampil" class="form-control" onchange="this.form.submit()">
                 <option value="" <?= $f['tampil'] === '' ? 'selected' : '' ?>>Semua produk</option>
                 <option value="sisa" <?= $f['tampil'] === 'sisa' ? 'selected' : '' ?>>Masih ada sisa</option>
-                <option value="habis" <?= $f['tampil'] === 'habis' ? 'selected' : '' ?>>Sudah habis keluar</option>
             </select>
         </div>
         <div style="min-width: 170px;">
