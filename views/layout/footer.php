@@ -82,6 +82,29 @@
         const initialTheme = localStorage.getItem('theme') || 'light';
         applyTheme(initialTheme);
 
+        // Cetakan selalu terang: saat mencetak di mode gelap, tema dipindah sementara ke terang lalu dikembalikan.
+        // Pilihan tema pengguna di localStorage tidak diubah.
+        let temaSebelumCetak = null;
+        function keTerangUntukCetak() {
+            if (temaSebelumCetak !== null) return;
+            temaSebelumCetak = document.documentElement.getAttribute('data-theme') || 'light';
+            if (temaSebelumCetak === 'dark') document.documentElement.setAttribute('data-theme', 'light');
+        }
+        function kembaliSetelahCetak() {
+            if (temaSebelumCetak === null) return;
+            document.documentElement.setAttribute('data-theme', temaSebelumCetak);
+            temaSebelumCetak = null;
+        }
+        window.addEventListener('beforeprint', keTerangUntukCetak);
+        window.addEventListener('afterprint', kembaliSetelahCetak);
+        // Cadangan untuk browser yang tidak mengirim beforeprint/afterprint (mis. Safari lama)
+        if (window.matchMedia) {
+            const mqCetak = window.matchMedia('print');
+            const onCetak = e => (e.matches ? keTerangUntukCetak() : kembaliSetelahCetak());
+            if (mqCetak.addEventListener) mqCetak.addEventListener('change', onCetak);
+            else if (mqCetak.addListener) mqCetak.addListener(onCetak);
+        }
+
         if (themeBtn) {
             themeBtn.addEventListener('click', () => {
                 const current = document.documentElement.getAttribute('data-theme');

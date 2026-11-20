@@ -3155,3 +3155,10 @@ input.fokus-harga-input { outline: 2px solid var(--aktif-fg); outline-offset: 1p
 /* Ringkasan Surat Jalan (Penerimaan): sel lebih rapat agar tabel muat tanpa geser samping */
 #tableInboundRecentBoxes th, #tableInboundRecentBoxes td { padding: 8px 6px; }
 #tableInboundRecentBoxes td .salin-btn { margin-left: 4px; }
+
+/* Cetakan selalu terang, juga saat aplikasi di mode gelap (tema dipindah ke terang oleh skrip di footer saat mencetak; ini cadangannya) */
+@media print {
+    [data-theme="dark"] { color-scheme: light; }
+    [data-theme="dark"] body { background: #ffffff !important; color: #0f172a !important; }
+    [data-theme="dark"] .thermal-label-wrapper { background: #ffffff !important; border-color: #94a3b8 !important; }
+}
