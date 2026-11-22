@@ -493,6 +493,9 @@ require_once __DIR__ . '/layout/header.php';
                 <button type="button" class="btn btn-outline btn-sm" onclick="eksporRincianLaba()" style="display: inline-flex; align-items: center; gap: 5px; color: var(--ok-fg); border-color: var(--border-hover); background: var(--ok-bg);" title="Ekspor rincian ke Excel">
                     <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i><span>Excel</span>
                 </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="eksporPdfRincianLaba()" style="display: inline-flex; align-items: center; gap: 5px;" title="Ekspor rincian ke PDF">
+                    <i data-lucide="file-text" style="width: 14px; height: 14px;"></i><span>PDF</span>
+                </button>
                 <button type="button" onclick="document.getElementById('modalRincianLaba').style.display='none'" style="border: none; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
             </div>
         </div>
@@ -573,6 +576,9 @@ async function rincianLaba(kunci, judul) {
 
 function eksporRincianLaba() {
     window.eksporExcel(rlNamaEkspor, 'rlEkspor');
+}
+function eksporPdfRincianLaba() {
+    window.eksporPdf(document.getElementById('rlJudul').textContent + ' · ' + document.getElementById('rlSub').textContent, 'rlEkspor');
 }
 </script>
 <?php endif; ?>
