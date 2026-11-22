@@ -27,7 +27,7 @@ if ($activeTab === 'matriks' && $tampil === 'nota') {
     usort($notaAging, fn($a, $b) => $b['hari_telat'] <=> $a['hari_telat'] ?: strcmp($a['created_at'], $b['created_at']));
     foreach ($notaAging as $n) {
         $agRows[] = ['no_dok' => $n['no_surat_jalan'], 'tanggal' => $n['created_at'], 'pihak' => '[' . $n['kode_mitra'] . '] ' . $n['nama_mitra'],
-            'tempo' => $n['jatuh_tempo'], 'tagihan' => $n['total_nilai_jual'], 'bayar' => $n['total_bayar'], 'sisa' => $n['sisa_piutang'], 'telat' => $n['hari_telat']];
+            'tempo' => $n['jatuh_tempo'], 'tagihan' => $n['total_nilai_jual'], 'bayar' => $n['total_bayar'], 'sisa' => $n['sisa_piutang'], 'telat' => $n['hari_telat'], 'rincian' => ['keluar', (int)$n['id']]];
     }
 }
 
@@ -350,7 +350,7 @@ require_once __DIR__ . '/layout/header.php';
                                     </td>
                                 <?php endif; ?>
                                 <td>
-                                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);">
+                                    <strong class="rsj-link" onclick="bukaRincianSj('keluar', <?= (int)$n['id'] ?>)" title="Lihat rincian box" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);">
                                         <?= htmlspecialchars($n['no_surat_jalan']) ?>
                                     </strong>
                                     <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
@@ -952,4 +952,5 @@ function escapeHtml(text) {
 </script>
 
 <?php if ($btBoleh) { $btJenis = 'ar'; $btPihakId = $selectedMitraId; include __DIR__ . '/layout/bayar_terpilih.php'; } ?>
+<?php require __DIR__ . '/layout/rincian_sj.php'; ?>
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

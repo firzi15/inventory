@@ -1,7 +1,7 @@
 <?php
 /**
  * Tabel umur utang/piutang per dokumen (surat jalan masuk atau nota keluar).
- * Variabel: $agRows [no_dok, tanggal, pihak, tempo, tagihan, bayar, sisa, telat], $agLabelDok, $agLabelPihak, $agLabelTagihan, $agLabelBayar, $agLabelSisa
+ * Variabel: $agRows [no_dok, tanggal, pihak, tempo, tagihan, bayar, sisa, telat, rincian (opsional: [tipe, kunci] untuk bukaRincianSj)], $agLabelDok, $agLabelPihak, $agLabelTagihan, $agLabelBayar, $agLabelSisa
  */
 use App\Core\Helper;
 use App\Services\AgingService;
@@ -31,7 +31,7 @@ $agWarna = ['aging_belum' => '#0369a1', 'aging_1_7' => '#15803d', 'aging_8_14' =
             <?php else: $no = 1; foreach ($agRows as $r): $kunci = AgingService::kunci((int)$r['telat']); ?>
                 <tr>
                     <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
-                    <td><strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);"><?= htmlspecialchars($r['no_dok']) ?></strong></td>
+                    <td><strong <?php if (!empty($r['rincian'])): ?>class="rsj-link" onclick='bukaRincianSj(<?= htmlspecialchars(json_encode($r['rincian'][0]), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($r['rincian'][1]), ENT_QUOTES) ?>)' title="Lihat rincian box"<?php endif; ?> style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);"><?= htmlspecialchars($r['no_dok']) ?></strong></td>
                     <td style="font-size: 12px;"><?= date('d/m/Y', strtotime($r['tanggal'])) ?></td>
                     <td><strong style="color: var(--text-main);"><?= htmlspecialchars($r['pihak']) ?></strong></td>
                     <td style="text-align: center; font-size: 12px;">

@@ -1189,6 +1189,16 @@ if ($action) {
                 ], $kunciDl)]);
                 exit;
 
+            // Rincian box satu surat jalan untuk AR Aging (keluar, per id transaksi) dan AP Aging (masuk, per nomor SJ)
+            case 'rincian_sj':
+                $tipeRsj = (string)($_GET['tipe'] ?? '');
+                if ($tipeRsj === 'keluar') $hasilRsj = \App\Services\RincianSuratJalanService::keluar((int)($_GET['id'] ?? 0));
+                elseif ($tipeRsj === 'masuk') $hasilRsj = \App\Services\RincianSuratJalanService::masuk(trim((string)($_GET['sj'] ?? '')));
+                else throw new Exception("Tipe rincian tidak valid.");
+                if (!$hasilRsj['kepala']) throw new Exception("Surat jalan tidak ditemukan.");
+                Helper::jsonResponse(['success' => true] + $hasilRsj);
+                exit;
+
             // Kartu piutang satu mitra untuk menu AR Ledger (saldo awal, nota, setoran, saldo berjalan)
             case 'ar_ledger_kartu':
                 $mitraKartu = (int)($_GET['mitra'] ?? 0);

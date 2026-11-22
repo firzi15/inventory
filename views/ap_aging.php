@@ -44,7 +44,7 @@ if ($activeTab === 'matriks' && $tampil === 'sj') {
     usort($sjAging, fn($a, $b) => $b['hari_telat'] <=> $a['hari_telat'] ?: strcmp($a['tanggal_masuk'], $b['tanggal_masuk']));
     foreach ($sjAging as $sj) {
         $agRows[] = ['no_dok' => $sj['no_surat_jalan'], 'tanggal' => $sj['tanggal_masuk'], 'pihak' => '[' . $sj['kode_pemasok'] . '] ' . $sj['nama_pemasok'],
-            'tempo' => $sj['jatuh_tempo'], 'tagihan' => $sj['total_nilai_beli'], 'bayar' => $sj['total_bayar'], 'sisa' => $sj['sisa_utang'], 'telat' => $sj['hari_telat']];
+            'tempo' => $sj['jatuh_tempo'], 'tagihan' => $sj['total_nilai_beli'], 'bayar' => $sj['total_bayar'], 'sisa' => $sj['sisa_utang'], 'telat' => $sj['hari_telat'], 'rincian' => ['masuk', $sj['no_surat_jalan']]];
     }
 }
 
@@ -320,7 +320,7 @@ require_once __DIR__ . '/layout/header.php';
                                 </td>
                                 <td>
                                     <?php if (!empty($inv['no_surat_jalan'])): ?>
-                                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: var(--aktif-fg);">
+                                        <span <?php if ($inv['tipe_invoice'] === 'STOK'): ?>class="rsj-link" onclick='bukaRincianSj("masuk", <?= htmlspecialchars(json_encode($inv['no_surat_jalan']), ENT_QUOTES) ?>)' title="Lihat rincian box"<?php endif; ?> style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: var(--aktif-fg);">
                                             <?= htmlspecialchars($inv['no_surat_jalan']) ?>
                                         </span>
                                     <?php else: ?>
@@ -543,7 +543,7 @@ require_once __DIR__ . '/layout/header.php';
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
                                 <td>
-                                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);">
+                                    <strong class="rsj-link" onclick='bukaRincianSj("masuk", <?= htmlspecialchars(json_encode($sj['no_surat_jalan']), ENT_QUOTES) ?>)' title="Lihat rincian box" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);">
                                         <?= htmlspecialchars($sj['no_surat_jalan']) ?>
                                     </strong>
                                     <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
@@ -1791,5 +1791,6 @@ window.addEventListener('click', function(e) {
 </script>
 
 <?php if ($btBoleh) { $btJenis = 'ap'; $btPihakId = $selectedPemasokId; include __DIR__ . '/layout/bayar_terpilih.php'; } ?>
+<?php require __DIR__ . '/layout/rincian_sj.php'; ?>
 <?php require_once __DIR__ . '/layout/footer.php'; ?>
 
