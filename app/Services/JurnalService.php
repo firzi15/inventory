@@ -431,6 +431,60 @@ class JurnalService
         return $rows;
     }
 
+    /**
+     * Rincian per box di balik satu baris Detail Laba.
+     * $f: filter halaman (dari, sampai, mitra_id, jenis_id, item_id, pemasok_id, cari)
+     * $r: kunci baris yang diklik (trx, item, pms, jenis, mitra, tgl); pms = -1 berarti box tanpa pemasok
+     */
+    public static function detailLabaBox(array $f, array $r): array
+    {
+        $db = Database::getConnection();
+        $sql = "
+            SELECT DATE(t.created_at) tanggal, COALESCE(t.no_referensi_eksternal, t.no_bast, t.no_transaksi) sj,
+                   COALESCE(m.nama_mitra, '-') mitra, i.id item_id, i.nama_item produk, COALESCE(jb.nama_jenis, '-') jenis,
+                   COALESCE(CONCAT('[', p.kode_pemasok, '] ', p.nama_pemasok), '-') pemasok, COALESCE(l.no_surat_jalan, '-') sj_masuk,
+                   l.id_label, d.berat_netto, d.harga_pemasok, d.harga_mitra, d.total_beli, d.total_jual, d.profit
+            FROM transaksi_stok t
+            JOIN transaksi_stok_detail d ON d.transaksi_id = t.id
+            JOIN labels l ON l.id = d.label_id
+            JOIN items i ON i.id = l.item_id
+            LEFT JOIN jenis_barang jb ON jb.id = i.jenis_id
+            LEFT JOIN mitra m ON m.id = t.mitra_id
+            LEFT JOIN pemasok p ON p.id = l.pemasok_id
+            WHERE t.jenis_transaksi = 'PENGELUARAN' AND DATE(t.created_at) BETWEEN :dari AND :sampai";
+        $p = [':dari' => $f['dari'], ':sampai' => $f['sampai']];
+        // filter halaman (sama dengan detailLaba)
+        if (!empty($f['mitra_id']))   { $sql .= " AND t.mitra_id = :mitra";   $p[':mitra'] = (int)$f['mitra_id']; }
+        if (!empty($f['jenis_id']))   { $sql .= " AND i.jenis_id = :jenis";   $p[':jenis'] = (int)$f['jenis_id']; }
+        if (!empty($f['item_id']))    { $sql .= " AND i.id = :item";          $p[':item'] = (int)$f['item_id']; }
+        if (!empty($f['pemasok_id'])) { $sql .= " AND l.pemasok_id = :pms";   $p[':pms'] = (int)$f['pemasok_id']; }
+        if (($f['cari'] ?? '') !== '') {
+            $sql .= " AND (t.no_transaksi LIKE :cari1 OR t.no_referensi_eksternal LIKE :cari2 OR t.no_bast LIKE :cari3)";
+            $p[':cari1'] = $p[':cari2'] = $p[':cari3'] = '%' . $f['cari'] . '%';
+        }
+        // kunci baris yang diklik
+        if (!empty($r['trx']))   { $sql .= " AND t.id = :rtrx";        $p[':rtrx'] = (int)$r['trx']; }
+        if (!empty($r['item']))  { $sql .= " AND i.id = :ritem";       $p[':ritem'] = (int)$r['item']; }
+        if (isset($r['jenis']) && (int)$r['jenis'] !== 0) {
+            if ((int)$r['jenis'] === -1) $sql .= " AND i.jenis_id IS NULL";
+            else { $sql .= " AND i.jenis_id = :rjenis"; $p[':rjenis'] = (int)$r['jenis']; }
+        }
+        if (!empty($r['mitra'])) { $sql .= " AND t.mitra_id = :rmitra"; $p[':rmitra'] = (int)$r['mitra']; }
+        if (!empty($r['tgl']))   { $sql .= " AND DATE(t.created_at) = :rtgl"; $p[':rtgl'] = (string)$r['tgl']; }
+        if (isset($r['pms']) && (int)$r['pms'] !== 0) {
+            if ((int)$r['pms'] === -1) $sql .= " AND l.pemasok_id IS NULL";
+            else { $sql .= " AND l.pemasok_id = :rpms"; $p[':rpms'] = (int)$r['pms']; }
+        }
+        $sql .= " ORDER BY i.nama_item, t.created_at, t.id, l.id_label";
+        $st = $db->prepare($sql);
+        $st->execute($p);
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as &$x) {
+            foreach (['berat_netto', 'harga_pemasok', 'harga_mitra', 'total_beli', 'total_jual', 'profit'] as $c) $x[$c] = (float)$x[$c];
+        }
+        return $rows;
+    }
+
     /** Tahun-tahun yang punya jurnal, ditambah tahun berjalan. */
     public static function tahunTersedia(): array
     {

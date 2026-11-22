@@ -499,6 +499,59 @@ class Piutang {
     }
 
     /**
+     * Setoran untuk beberapa nota satu mitra sekaligus (setor gelondongan dari daftar Payment In).
+     * Nominal boleh kurang dari total: dibagi ke nota yang jatuh temponya paling lama lebih dahulu,
+     * lalu dibukukan lewat recordPayment (alokasi manual), jadi aturan, jurnal, dan riwayatnya sama dengan setoran biasa.
+     * $data: mitra_id, nota_ids[], jumlah_bayar, tanggal_bayar, metode_bayar, bank_tujuan, keterangan
+     */
+    public static function recordPaymentTerpilih(array $data, int $userId = 1): array {
+        $mitraId = (int)($data['mitra_id'] ?? 0);
+        $ids     = array_values(array_unique(array_filter(array_map('intval', (array)($data['nota_ids'] ?? [])))));
+        $jumlah  = round((float)($data['jumlah_bayar'] ?? 0), 2);
+        $tgl     = trim((string)($data['tanggal_bayar'] ?? date('Y-m-d')));
+
+        if ($mitraId <= 0) throw new Exception("Pilih mitra terlebih dahulu.");
+        if (!$ids) throw new Exception("Pilih minimal satu nota yang disetor.");
+        if ($jumlah <= 0) throw new Exception("Nominal setoran harus lebih besar dari 0.");
+        if (!\App\Core\Periode::sah($tgl)) throw new Exception("Tanggal setor tidak valid.");
+
+        $notas = array_values(array_filter(
+            self::getNotaList(['mitra_id' => $mitraId, 'status' => 'BELUM_LUNAS']),
+            fn($n) => in_array((int)$n['id'], $ids, true)
+        ));
+        if (count($notas) !== count($ids)) {
+            throw new Exception("Ada nota yang tidak ditemukan, sudah lunas, atau bukan milik mitra ini. Muat ulang halaman lalu coba lagi.");
+        }
+
+        // Jatuh tempo paling lama lebih dahulu
+        usort($notas, fn($a, $b) => [$a['jatuh_tempo'], $a['created_at'], (int)$a['id']] <=> [$b['jatuh_tempo'], $b['created_at'], (int)$b['id']]);
+        $totalSisa = round(array_sum(array_map(fn($n) => (float)$n['sisa_piutang'], $notas)), 2);
+        if ($jumlah > $totalSisa + 0.01) {
+            throw new Exception("Nominal (Rp " . number_format($jumlah, 0, ',', '.') . ") melebihi total sisa nota terpilih (Rp " . number_format($totalSisa, 0, ',', '.') . ").");
+        }
+
+        $alokasi = [];
+        $sisaUang = $jumlah;
+        foreach ($notas as $n) {
+            if ($sisaUang <= 0.001) break;
+            $potong = round(min($sisaUang, (float)$n['sisa_piutang']), 2);
+            $alokasi[(int)$n['id']] = $potong;
+            $sisaUang = round($sisaUang - $potong, 2);
+        }
+
+        return self::recordPayment([
+            'mitra_id'       => $mitraId,
+            'jumlah_bayar'   => $jumlah,
+            'tanggal_bayar'  => $tgl,
+            'metode_bayar'   => $data['metode_bayar'] ?? 'TUNAI',
+            'bank_tujuan'    => $data['bank_tujuan'] ?? '',
+            'keterangan'     => $data['keterangan'] ?? '',
+            'mode_alokasi'   => 'MANUAL',
+            'alokasi_manual' => $alokasi,
+        ], $userId);
+    }
+
+    /**
      * Mengambil Sisa Piutang Riil Satu Nota Tertentu
      */
     public static function getSisaPiutangNota(int $transaksiStokId): float {

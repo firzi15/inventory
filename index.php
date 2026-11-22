@@ -1130,6 +1130,22 @@ if ($action) {
                 ]);
                 exit;
 
+            // Bayar beberapa faktur satu pemasok sekaligus (checklist di Payment Out); boleh cicil
+            case 'save_ap_payment_terpilih':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $resBt = \App\Models\Utang::recordPaymentTerpilih($_POST, (int)($_SESSION['user_login']['id'] ?? 1));
+                Helper::jsonResponse(['success' => true, 'data' => $resBt,
+                    'message' => "Pembayaran {$resBt['no_bukti_keluar']} sebesar Rp " . number_format($resBt['jumlah_bayar'], 0, ',', '.') . " dibukukan ke {$resBt['allocated_count']} faktur."]);
+                exit;
+
+            // Setoran beberapa nota satu mitra sekaligus (checklist di Payment In)
+            case 'save_ar_payment_terpilih':
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
+                $resBt = \App\Models\Piutang::recordPaymentTerpilih($_POST, (int)($_SESSION['user_login']['id'] ?? 1));
+                Helper::jsonResponse(['success' => true, 'data' => $resBt,
+                    'message' => "Setoran {$resBt['no_bukti_bayar']} sebesar Rp " . number_format($resBt['jumlah_bayar'], 0, ',', '.') . " dibukukan ke {$resBt['allocated_count']} nota."]);
+                exit;
+
             // X. Bukukan Pembayaran Utang AP ke Pemasok (Kas / Bank)
             case 'save_ap_payment':
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -1155,6 +1171,22 @@ if ($action) {
                     'success' => true,
                     'history' => $history
                 ]);
+                exit;
+
+            // Rincian per produk (per box) di balik satu baris Detail Laba; hanya untuk akun yang boleh membuka Laba Rugi
+            case 'detail_laba_box':
+                if (!\App\Core\Akses::lihatLabaRugi()) {
+                    Helper::jsonResponse(['success' => false, 'message' => 'Anda tidak memiliki akses ke laporan laba.'], 403);
+                    exit;
+                }
+                [$dariDl, $sampaiDl] = \App\Core\Periode::baca($_GET, 'bulan');
+                $kunciDl = [];
+                foreach (['trx', 'item', 'pms', 'jenis', 'mitra'] as $kDl) if (isset($_GET['r_' . $kDl])) $kunciDl[$kDl] = (int)$_GET['r_' . $kDl];
+                if (isset($_GET['r_tgl']) && \App\Core\Periode::sah((string)$_GET['r_tgl'])) $kunciDl['tgl'] = (string)$_GET['r_tgl'];
+                Helper::jsonResponse(['success' => true, 'box' => \App\Services\JurnalService::detailLabaBox([
+                    'dari' => $dariDl, 'sampai' => $sampaiDl, 'mitra_id' => (int)($_GET['mitra'] ?? 0), 'jenis_id' => (int)($_GET['jenis'] ?? 0),
+                    'item_id' => (int)($_GET['item'] ?? 0), 'pemasok_id' => (int)($_GET['pemasok'] ?? 0), 'cari' => trim((string)($_GET['cari'] ?? '')),
+                ], $kunciDl)]);
                 exit;
 
             // Kartu piutang satu mitra untuk menu AR Ledger (saldo awal, nota, setoran, saldo berjalan)

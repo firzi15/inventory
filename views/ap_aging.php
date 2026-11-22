@@ -78,6 +78,11 @@ $riwayatPayments = Utang::getAllPayments([
     'search'     => $searchKeyword
 ]);
 
+// Bayar gelondongan: checklist hanya muncul setelah pemasok dipilih di filter
+$btBoleh = $activeTab === 'invoices' && $selectedPemasokId > 0;
+$btPihakNama = '';
+foreach ($pemasokList as $pmBt) { if ((int)$pmBt['id'] === $selectedPemasokId) $btPihakNama = '[' . $pmBt['kode_pemasok'] . '] ' . $pmBt['nama_pemasok']; }
+
 require_once __DIR__ . '/layout/header.php';
 ?>
 
@@ -201,6 +206,17 @@ require_once __DIR__ . '/layout/header.php';
                     <?php if ($selectedPemasokId > 0 || $selectedTipe !== 'SEMUA' || $selectedStatus !== 'SEMUA' || !empty($searchKeyword)): ?>
                         <a href="index.php?page=ap_aging&tab=invoices" class="btn btn-outline" style="font-size: 12px; padding: 8px 12px;">Reset</a>
                     <?php endif; ?>
+                    <?php if ($btBoleh): ?>
+                        <button type="button" id="btnBayarTerpilih" class="btn btn-primary" onclick="bukaBayarTerpilih()" disabled
+                                style="font-size: 12px; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;" title="Centang dokumen di tabel, lalu klik untuk membayar sekaligus">
+                            <i data-lucide="wallet" style="width: 14px; height: 14px;"></i><span id="lblBayarTerpilih">Bayar Terpilih</span>
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline" disabled title="Pilih pemasok di filter dulu untuk membayar beberapa dokumen sekaligus"
+                                style="font-size: 12px; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px; opacity: .6;">
+                            <i data-lucide="wallet" style="width: 14px; height: 14px;"></i><span>Bayar Terpilih</span>
+                        </button>
+                    <?php endif; ?>
                 </div>
             </form>
 
@@ -210,6 +226,7 @@ require_once __DIR__ . '/layout/header.php';
                     <thead>
                         <tr>
                             <th style="width: 35px; text-align: center;">No</th>
+                            <?php if ($btBoleh): ?><th class="no-print" style="width: 34px; text-align: center;"><input type="checkbox" id="cekSemuaBayar" onchange="pilihSemuaBayar(this.checked)" title="Pilih semua yang tampil"></th><?php endif; ?>
                             <th style="width: 155px;">No. Faktur</th>
                             <th style="width: 150px;">Tipe &amp; Akun</th>
                             <th style="min-width: 170px;">Pemasok / Vendor</th>
@@ -225,7 +242,7 @@ require_once __DIR__ . '/layout/header.php';
                     <tbody>
                         <?php if (empty($invoicesList)): ?>
                             <tr>
-                                <td colspan="11" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                                <td colspan="<?= $btBoleh ? 12 : 11 ?>" style="text-align: center; padding: 36px; color: var(--text-muted);">
                                     Tidak ada data Faktur Pembelian yang cocok dengan kriteria filter.
                                 </td>
                             </tr>
@@ -246,6 +263,15 @@ require_once __DIR__ . '/layout/header.php';
                             ?>
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
+                                <?php if ($btBoleh): ?>
+                                    <td class="no-print" style="text-align: center;">
+                                        <?php if (!in_array($inv['status_bayar'], ['BATAL', 'LUNAS'], true) && (float)$inv['sisa_utang'] > 0.01): ?>
+                                            <input type="checkbox" class="cek-bayar-ap" value="<?= (int)$inv['id'] ?>" onchange="perbaruiTombolBayar()"
+                                                   data-no="<?= htmlspecialchars($inv['no_invoice']) ?>" data-sisa="<?= (float)$inv['sisa_utang'] ?>"
+                                                   data-tempo="<?= htmlspecialchars(substr((string)$inv['tanggal_jatuh_tempo'], 0, 10)) ?>" data-tgl="<?= htmlspecialchars((string)$inv['tanggal_invoice']) ?>">
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
                                 <td>
                                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 800; color: var(--aktif-fg);">
                                         <?= htmlspecialchars($inv['no_invoice']) ?>
@@ -1764,5 +1790,6 @@ window.addEventListener('click', function(e) {
 });
 </script>
 
+<?php if ($btBoleh) { $btJenis = 'ap'; $btPihakId = $selectedPemasokId; include __DIR__ . '/layout/bayar_terpilih.php'; } ?>
 <?php require_once __DIR__ . '/layout/footer.php'; ?>
 

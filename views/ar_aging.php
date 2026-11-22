@@ -47,6 +47,11 @@ $riwayatPayments = Piutang::getAllPayments([
     'search'   => $searchKeyword
 ]);
 
+// Setor gelondongan: checklist hanya muncul setelah mitra dipilih di filter
+$btBoleh = $activeTab === 'nota' && $selectedMitraId > 0;
+$btPihakNama = '';
+foreach ($mitraList as $mBt) { if ((int)$mBt['id'] === $selectedMitraId) $btPihakNama = '[' . $mBt['kode_mitra'] . '] ' . $mBt['nama_mitra']; }
+
 require_once __DIR__ . '/layout/header.php';
 ?>
 
@@ -287,6 +292,19 @@ require_once __DIR__ . '/layout/header.php';
                         <a href="index.php?page=ar_aging&tab=nota" class="btn btn-outline" style="height: 38px; display: inline-flex; align-items: center;">Reset Filter</a>
                     </div>
                 <?php endif; ?>
+                <div>
+                    <?php if ($btBoleh): ?>
+                        <button type="button" id="btnBayarTerpilih" class="btn btn-primary" onclick="bukaBayarTerpilih()" disabled
+                                style="height: 38px; padding: 0 14px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" title="Centang dokumen di tabel, lalu klik untuk menyetor sekaligus">
+                            <i data-lucide="wallet" style="width: 14px; height: 14px;"></i><span id="lblBayarTerpilih">Setor Terpilih</span>
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline" disabled title="Pilih mitra di filter dulu untuk menyetor beberapa dokumen sekaligus"
+                                style="height: 38px; padding: 0 14px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; opacity: .6;">
+                            <i data-lucide="wallet" style="width: 14px; height: 14px;"></i><span>Setor Terpilih</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
             </form>
 
             <div class="table-responsive">
@@ -294,6 +312,7 @@ require_once __DIR__ . '/layout/header.php';
                     <thead>
                         <tr>
                             <th style="width: 35px; text-align: center;">No</th>
+                            <?php if ($btBoleh): ?><th class="no-print" style="width: 34px; text-align: center;"><input type="checkbox" id="cekSemuaBayar" onchange="pilihSemuaBayar(this.checked)" title="Pilih semua yang tampil"></th><?php endif; ?>
                             <th style="min-width: 150px;">No. Surat Jalan / Bon</th>
                             <th style="width: 115px;">Tanggal Terbit</th>
                             <th style="min-width: 160px;">Mitra Penerima</th>
@@ -308,7 +327,7 @@ require_once __DIR__ . '/layout/header.php';
                     <tbody>
                         <?php if (empty($notaList)): ?>
                             <tr>
-                                <td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                <td colspan="<?= $btBoleh ? 11 : 10 ?>" style="text-align: center; padding: 30px; color: var(--text-muted);">
                                     Tidak ada data nota piutang yang sesuai dengan filter yang dipilih.
                                 </td>
                             </tr>
@@ -321,6 +340,15 @@ require_once __DIR__ . '/layout/header.php';
                             ?>
                             <tr>
                                 <td style="text-align: center; color: var(--text-muted);"><?= $no++ ?></td>
+                                <?php if ($btBoleh): ?>
+                                    <td class="no-print" style="text-align: center;">
+                                        <?php if ((float)$n['sisa_piutang'] > 0.01): ?>
+                                            <input type="checkbox" class="cek-bayar-ar" value="<?= (int)$n['id'] ?>" onchange="perbaruiTombolBayar()"
+                                                   data-no="<?= htmlspecialchars($n['no_surat_jalan']) ?>" data-sisa="<?= (float)$n['sisa_piutang'] ?>"
+                                                   data-tempo="<?= htmlspecialchars(substr((string)$n['jatuh_tempo'], 0, 10)) ?>" data-tgl="<?= htmlspecialchars((string)$n['created_at']) ?>">
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
                                 <td>
                                     <strong style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-main);">
                                         <?= htmlspecialchars($n['no_surat_jalan']) ?>
@@ -923,4 +951,5 @@ function escapeHtml(text) {
 }
 </script>
 
+<?php if ($btBoleh) { $btJenis = 'ar'; $btPihakId = $selectedMitraId; include __DIR__ . '/layout/bayar_terpilih.php'; } ?>
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

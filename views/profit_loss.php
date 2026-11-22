@@ -73,6 +73,19 @@ if ($tab === 'laba_sj') {
         if (!isset($hasilDl[$k])) {
             $hasilDl[$k] = ['kemasan' => 0, 'qty' => 0.0, 'jual' => 0.0, 'hpp' => 0.0];
             foreach ($kolomLabel as [$kol]) $hasilDl[$k][$kol] = $r[$kol];
+            // kunci baris untuk modal rincian per produk (pms/jenis -1 = kosong)
+            $pmsK = $r['pemasok_id'] !== null ? (int)$r['pemasok_id'] : -1;
+            $jenisK = $r['jenis_id'] !== null ? (int)$r['jenis_id'] : -1;
+            $hasilDl[$k]['_kunci'] = [
+                'sj' => ['trx' => (int)$r['trx_id']],
+                'rincian' => ['trx' => (int)$r['trx_id'], 'item' => (int)$r['item_id'], 'pms' => $pmsK],
+                'jenis' => ['jenis' => $jenisK],
+                'produk' => ['item' => (int)$r['item_id']],
+                'mitra' => ['mitra' => (int)$r['mitra_id']],
+                'pemasok' => ['pms' => $pmsK],
+                'tanggal' => ['tgl' => $r['tanggal']],
+            ][$dlKel];
+            $hasilDl[$k]['_judul'] = implode(' · ', array_map(fn($kl) => $kl[0] === 'tanggal' ? $tglPanjang((string)$r['tanggal']) : (string)$r[$kl[0]], $kolomLabel));
         }
         $hasilDl[$k]['kemasan'] += $r['kemasan']; $hasilDl[$k]['qty'] += $r['qty'];
         $hasilDl[$k]['jual'] += $r['jual']; $hasilDl[$k]['hpp'] += $r['hpp'];
@@ -92,6 +105,7 @@ if ($tab === 'laba_sj') {
         $c = (is_int($x) || is_float($x)) ? $x <=> $y : strcasecmp((string)$x, (string)$y);
         return $dlArah === 'turun' ? -$c : $c;
     });
+    $dlAdaSj = in_array($dlKel, ['sj', 'rincian'], true); // baris mewakili satu surat jalan: tampilkan tombol ke halaman Surat Jalan
     $dlPer = 50;
     $dlTotalBaris = count($hasilDl);
     $dlHalMax = max(1, (int)ceil($dlTotalBaris / $dlPer));
@@ -420,14 +434,16 @@ require_once __DIR__ . '/layout/header.php';
                     <tr>
                         <?php foreach ($kolomLabel as [$kol, $jdl]) echo $thDl($kol, $jdl); ?>
                         <?php foreach ($kolomAngka as $kol => $jdl) echo $thDl($kol, $jdl, true); ?>
+                        <?php if ($dlAdaSj): ?><th class="no-print" style="width: 70px; text-align: center;">SJ</th><?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!$dlTampil): ?>
-                        <tr><td colspan="<?= count($kolomLabel) + count($kolomAngka) ?>" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada pengeluaran barang pada filter ini</td></tr>
+                        <tr><td colspan="<?= count($kolomLabel) + count($kolomAngka) + ($dlAdaSj ? 1 : 0) ?>" style="text-align: center; padding: 28px; color: var(--text-muted);">Tidak ada pengeluaran barang pada filter ini</td></tr>
                     <?php endif; ?>
                     <?php foreach ($dlTampil as $g): ?>
-                        <tr>
+                        <tr class="dl-baris" style="cursor: pointer;" title="Klik untuk melihat rincian per produk"
+                            onclick='rincianLaba(<?= htmlspecialchars(json_encode($g['_kunci']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($g['_judul']), ENT_QUOTES) ?>)'>
                             <?php foreach ($kolomLabel as $iK => [$kol]):
                                 $v = $g[$kol]; ?>
                                 <td style="<?= $iK === 0 ? 'font-weight: 600;' : '' ?>"><?= $kol === 'tanggal' ? $tglPanjang((string)$v) : htmlspecialchars((string)$v) ?></td>
@@ -438,6 +454,15 @@ require_once __DIR__ . '/layout/header.php';
                             <td style="text-align: right;"><?= $rp($g['hpp']) ?></td>
                             <td style="text-align: right; font-weight: 700; color: <?= $warna($g['laba']) ?>;"><?= $rp($g['laba']) ?></td>
                             <td style="text-align: right;"><?= number_format($g['margin'], 1, ',', '.') ?>%</td>
+                            <?php if ($dlAdaSj):
+                                $urlSj = 'index.php?' . http_build_query(['page' => 'surat_jalan', 'tab' => 'pengeluaran', 'dari' => $g['tanggal'], 'sampai' => $g['tanggal'], 'cari' => $g['sj']]); ?>
+                                <td class="no-print" style="text-align: center;">
+                                    <a href="<?= htmlspecialchars($urlSj) ?>" class="btn btn-outline btn-sm" onclick="event.stopPropagation()"
+                                       title="Buka surat jalan <?= htmlspecialchars($g['sj']) ?>" style="padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i data-lucide="external-link" style="width: 13px; height: 13px;"></i><span style="font-size: 11px;">Buka</span>
+                                    </a>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -453,5 +478,76 @@ require_once __DIR__ . '/layout/header.php';
     <?php endif; ?>
 
 </div>
+
+<?php if ($tab === 'laba_sj'): ?>
+<style>.dl-baris:hover td { background: var(--bg-muted); }</style>
+<!-- MODAL: RINCIAN PER PRODUK (box di balik satu baris Detail Laba) -->
+<div id="modalRincianLaba" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
+    <div class="card" style="width: 100%; max-width: 1100px; margin: auto; padding: 24px; border-radius: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+            <div>
+                <h3 id="rlJudul" style="margin: 0; font-size: 16px; font-weight: 800;">Rincian per Produk</h3>
+                <p id="rlSub" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);"></p>
+            </div>
+            <button type="button" onclick="document.getElementById('modalRincianLaba').style.display='none'" style="border: none; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+            <table class="table-custom" data-no-tools style="font-size: 12.5px;">
+                <thead><tr>
+                    <th>Barcode</th><th>Surat Jalan Keluar</th><th>Pemasok &middot; SJ Masuk</th>
+                    <th style="text-align:right;">Netto</th><th style="text-align:right;">Harga Beli/kg</th><th style="text-align:right;">Harga Jual/kg</th>
+                    <th style="text-align:right;">HPP</th><th style="text-align:right;">Penjualan</th><th style="text-align:right;">Laba</th>
+                </tr></thead>
+                <tbody id="rlBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+const rlFilter = <?= json_encode(['dari' => $dari, 'sampai' => $sampai, 'mitra' => $dlMitra, 'jenis' => $dlJenis, 'item' => $dlItem, 'pemasok' => $dlPemasok, 'cari' => $dlCari]) ?>;
+const rlRp = n => (n < 0 ? '-' : '') + 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.abs(Math.round(n)));
+const rlKg = n => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' kg';
+const rlEsc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const rlTgl = s => { const d = String(s).slice(0, 10).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
+const rlWarna = n => n < 0 ? 'var(--bad-fg)' : 'inherit';
+const rlMargin = (laba, jual) => jual ? (laba / jual * 100).toFixed(1).replace('.', ',') + '%' : '-';
+
+async function rincianLaba(kunci, judul) {
+    try {
+        const q = new URLSearchParams({ action: 'detail_laba_box' });
+        Object.entries(rlFilter).forEach(([k, v]) => { if (v !== '' && v !== 0 && v !== null) q.set(k, v); });
+        Object.entries(kunci).forEach(([k, v]) => q.set('r_' + k, v));
+        const r = await fetch('index.php?' + q.toString());
+        const j = await r.json();
+        if (!j.success) throw new Error(j.message || 'Gagal memuat rincian');
+        const per = {};
+        j.box.forEach(b => { (per[b.produk] = per[b.produk] || { jenis: b.jenis, box: [] }).box.push(b); });
+        let tKg = 0, tBeli = 0, tJual = 0, tBox = 0, html = '';
+        Object.keys(per).forEach(nama => {
+            const g = per[nama];
+            let kg = 0, beli = 0, jual = 0;
+            g.box.forEach(b => { kg += b.berat_netto; beli += b.total_beli; jual += b.total_jual; });
+            tKg += kg; tBeli += beli; tJual += jual; tBox += g.box.length;
+            html += '<tr style="background:var(--bg-muted);font-weight:800;"><td colspan="3">' + rlEsc(nama) + ' <span style="font-weight:600;color:var(--text-muted);">&middot; ' + rlEsc(g.jenis) + ' &middot; ' + g.box.length + ' box &middot; margin ' + rlMargin(jual - beli, jual) + '</span></td>' +
+                    '<td style="text-align:right;">' + rlKg(kg) + '</td><td></td><td></td><td style="text-align:right;">' + rlRp(beli) + '</td><td style="text-align:right;">' + rlRp(jual) + '</td>' +
+                    '<td style="text-align:right;color:' + rlWarna(jual - beli) + ';">' + rlRp(jual - beli) + '</td></tr>';
+            html += g.box.map(b => '<tr><td style="font-family:monospace;">' + rlEsc(b.id_label) + '</td>' +
+                    '<td>' + rlEsc(b.sj) + '<div style="font-size:11px;color:var(--text-muted);">' + rlTgl(b.tanggal) + ' &middot; ' + rlEsc(b.mitra) + '</div></td>' +
+                    '<td>' + rlEsc(b.pemasok) + '<div style="font-size:11px;color:var(--text-muted);">' + rlEsc(b.sj_masuk) + '</div></td>' +
+                    '<td style="text-align:right;">' + rlKg(b.berat_netto) + '</td><td style="text-align:right;">' + rlRp(b.harga_pemasok) + '</td><td style="text-align:right;">' + rlRp(b.harga_mitra) + '</td>' +
+                    '<td style="text-align:right;">' + rlRp(b.total_beli) + '</td><td style="text-align:right;">' + rlRp(b.total_jual) + '</td>' +
+                    '<td style="text-align:right;font-weight:700;color:' + rlWarna(b.profit) + ';">' + rlRp(b.profit) + '</td></tr>').join('');
+        });
+        if (!j.box.length) html = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted);">Tidak ada box</td></tr>';
+        else html += '<tr style="font-weight:800;border-top:2px solid var(--border);"><td colspan="3">TOTAL ' + Object.keys(per).length + ' produk &middot; ' + tBox + ' box</td><td style="text-align:right;">' + rlKg(tKg) + '</td><td></td><td></td>' +
+                     '<td style="text-align:right;">' + rlRp(tBeli) + '</td><td style="text-align:right;">' + rlRp(tJual) + '</td><td style="text-align:right;color:' + rlWarna(tJual - tBeli) + ';">' + rlRp(tJual - tBeli) + '</td></tr>';
+        document.getElementById('rlBody').innerHTML = html;
+        document.getElementById('rlJudul').textContent = judul;
+        document.getElementById('rlSub').textContent = 'Rincian per produk · laba ' + rlRp(tJual - tBeli) + ' · margin ' + rlMargin(tJual - tBeli, tJual);
+        document.getElementById('modalRincianLaba').style.display = 'flex';
+    } catch (e) { Swal.fire({ icon: 'error', title: 'Gagal', text: e.message }); }
+}
+</script>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/layout/footer.php'; ?>

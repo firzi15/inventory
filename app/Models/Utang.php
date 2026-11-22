@@ -40,7 +40,7 @@ class Utang {
 
         // 2. Ambil Total Kas Keluar dari ap_pembayaran
         $stmtBayar = $pdo->prepare("
-            SELECT 
+            SELECT
                 COALESCE(SUM(jumlah_bayar), 0) as total_kas_keluar,
                 COUNT(CASE WHEN status = 'AKTIF' THEN 1 END) as total_transaksi_bayar
             FROM ap_pembayaran
@@ -107,7 +107,7 @@ class Utang {
 
         // Ambil total kas keluar yang sudah dibayarkan per pemasok
         $stmtBayar = $pdo->query("
-            SELECT 
+            SELECT
                 pemasok_id,
                 COALESCE(SUM(jumlah_bayar), 0) as total_dibayar
             FROM ap_pembayaran
@@ -531,6 +531,114 @@ class Utang {
             ];
         } catch (Exception $e) {
             $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Bayar beberapa faktur satu pemasok sekaligus (bayar gelondongan dari daftar Payment Out).
+     * Nominal boleh kurang dari total (cicil): dibagi ke faktur yang jatuh temponya paling lama lebih dahulu.
+     * $data: pemasok_id, invoice_ids[], jumlah_bayar, tanggal_bayar, metode_bayar, bank_sumber, no_rekening_tujuan, keterangan
+     */
+    public static function recordPaymentTerpilih(array $data, int $userId = 1): array {
+        $pdo = Database::getConnection();
+
+        $pemasokId   = (int)($data['pemasok_id'] ?? 0);
+        $ids         = array_values(array_unique(array_filter(array_map('intval', (array)($data['invoice_ids'] ?? [])))));
+        $jumlahBayar = round((float)($data['jumlah_bayar'] ?? 0), 2);
+        $tglBayar    = trim((string)($data['tanggal_bayar'] ?? date('Y-m-d')));
+        $metodeBayar = strtoupper(trim((string)($data['metode_bayar'] ?? 'TRANSFER_BANK')));
+        $bankSumber  = trim((string)($data['bank_sumber'] ?? ''));
+        $noRekTujuan = trim((string)($data['no_rekening_tujuan'] ?? ''));
+        $keterangan  = trim((string)($data['keterangan'] ?? ''));
+
+        if ($pemasokId <= 0) throw new Exception("Pilih pemasok terlebih dahulu.");
+        if (!$ids) throw new Exception("Pilih minimal satu faktur yang dibayar.");
+        if ($jumlahBayar <= 0) throw new Exception("Nominal pembayaran harus lebih besar dari 0.");
+        if (!\App\Core\Periode::sah($tglBayar)) throw new Exception("Tanggal bayar tidak valid.");
+        \App\Services\PeriodeService::pastikanTerbuka($tglBayar, 'mencatat pembayaran');
+        if (!in_array($metodeBayar, ['TUNAI', 'TRANSFER_BANK'], true)) $metodeBayar = 'TRANSFER_BANK';
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $st = $pdo->prepare("SELECT * FROM purchase_invoices WHERE id IN ($ph)");
+        $st->execute($ids);
+        $faktur = $st->fetchAll(PDO::FETCH_ASSOC);
+        if (count($faktur) !== count($ids)) throw new Exception("Ada faktur yang tidak ditemukan. Muat ulang halaman lalu coba lagi.");
+
+        foreach ($faktur as &$f) {
+            if ((int)$f['pemasok_id'] !== $pemasokId) throw new Exception("Faktur {$f['no_invoice']} bukan milik pemasok yang dipilih.");
+            if (in_array($f['status_bayar'], ['BATAL', 'LUNAS'], true)) throw new Exception("Faktur {$f['no_invoice']} sudah lunas atau dibatalkan.");
+            $noSj = trim((string)($f['no_surat_jalan'] ?? ''));
+            // Faktur stok: sisa dihitung dari surat jalannya (sumber yang sama dengan AP Aging)
+            $f['sisa'] = $noSj !== '' ? self::getSisaUtangSj($noSj) : max(0, round((float)$f['sisa_utang'], 2));
+            if ($f['sisa'] <= 0.01) throw new Exception("Faktur {$f['no_invoice']} sudah tidak punya sisa utang.");
+        }
+        unset($f);
+
+        // Jatuh tempo paling lama lebih dahulu
+        usort($faktur, fn($a, $b) => [$a['tanggal_jatuh_tempo'], $a['tanggal_invoice'], (int)$a['id']] <=> [$b['tanggal_jatuh_tempo'], $b['tanggal_invoice'], (int)$b['id']]);
+        $totalSisa = round(array_sum(array_column($faktur, 'sisa')), 2);
+        if ($jumlahBayar > $totalSisa + 0.01) {
+            throw new Exception("Nominal (Rp " . number_format($jumlahBayar, 0, ',', '.') . ") melebihi total sisa faktur terpilih (Rp " . number_format($totalSisa, 0, ',', '.') . ").");
+        }
+
+        $alokasi = [];
+        $sisaUang = $jumlahBayar;
+        foreach ($faktur as $f) {
+            if ($sisaUang <= 0.001) break;
+            $potong = round(min($sisaUang, $f['sisa']), 2);
+            $alokasi[] = ['faktur' => $f, 'nominal' => $potong, 'sisa_setelah' => round($f['sisa'] - $potong, 2)];
+            $sisaUang = round($sisaUang - $potong, 2);
+        }
+
+        // Nomor bukti kas keluar: CD-YYYYMMDD-XXXX (sama dengan pembayaran satuan)
+        $dateCode = date('Ymd', strtotime($tglBayar));
+        $cnt = $pdo->prepare("SELECT COUNT(id) FROM ap_pembayaran WHERE tanggal_bayar = ?");
+        $cnt->execute([$tglBayar]);
+        $noBukti = "CD-{$dateCode}-" . str_pad((int)$cnt->fetchColumn() + 1, 4, '0', STR_PAD_LEFT);
+        $cekDup = $pdo->prepare("SELECT id FROM ap_pembayaran WHERE no_bukti_keluar = ?");
+        $cekDup->execute([$noBukti]);
+        if ($cekDup->fetch()) $noBukti = "CD-{$dateCode}-" . strtoupper(substr(uniqid(), -4));
+
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare("
+                INSERT INTO ap_pembayaran
+                (no_bukti_keluar, pemasok_id, tanggal_bayar, metode_bayar, bank_sumber, no_rekening_tujuan, jumlah_bayar, keterangan, user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ")->execute([
+                $noBukti, $pemasokId, $tglBayar, $metodeBayar,
+                ($metodeBayar === 'TRANSFER_BANK' && $bankSumber !== '') ? $bankSumber : null,
+                ($metodeBayar === 'TRANSFER_BANK' && $noRekTujuan !== '') ? $noRekTujuan : null,
+                $jumlahBayar, $keterangan !== '' ? $keterangan : null, $userId,
+            ]);
+            $pembayaranId = (int)$pdo->lastInsertId();
+
+            $stmtAlok = $pdo->prepare("
+                INSERT INTO ap_alokasi_pembayaran (pembayaran_id, no_surat_jalan, invoice_id, nominal_alokasi, sisa_utang_setelah)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $hasil = [];
+            foreach ($alokasi as $a) {
+                $f = $a['faktur'];
+                $stmtAlok->execute([$pembayaranId, trim((string)($f['no_surat_jalan'] ?? '')), (int)$f['id'], $a['nominal'], $a['sisa_setelah']]);
+                PurchaseInvoice::syncPaymentStatus((int)$f['id']);
+                $hasil[] = ['no_invoice' => $f['no_invoice'], 'nominal_alokasi' => $a['nominal'], 'sisa_setelah' => $a['sisa_setelah']];
+            }
+
+            \App\Services\JurnalService::postApPayment($pembayaranId);
+            $pdo->commit();
+
+            return [
+                'success'         => true,
+                'pembayaran_id'   => $pembayaranId,
+                'no_bukti_keluar' => $noBukti,
+                'jumlah_bayar'    => $jumlahBayar,
+                'allocated_count' => count($hasil),
+                'alokasi'         => $hasil,
+            ];
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
             throw $e;
         }
     }
