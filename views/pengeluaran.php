@@ -542,6 +542,9 @@ require_once __DIR__ . '/layout/header.php';
                 <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;" id="modalSjSubtitle">-</div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="eksporRincianKeluar()" style="display: inline-flex; align-items: center; gap: 5px; color: var(--ok-fg); border-color: var(--border-hover); background: var(--ok-bg);" title="Ekspor rincian ke Excel">
+                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i><span>Excel</span>
+                </button>
                 <a href="#" id="modalBtnPrintSj" target="_blank" class="btn btn-primary btn-sm">Cetak Surat Jalan</a>
                 <button type="button" class="btn btn-outline btn-sm" onclick="closeOutboundDetailModal()">Tutup</button>
             </div>
@@ -552,7 +555,7 @@ require_once __DIR__ . '/layout/header.php';
 
             <!-- Tabel barcode transaksi -->
             <div class="table-responsive" style="max-height: none;">
-                <table class="table-custom" data-no-tools>
+                <table class="table-custom" data-no-tools id="tabelRincianKeluar">
                     <thead>
                         <tr>
                             <th style="width: 40px; text-align: center;">No</th>
@@ -560,12 +563,23 @@ require_once __DIR__ . '/layout/header.php';
                             <th>Nama Barang / Produk</th>
                             <th>Kategori</th>
                             <th style="text-align: right;">Netto</th>
+                            <th style="text-align: right;">Harga/kg</th>
+                            <th style="text-align: right;">Nominal</th>
                             <th>SJ Inbound</th>
                         </tr>
                     </thead>
                     <tbody id="modalSjItemsBody">
-                        <tr><td colspan="6" style="text-align: center; padding: 25px;">Memuat data...</td></tr>
+                        <tr><td colspan="8" style="text-align: center; padding: 25px;">Memuat data...</td></tr>
                     </tbody>
+                    <tfoot id="modalSjItemsFoot" style="display: none;">
+                        <tr style="background: var(--bg-muted); font-weight: 800;">
+                            <td colspan="4" style="text-align: right;">Total <span id="modalSjTotBox">0</span> kemasan</td>
+                            <td style="text-align: right;" id="modalSjTotKg">0,00 kg</td>
+                            <td></td>
+                            <td style="text-align: right;" id="modalSjTotNominal">Rp 0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -1134,7 +1148,8 @@ require_once __DIR__ . '/layout/header.php';
         const btnPrint = document.getElementById('modalBtnPrintSj');
 
         modal.style.display = 'flex';
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 25px; color: var(--text-muted);">Memuat rincian barcode...</td></tr>';
+        document.getElementById('modalSjItemsFoot').style.display = 'none';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: var(--text-muted);">Memuat rincian barcode...</td></tr>';
         btnPrint.href = 'index.php?page=surat_jalan_print&id=' + trxId;
 
         try {
@@ -1142,13 +1157,14 @@ require_once __DIR__ . '/layout/header.php';
             const data = await resp.json();
 
             if (!data.success || !data.transaksi) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 25px;">Gagal memuat rincian: ${data.message || 'Data tidak ditemukan'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 25px;">Gagal memuat rincian: ${data.message || 'Data tidak ditemukan'}</td></tr>`;
                 return;
             }
 
             const t = data.transaksi;
             const sjNo = t.no_referensi_eksternal || t.no_bast || t.no_transaksi;
             titleEl.innerText = 'Rincian Surat Jalan: ' + sjNo;
+            rincianKeluarNoSj = sjNo;
             subtitleEl.innerText = `${t.created_at}  ·  ${t.total_label} kemasan  ·  ${parseFloat(t.total_kg).toFixed(2)} kg`;
 
             const namaPms = t.nama_pemasok || 'Gudang Pemasok';
@@ -1163,29 +1179,48 @@ require_once __DIR__ . '/layout/header.php';
                 bidang('Catatan', t.keterangan || '-');
 
             if (!t.items || t.items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 25px;">Tidak ada kemasan terdaftar dalam transaksi ini.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 25px;">Tidak ada kemasan terdaftar dalam transaksi ini.</td></tr>';
                 return;
             }
 
             tbody.innerHTML = '';
+            let totKg = 0, totNominal = 0;
             t.items.forEach((it, idx) => {
+                const kg = parseFloat(it.berat_netto || 0);
+                const harga = parseFloat(it.harga_mitra || 0);
+                const nominal = parseFloat(it.total_jual || 0) || Math.round(kg * harga);
+                totKg += kg; totNominal += nominal;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="text-align: center; color: var(--text-muted);">${idx + 1}</td>
                     <td><strong>${it.id_label}</strong></td>
                     <td><strong>${it.nama_item}</strong></td>
                     <td style="color: var(--text-muted);">${it.nama_jenis || '-'}</td>
-                    <td style="text-align: right; font-weight: 600;">${parseFloat(it.berat_netto).toFixed(2)} kg</td>
+                    <td style="text-align: right; font-weight: 600;">${fmtKgRincian(kg)}</td>
+                    <td style="text-align: right;">${harga > 0 ? fmtRpRincian(harga) : '-'}</td>
+                    <td style="text-align: right; font-weight: 700;">${nominal > 0 ? fmtRpRincian(nominal) : '-'}</td>
                     <td>${it.no_surat_jalan || it.batch_no || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
+            document.getElementById('modalSjTotBox').innerText = t.items.length;
+            document.getElementById('modalSjTotKg').innerText = fmtKgRincian(totKg);
+            document.getElementById('modalSjTotNominal').innerText = fmtRpRincian(totNominal);
+            document.getElementById('modalSjItemsFoot').style.display = '';
 
             if (window.lucide) window.lucide.createIcons();
 
         } catch (e) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 25px;">Kesalahan jaringan: ${e.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 25px;">Kesalahan jaringan: ${e.message}</td></tr>`;
         }
+    }
+
+    // Format angka rincian; "Rp 1.234.567" dikenali sebagai angka saat diekspor ke Excel
+    const fmtRpRincian = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+    const fmtKgRincian = n => n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg';
+    let rincianKeluarNoSj = '';
+    function eksporRincianKeluar() {
+        window.eksporExcel('Rincian_' + (rincianKeluarNoSj || 'Surat_Jalan_Keluar'), 'tabelRincianKeluar');
     }
 
     function closeOutboundDetailModal() {

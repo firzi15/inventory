@@ -911,13 +911,15 @@ require_once __DIR__ . '/layout/header.php';
 
         <!-- Body Modal: Tabel Elegan Seluruh Box -->
         <div style="padding: 0; overflow-y: auto; flex: 1; max-height: 440px; background: var(--bg-card);">
-            <table class="table-custom" style="margin: 0; border: none;">
+            <table class="table-custom" id="tabelRincianTerima" style="margin: 0; border: none;">
                 <thead style="position: sticky; top: 0; z-index: 5; background: var(--bg-muted);">
                     <tr>
                         <th style="width: 45px; text-align: center;">No</th>
                         <th>Kode Box / Barcode</th>
                         <th>Nama Produk</th>
-                        <th style="text-align: right; width: 120px;">Netto (Kg)</th>
+                        <th style="text-align: right; width: 110px;">Netto (Kg)</th>
+                        <th style="text-align: right; width: 110px;">Harga Beli/kg</th>
+                        <th style="text-align: right; width: 130px;">Nominal</th>
                         <th style="text-align: center; width: 90px;">Aksi</th>
                     </tr>
                 </thead>
@@ -928,6 +930,8 @@ require_once __DIR__ . '/layout/header.php';
                     <tr style="background: var(--bg-muted);">
                         <td colspan="3" style="text-align: right; font-weight: 700; color: var(--text-muted, #64748b); font-size: 12.5px;">Total <span id="modalSJTotalCount">0</span> box</td>
                         <td id="modalSJTotalNetto" style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px;">0.00 kg</td>
+                        <td></td>
+                        <td id="modalSJTotalNominal" style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px;">Rp 0</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -941,7 +945,11 @@ require_once __DIR__ . '/layout/header.php';
                     <i data-lucide="tag" style="width: 14px; height: 14px;"></i>
                     <span>Cetak Semua Barcode</span>
                 </button>
-                <a id="btnModalCetakSuratJalan" href="#" target="_blank" class="btn btn-outline" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; color: var(--ok-fg); border-color: var(--border-hover); background: var(--ok-bg);">
+                <button type="button" class="btn btn-outline" onclick="eksporRincianTerima()" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; color: var(--ok-fg); border-color: var(--border-hover); background: var(--ok-bg);" title="Ekspor rincian box ke Excel">
+                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i>
+                    <span>Excel</span>
+                </button>
+                <a id="btnModalCetakSuratJalan" href="#" target="_blank" class="btn btn-outline" style="font-size: 12.5px; font-weight: 700; height: 38px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border-radius: 6px;">
                     <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
                     <span>Cetak Surat Jalan</span>
                 </a>
@@ -3470,7 +3478,7 @@ require_once __DIR__ . '/layout/header.php';
             const modal = document.getElementById('modalSJBarcodeList');
             const tbody = document.getElementById('modalSJTableBody');
             if (modal) modal.style.display = 'flex';
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 36px; color: var(--text-muted); font-size: 13px;">Memuat data box Surat Jalan...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted); font-size: 13px;">Memuat data box Surat Jalan...</td></tr>';
 
             try {
                 const resp = await fetch('index.php?action=get_sj_weigh_detail&no_surat_jalan=' + encodeURIComponent(targetSJ));
@@ -3493,13 +3501,18 @@ require_once __DIR__ . '/layout/header.php';
 
                     renderModalBoxesTable(res.data.all_labels || []);
                 } else {
-                    if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 30px;">Gagal memuat: ${res.message || 'Data tidak ditemukan'}</td></tr>`;
+                    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: 30px;">Gagal memuat: ${res.message || 'Data tidak ditemukan'}</td></tr>`;
                 }
             } catch (err) {
-                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 30px;">Kesalahan jaringan: ${err.message}</td></tr>`;
+                if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: 30px;">Kesalahan jaringan: ${err.message}</td></tr>`;
             }
 
             if (window.lucide) window.lucide.createIcons();
+        };
+
+        window.eksporRincianTerima = function() {
+            const no = (currentModalSJData && currentModalSJData.no_surat_jalan) || 'Surat_Jalan_Masuk';
+            window.eksporExcel('Rincian_' + no, 'tabelRincianTerima');
         };
 
         window.closeSJBarcodeListModal = function() {
@@ -3511,22 +3524,26 @@ require_once __DIR__ . '/layout/header.php';
             const tbody = document.getElementById('modalSJTableBody');
             if (!tbody) return;
 
-            // Baris total: hanya bila lebih dari 1 box (1 box = baris itu sendiri)
+            // Baris total: jumlah box, netto, dan nominal (berat x harga beli). Box yang dibatalkan (VOID) tidak dihitung nominalnya.
+            const rpTerima = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
             const foot = document.getElementById('modalSJTableFoot');
             if (foot) {
                 const n = (labels || []).length;
                 const sum = (labels || []).reduce((a, l) => a + parseFloat(l.berat_netto || 0), 0);
-                foot.style.display = n >= 2 ? '' : 'none';
+                const nom = (labels || []).reduce((a, l) => a + (l.status === 'VOID' ? 0 : parseFloat(l.berat_netto || 0) * parseFloat(l.harga_beli_per_kg || 0)), 0);
+                foot.style.display = n >= 1 ? '' : 'none';
                 const c = document.getElementById('modalSJTotalCount');
                 const v = document.getElementById('modalSJTotalNetto');
+                const nm = document.getElementById('modalSJTotalNominal');
                 if (c) c.innerText = n;
                 if (v) v.innerText = sum.toFixed(2) + ' kg';
+                if (nm) nm.innerText = rpTerima(nom);
             }
 
             if (!labels || !labels.length) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 36px 20px; color: var(--text-muted);">
+                        <td colspan="7" style="text-align: center; padding: 36px 20px; color: var(--text-muted);">
                             <div style="font-weight: 700; font-size: 13.5px;">Belum ada box pada Surat Jalan ini</div>
                         </td>
                     </tr>
@@ -3552,6 +3569,12 @@ require_once __DIR__ . '/layout/header.php';
                     </td>
                     <td style="text-align: right; font-weight: 800; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ok-fg);">
                         ${netto.toFixed(2)} kg
+                    </td>
+                    <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
+                        ${parseFloat(lbl.harga_beli_per_kg || 0) > 0 ? rpTerima(parseFloat(lbl.harga_beli_per_kg)) : '-'}
+                    </td>
+                    <td style="text-align: right; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12.5px;">
+                        ${lbl.status === 'VOID' ? '<span style="color: var(--text-muted);" title="Box dibatalkan">batal</span>' : (netto * parseFloat(lbl.harga_beli_per_kg || 0) > 0 ? rpTerima(netto * parseFloat(lbl.harga_beli_per_kg)) : '-')}
                     </td>
                     <td style="text-align: center;">
                         <button type="button" class="btn btn-outline btn-sm" onclick="reprintBarcodeDirect('${lbl.id_label}')" style="padding: 3px 10px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer;" title="Cetak Barcode Box Ini Saja (Format Stiker 70x50 mm)">

@@ -74,10 +74,12 @@
         return buang;
     }
 
+    // grid: baris sel teks; bagian: asal tiap baris (THEAD / TBODY / TFOOT) agar Excel bisa memisahkan judul, isi, dan total
     function keGrid(t) {
-        var buang = kolomBuang(t), grid = [];
+        var buang = kolomBuang(t), grid = [], bagian = [];
         Array.prototype.forEach.call(t.rows, function (tr) {
             if (tr.classList.contains('tt-hidden') || tr.style.display === 'none' || tr.classList.contains('no-print')) return;
+            if (tr.parentNode && tr.parentNode.style && tr.parentNode.style.display === 'none') return;
             var baris = [], idx = 0;
             Array.prototype.forEach.call(tr.cells, function (td) {
                 var teks = teksSel(td);
@@ -86,16 +88,19 @@
                     idx++;
                 }
             });
-            if (baris.some(function (v) { return v !== ''; })) grid.push(baris);
+            if (baris.some(function (v) { return v !== ''; })) {
+                grid.push(baris);
+                bagian.push(tr.parentNode && tr.parentNode.tagName ? tr.parentNode.tagName.toUpperCase() : 'TBODY');
+            }
         });
-        return grid;
+        return { grid: grid, bagian: bagian };
     }
 
     function kumpulkan(id) {
         var hasil = [];
         tabelTarget(id).forEach(function (t, i) {
             var g = keGrid(t);
-            if (g.length) hasil.push({ judul: judulTabel(t, i), grid: g, adaHead: !!(t.tHead && t.tHead.rows.length) });
+            if (g.grid.length) hasil.push({ judul: judulTabel(t, i), grid: g.grid, bagian: g.bagian, adaHead: !!(t.tHead && t.tHead.rows.length) });
         });
         // halaman dengan satu tabel: nama sheet memakai judul halaman
         var h1 = document.querySelector('.page-title');
@@ -124,8 +129,122 @@
         return muatanXlsx;
     }
 
+    // ExcelJS (+/- 950 KB) untuk ekspor berbentuk tabel Excel (Format as Table); juga dimuat hanya saat dipakai
+    var muatanExcelJs = null;
+    function muatExcelJs() {
+        if (typeof ExcelJS !== 'undefined') return Promise.resolve();
+        if (!muatanExcelJs) {
+            muatanExcelJs = new Promise(function (ok, gagal) {
+                var s = document.createElement('script');
+                s.src = 'assets/js/exceljs.min.js';
+                s.onload = ok;
+                s.onerror = function () { muatanExcelJs = null; gagal(new Error('gagal memuat')); };
+                document.head.appendChild(s);
+            });
+        }
+        return muatanExcelJs;
+    }
+
     window.eksporExcel = function (nama, id) {
-        muatXlsx().then(function () { eksporExcelSiap(nama, id); }, function () { peringatan('Pustaka Excel gagal dimuat, coba lagi.'); });
+        var data = kumpulkan(id);
+        if (!data.length) { peringatan('Tidak ada data yang tampil untuk diekspor.'); return; }
+        var file = nama + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+        // Utama: tabel Excel berformat. Cadangan: cara lama (data polos) bila ExcelJS gagal dimuat atau gagal menulis.
+        var caraLama = function () {
+            muatXlsx().then(function () { eksporExcelSiap(nama, id); }, function () { peringatan('Pustaka Excel gagal dimuat, coba lagi.'); });
+        };
+        muatExcelJs().then(function () {
+            return window.eksporBuatWorkbook(data).xlsx.writeBuffer().then(function (buf) {
+                var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = file;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+                if (window.showToast) window.showToast('Berhasil mengekspor ' + file, 'success');
+            });
+        }).catch(caraLama);
+    };
+
+    // Angka biasa tanpa nol di depan ("13", "-250") menjadi angka; kode seperti "007" atau "261117-00644" tetap teks
+    function nilaiExcel(teks) {
+        var v = nilai(teks);
+        if (typeof v === 'number') return v;
+        if (/^-?(0|[1-9]\d{0,14})$/.test(v)) return parseInt(v, 10);
+        return v === '' ? null : v;
+    }
+
+    /**
+     * Susun workbook ExcelJS: tiap tabel halaman menjadi satu sheet berisi tabel Excel (header berwarna, filter, baris belang).
+     * Baris tfoot (total) diletakkan tepat di bawah tabel dengan huruf tebal.
+     */
+    window.eksporBuatWorkbook = function (data) {
+        var wb = new ExcelJS.Workbook();
+        wb.creator = 'AR_BAROKAH';
+        wb.created = new Date();
+        var dipakai = {};
+        data.forEach(function (d, iTabel) {
+            var head = [], isi = [], total = [];
+            d.grid.forEach(function (r, i) {
+                var b = (d.bagian && d.bagian[i]) || (i === 0 && d.adaHead ? 'THEAD' : 'TBODY');
+                if (b === 'THEAD') head = r; else if (b === 'TFOOT') total.push(r); else isi.push(r);
+            });
+            var ncol = Math.max(head.length, 1);
+            isi.concat(total).forEach(function (r) { ncol = Math.max(ncol, r.length); });
+            var pad = function (r) { var x = r.slice(0, ncol); while (x.length < ncol) x.push(''); return x; };
+
+            // judul kolom wajib unik dan tidak kosong di tabel Excel
+            var kolom = [], seen = {};
+            pad(head).forEach(function (h, c) {
+                var n = bersihTeks(h) || ('Kolom ' + (c + 1)), dasar = n, k = 2;
+                while (seen[n.toLowerCase()]) n = dasar + ' ' + (k++);
+                seen[n.toLowerCase()] = 1;
+                kolom.push({ name: n, filterButton: true });
+            });
+            var baris = isi.map(function (r) { return pad(r).map(nilaiExcel); });
+            if (!baris.length) baris = [pad([]).map(function () { return null; })];
+
+            var judul = d.judul.replace(/[\\\/?*\[\]:]/g, ' ').slice(0, 28) || 'Data', nmSheet = judul, k2 = 2;
+            while (dipakai[nmSheet.toLowerCase()]) nmSheet = judul.slice(0, 26) + ' ' + (k2++);
+            dipakai[nmSheet.toLowerCase()] = 1;
+
+            var ws = wb.addWorksheet(nmSheet, { views: [{ state: 'frozen', ySplit: 1 }] });
+            ws.addTable({
+                name: 'Tabel' + (iTabel + 1), ref: 'A1', headerRow: true, totalsRow: false,
+                style: { theme: 'TableStyleMedium2', showRowStripes: true },
+                columns: kolom, rows: baris
+            });
+            baris.forEach(function (r, ri) {
+                r.forEach(function (v, ci) { if (typeof v === 'number') ws.getCell(ri + 2, ci + 1).numFmt = '#,##0'; });
+            });
+
+            // baris total dari tfoot, tepat di bawah tabel
+            var rr = baris.length + 2;
+            total.forEach(function (r) {
+                var row = ws.getRow(rr++);
+                pad(r).map(nilaiExcel).forEach(function (v, ci) {
+                    var cell = row.getCell(ci + 1);
+                    cell.value = v;
+                    cell.font = { bold: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDEBF7' } };
+                    cell.border = { top: { style: 'thin', color: { argb: 'FF1F4E78' } } };
+                    if (typeof v === 'number') cell.numFmt = '#,##0';
+                });
+            });
+
+            // lebar kolom mengikuti isi terpanjang
+            kolom.forEach(function (c, ci) {
+                var w = c.name.length + 4;
+                baris.concat(total.map(function (r) { return pad(r); })).forEach(function (r) {
+                    var v = r[ci];
+                    var pj = v === null || v === undefined ? 0 : (typeof v === 'number' ? v.toLocaleString('id-ID').length : String(v).length);
+                    w = Math.max(w, pj + 2);
+                });
+                ws.getColumn(ci + 1).width = Math.min(Math.max(w, 8), 50);
+            });
+        });
+        return wb;
     };
 
     function eksporExcelSiap(nama, id) {
