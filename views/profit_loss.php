@@ -489,7 +489,12 @@ require_once __DIR__ . '/layout/header.php';
                 <h3 id="rlJudul" style="margin: 0; font-size: 16px; font-weight: 800;">Rincian per Produk</h3>
                 <p id="rlSub" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);"></p>
             </div>
-            <button type="button" onclick="document.getElementById('modalRincianLaba').style.display='none'" style="border: none; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="eksporRincianLaba()" style="display: inline-flex; align-items: center; gap: 5px; color: var(--ok-fg); border-color: var(--border-hover); background: var(--ok-bg);" title="Ekspor rincian ke Excel">
+                    <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i><span>Excel</span>
+                </button>
+                <button type="button" onclick="document.getElementById('modalRincianLaba').style.display='none'" style="border: none; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
         </div>
         <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
             <table class="table-custom" data-no-tools style="font-size: 12.5px;">
@@ -501,6 +506,15 @@ require_once __DIR__ . '/layout/header.php';
                 <tbody id="rlBody"></tbody>
             </table>
         </div>
+        <!-- Tabel datar per box khusus ekspor Excel (tidak ditampilkan) -->
+        <table id="rlEkspor" data-no-tools style="display: none;">
+            <thead><tr>
+                <th>Produk</th><th>Jenis</th><th>Barcode</th><th>Surat Jalan Keluar</th><th>Tanggal</th><th>Mitra</th><th>Pemasok</th><th>SJ Masuk</th>
+                <th>Netto (kg)</th><th>Harga Beli/kg</th><th>Harga Jual/kg</th><th>HPP</th><th>Penjualan</th><th>Laba</th>
+            </tr></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+        </table>
     </div>
 </div>
 <script>
@@ -510,6 +524,8 @@ const rlKg = n => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, max
 const rlEsc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const rlTgl = s => { const d = String(s).slice(0, 10).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
 const rlWarna = n => n < 0 ? 'var(--bad-fg)' : 'inherit';
+const rlAngka = n => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+let rlNamaEkspor = 'Rincian_Laba';
 const rlMargin = (laba, jual) => jual ? (laba / jual * 100).toFixed(1).replace('.', ',') + '%' : '-';
 
 async function rincianLaba(kunci, judul) {
@@ -542,10 +558,21 @@ async function rincianLaba(kunci, judul) {
         else html += '<tr style="font-weight:800;border-top:2px solid var(--border);"><td colspan="3">TOTAL ' + Object.keys(per).length + ' produk &middot; ' + tBox + ' box</td><td style="text-align:right;">' + rlKg(tKg) + '</td><td></td><td></td>' +
                      '<td style="text-align:right;">' + rlRp(tBeli) + '</td><td style="text-align:right;">' + rlRp(tJual) + '</td><td style="text-align:right;color:' + rlWarna(tJual - tBeli) + ';">' + rlRp(tJual - tBeli) + '</td></tr>';
         document.getElementById('rlBody').innerHTML = html;
+        // tabel ekspor: satu baris per box, kolom terpisah
+        const td = v => '<td>' + rlEsc(v) + '</td>';
+        const ek = document.getElementById('rlEkspor');
+        ek.tBodies[0].innerHTML = j.box.map(b => '<tr>' + [b.produk, b.jenis, b.id_label, b.sj, rlTgl(b.tanggal), b.mitra, b.pemasok, b.sj_masuk,
+            rlAngka(b.berat_netto), rlRp(b.harga_pemasok), rlRp(b.harga_mitra), rlRp(b.total_beli), rlRp(b.total_jual), rlRp(b.profit)].map(td).join('') + '</tr>').join('');
+        ek.tFoot.innerHTML = j.box.length ? '<tr>' + ['TOTAL', '', tBox + ' box', '', '', '', '', '', rlAngka(tKg), '', '', rlRp(tBeli), rlRp(tJual), rlRp(tJual - tBeli)].map(td).join('') + '</tr>' : '';
+        rlNamaEkspor = 'Rincian_Laba_' + judul.split(' · ')[0].replace(/[^\w-]+/g, '_');
         document.getElementById('rlJudul').textContent = judul;
         document.getElementById('rlSub').textContent = 'Rincian per produk · laba ' + rlRp(tJual - tBeli) + ' · margin ' + rlMargin(tJual - tBeli, tJual);
         document.getElementById('modalRincianLaba').style.display = 'flex';
     } catch (e) { Swal.fire({ icon: 'error', title: 'Gagal', text: e.message }); }
+}
+
+function eksporRincianLaba() {
+    window.eksporExcel(rlNamaEkspor, 'rlEkspor');
 }
 </script>
 <?php endif; ?>

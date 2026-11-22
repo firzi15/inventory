@@ -172,6 +172,8 @@
         var v = nilai(teks);
         if (typeof v === 'number') return v;
         if (/^-?(0|[1-9]\d{0,14})$/.test(v)) return parseInt(v, 10);
+        // desimal format Indonesia, mis. "1.234,50" (berat kg)
+        if (/^-?\d{1,3}(\.\d{3})*,\d+$/.test(v)) return parseFloat(v.replace(/\./g, '').replace(',', '.'));
         return v === '' ? null : v;
     }
 
@@ -216,7 +218,7 @@
                 columns: kolom, rows: baris
             });
             baris.forEach(function (r, ri) {
-                r.forEach(function (v, ci) { if (typeof v === 'number') ws.getCell(ri + 2, ci + 1).numFmt = '#,##0'; });
+                r.forEach(function (v, ci) { if (typeof v === 'number') ws.getCell(ri + 2, ci + 1).numFmt = Number.isInteger(v) ? '#,##0' : '#,##0.00'; });
             });
 
             // baris total dari tfoot, tepat di bawah tabel
@@ -229,7 +231,7 @@
                     cell.font = { bold: true };
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDEBF7' } };
                     cell.border = { top: { style: 'thin', color: { argb: 'FF1F4E78' } } };
-                    if (typeof v === 'number') cell.numFmt = '#,##0';
+                    if (typeof v === 'number') cell.numFmt = Number.isInteger(v) ? '#,##0' : '#,##0.00';
                 });
             });
 
