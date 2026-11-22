@@ -167,7 +167,7 @@ require_once __DIR__ . '/layout/header.php';
 
 <script>
 const arlPeriode = <?= json_encode(['dari' => $dari, 'sampai' => $sampai]) ?>;
-const rpArl = n => (n < 0 ? '-' : '') + 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.abs(Math.round(n)));
+const rpArl = n => (n < 0 ? '-' : '') + 'Rp ' + new Intl.NumberFormat('en-US').format(Math.abs(Math.round(n)));
 const escArl = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const tglArl = s => { const d = String(s).slice(0, 10).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };
 

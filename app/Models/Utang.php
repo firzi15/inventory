@@ -327,7 +327,7 @@ class Utang {
         if (!empty($data['invoice_id'])) {
             $invCek = PurchaseInvoice::findById((int)$data['invoice_id']);
             if ($invCek && abs($jumlahBayar - (float)$invCek['sisa_utang']) > 0.01) {
-                throw new Exception("Pembayaran ke pemasok harus lunas penuh (Rp " . number_format((float)$invCek['sisa_utang'], 0, ',', '.') . ").");
+                throw new Exception("Pembayaran ke pemasok harus lunas penuh (Rp " . number_format((float)$invCek['sisa_utang'], 0, '.', ',') . ").");
             }
         } else {
             $alokCek = $data['alokasi_manual'] ?? [];
@@ -339,7 +339,7 @@ class Utang {
                 if ((float)$nomCek <= 0) continue;
                 $sisaCek = self::getSisaUtangSj(trim((string)$noSjCek));
                 if (abs((float)$nomCek - $sisaCek) > 0.01) {
-                    throw new Exception("Surat jalan {$noSjCek} harus dibayar lunas penuh (Rp " . number_format($sisaCek, 0, ',', '.') . ").");
+                    throw new Exception("Surat jalan {$noSjCek} harus dibayar lunas penuh (Rp " . number_format($sisaCek, 0, '.', ',') . ").");
                 }
                 $totalCek += $sisaCek;
             }
@@ -431,7 +431,7 @@ class Utang {
                 }
 
                 if ($totalAlokasiReq > $jumlahBayar + 0.01) {
-                    throw new Exception("Total alokasi manual (Rp " . number_format($totalAlokasiReq, 0, ',', '.') . ") melebihi jumlah uang yang dibayarkan (Rp " . number_format($jumlahBayar, 0, ',', '.') . ").");
+                    throw new Exception("Total alokasi manual (Rp " . number_format($totalAlokasiReq, 0, '.', ',') . ") melebihi jumlah uang yang dibayarkan (Rp " . number_format($jumlahBayar, 0, '.', ',') . ").");
                 }
 
                 foreach ($data['alokasi_manual'] as $noSj => $nom) {
@@ -579,7 +579,7 @@ class Utang {
         usort($faktur, fn($a, $b) => [$a['tanggal_jatuh_tempo'], $a['tanggal_invoice'], (int)$a['id']] <=> [$b['tanggal_jatuh_tempo'], $b['tanggal_invoice'], (int)$b['id']]);
         $totalSisa = round(array_sum(array_column($faktur, 'sisa')), 2);
         if ($jumlahBayar > $totalSisa + 0.01) {
-            throw new Exception("Nominal (Rp " . number_format($jumlahBayar, 0, ',', '.') . ") melebihi total sisa faktur terpilih (Rp " . number_format($totalSisa, 0, ',', '.') . ").");
+            throw new Exception("Nominal (Rp " . number_format($jumlahBayar, 0, '.', ',') . ") melebihi total sisa faktur terpilih (Rp " . number_format($totalSisa, 0, '.', ',') . ").");
         }
 
         $alokasi = [];

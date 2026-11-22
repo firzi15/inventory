@@ -659,7 +659,7 @@ require_once __DIR__ . '/layout/header.php';
                             </span>
                         </td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--ok-fg); font-size: 13px;">
-                            Rp <?= number_format((float)$b['estimasi_harga'], 0, ',', '.') ?>
+                            Rp <?= number_format((float)$b['estimasi_harga'], 0, '.', ',') ?>
                         </td>
                         <td style="font-size: 12.5px; color: var(--text-muted); max-width: 200px;">
                             <?= htmlspecialchars($b['keterangan'] ?: '-') ?>

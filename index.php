@@ -1135,7 +1135,7 @@ if ($action) {
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $resBt = \App\Models\Utang::recordPaymentTerpilih($_POST, (int)($_SESSION['user_login']['id'] ?? 1));
                 Helper::jsonResponse(['success' => true, 'data' => $resBt,
-                    'message' => "Pembayaran {$resBt['no_bukti_keluar']} sebesar Rp " . number_format($resBt['jumlah_bayar'], 0, ',', '.') . " dibukukan ke {$resBt['allocated_count']} faktur."]);
+                    'message' => "Pembayaran {$resBt['no_bukti_keluar']} sebesar Rp " . number_format($resBt['jumlah_bayar'], 0, '.', ',') . " dibukukan ke {$resBt['allocated_count']} faktur."]);
                 exit;
 
             // Setoran beberapa nota satu mitra sekaligus (checklist di Payment In)
@@ -1143,7 +1143,7 @@ if ($action) {
                 if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception("Metode request harus POST");
                 $resBt = \App\Models\Piutang::recordPaymentTerpilih($_POST, (int)($_SESSION['user_login']['id'] ?? 1));
                 Helper::jsonResponse(['success' => true, 'data' => $resBt,
-                    'message' => "Setoran {$resBt['no_bukti_bayar']} sebesar Rp " . number_format($resBt['jumlah_bayar'], 0, ',', '.') . " dibukukan ke {$resBt['allocated_count']} nota."]);
+                    'message' => "Setoran {$resBt['no_bukti_bayar']} sebesar Rp " . number_format($resBt['jumlah_bayar'], 0, '.', ',') . " dibukukan ke {$resBt['allocated_count']} nota."]);
                 exit;
 
             // X. Bukukan Pembayaran Utang AP ke Pemasok (Kas / Bank)

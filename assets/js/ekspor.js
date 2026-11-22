@@ -53,9 +53,14 @@
         return bersihTeks(c.textContent);
     }
 
-    // "Rp 1.234.567" / "-Rp 1.000" / "Rp -1.000" menjadi angka; selain itu tetap teks
+    // "Rp 1,234,567" / "-Rp 1,000" / "Rp -1,000" menjadi angka (format lama "Rp 1.234.567" juga dikenali); selain itu tetap teks
     function nilai(teks) {
-        var m = teks.match(/^(-?)\s*Rp\s*(-?)\s*([\d.]+)(?:,(\d+))?$/);
+        var m = teks.match(/^(-?)\s*Rp\s*(-?)\s*(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d+))?$/);
+        if (m) {
+            var a = parseFloat(m[3].replace(/,/g, '') + (m[4] ? '.' + m[4] : ''));
+            return (m[1] || m[2]) ? -a : a;
+        }
+        m = teks.match(/^(-?)\s*Rp\s*(-?)\s*([\d.]+)(?:,(\d+))?$/);
         if (!m) return teks;
         var n = parseFloat(m[3].replace(/\./g, '') + (m[4] ? '.' + m[4] : ''));
         return (m[1] || m[2]) ? -n : n;
@@ -172,8 +177,12 @@
         var v = nilai(teks);
         if (typeof v === 'number') return v;
         if (/^-?(0|[1-9]\d{0,14})$/.test(v)) return parseInt(v, 10);
-        // desimal format Indonesia, mis. "1.234,50" (berat kg)
-        if (/^-?\d{1,3}(\.\d{3})*,\d+$/.test(v)) return parseFloat(v.replace(/\./g, '').replace(',', '.'));
+        // ribuan dengan koma, mis. "48,000" (nominal tanpa Rp)
+        if (/^-?\d{1,3}(,\d{3})+$/.test(v)) return parseInt(v.replace(/,/g, ''), 10);
+        // desimal format Indonesia, mis. "1.234,50" (berat kg, 1-2 angka di belakang koma)
+        if (/^-?\d{1,3}(\.\d{3})*,\d{1,2}$/.test(v)) return parseFloat(v.replace(/\./g, '').replace(',', '.'));
+        // "Rp" tidak ikut ke Excel, mis. "Rp 48,000/kg" menjadi "48,000/kg"
+        if (/Rp/.test(v)) v = v.replace(/Rp\s*/g, '').trim();
         return v === '' ? null : v;
     }
 
@@ -316,4 +325,47 @@
 
     // Kompatibel dengan tombol lama
     window.exportTableToExcel = function (id, nama) { window.eksporExcel(nama, id); };
+
+    /**
+     * Salin (Ctrl+C) dari halaman: nominal "Rp 1,234,567" / "-Rp 1,000" / "Rp -1,000" disalin sebagai angka polos
+     * ("1234567", "-1000") tanpa Rp, koma, atau titik, sehingga langsung terbaca angka saat ditempel ke Excel.
+     * Tampilan di layar tidak berubah. Isi kolom input tidak diubah.
+     */
+    var POLA_RP = /(?:(-)\s*)?Rp\s*(?:(-)\s*)?(\d{1,3}(?:[.,]\d{3})+|\d+)(?![\d.,]*\d)/g;
+    function polosRp(teks) {
+        return teks.replace(POLA_RP, function (_, m1, m2, angka) {
+            return (m1 || m2 ? '-' : '') + angka.replace(/[.,]/g, '');
+        });
+    }
+    window.salinPolosRp = polosRp;
+    document.addEventListener('copy', function (e) {
+        var ae = document.activeElement;
+        if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+        var sel = window.getSelection();
+        if (!sel || sel.isCollapsed || !sel.rangeCount || !e.clipboardData) return;
+        var teks = sel.toString();
+        if (!/Rp/.test(teks)) return;
+
+        var wadah = document.createElement('div');
+        for (var i = 0; i < sel.rangeCount; i++) wadah.appendChild(sel.getRangeAt(i).cloneContents());
+        // Sel tabel yang terpotong (mis. hanya td) dibungkus tabel agar Excel tetap memecahnya per kolom
+        if (wadah.querySelector('td, th') && !wadah.querySelector('table')) {
+            var tb = document.createElement('table');
+            if (wadah.querySelector('tr')) { var body = document.createElement('tbody'); while (wadah.firstChild) body.appendChild(wadah.firstChild); tb.appendChild(body); }
+            else { var tr = document.createElement('tr'); while (wadah.firstChild) tr.appendChild(wadah.firstChild); tb.appendChild(tr); }
+            wadah.appendChild(tb);
+        }
+        var jalan = document.createTreeWalker(wadah, NodeFilter.SHOW_TEXT, null), n, simpul = [];
+        while ((n = jalan.nextNode())) simpul.push(n);
+        simpul.forEach(function (t) { if (/Rp/.test(t.nodeValue)) t.nodeValue = polosRp(t.nodeValue); });
+        // "Rp" dan angka kadang terpisah elemen (mis. <span>Rp</span> 1,234): gabungkan per sel lalu bersihkan
+        Array.prototype.forEach.call(wadah.querySelectorAll('td, th'), function (c) {
+            var isi = c.textContent;
+            if (/^\s*-?\s*Rp\s*-?\s*[\d.,]+\s*$/.test(isi)) c.textContent = polosRp(isi.trim());
+        });
+
+        e.clipboardData.setData('text/plain', polosRp(teks));
+        e.clipboardData.setData('text/html', wadah.innerHTML);
+        e.preventDefault();
+    });
 })();

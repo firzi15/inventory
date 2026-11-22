@@ -1031,7 +1031,7 @@ require_once __DIR__ . '/layout/header.php';
             <datalist id="listTipeBiayaMaster">
                 <?php foreach ($tipeBiayaList as $tb): ?>
                     <option value="<?= htmlspecialchars($tb['nama_biaya']) ?>" data-satuan="<?= htmlspecialchars($tb['satuan_default']) ?>" data-harga="<?= (float)$tb['estimasi_harga'] ?>" data-akun="<?= htmlspecialchars($tb['kode_akun']) ?>">
-                        [<?= htmlspecialchars($tb['kode_akun']) ?>] <?= htmlspecialchars($tb['nama_akun']) ?> - Estimasi: Rp <?= number_format((float)$tb['estimasi_harga'], 0, ',', '.') ?>/<?= htmlspecialchars($tb['satuan_default']) ?>
+                        [<?= htmlspecialchars($tb['kode_akun']) ?>] <?= htmlspecialchars($tb['nama_akun']) ?> - Estimasi: Rp <?= number_format((float)$tb['estimasi_harga'], 0, '.', ',') ?>/<?= htmlspecialchars($tb['satuan_default']) ?>
                     </option>
                 <?php endforeach; ?>
             </datalist>
@@ -1178,7 +1178,7 @@ function openPaymentModal(pemasokId = null, pemasokNama = '', specificSj = null,
 
     if (invoiceId && noInvoice) {
         bannerTarget.style.display = 'block';
-        bannerText.textContent = `${noInvoice} (${pemasokNama}) - Sisa Utang: Rp ${new Intl.NumberFormat('id-ID').format(specificSisa || 0)}`;
+        bannerText.textContent = `${noInvoice} (${pemasokNama}) - Sisa Utang: Rp ${new Intl.NumberFormat('en-US').format(specificSisa || 0)}`;
         document.getElementById('wrapperUnpaidSj').style.display = 'none';
         inputJumlah.value = specificSisa || 0;
     } else {
@@ -1246,7 +1246,7 @@ async function loadUnpaidSjForPemasok(pemasokId, prefillNominal = null) {
             let totalSisa = 0;
             currentUnpaidSjList.forEach(s => totalSisa += parseFloat(s.sisa_utang));
 
-            badge.textContent = `Sisa Utang: Rp ${new Intl.NumberFormat('id-ID').format(totalSisa)}`;
+            badge.textContent = `Sisa Utang: Rp ${new Intl.NumberFormat('en-US').format(totalSisa)}`;
 
             renderUnpaidTable(currentUnpaidSjList);
         } else {
@@ -1289,7 +1289,7 @@ function renderUnpaidTable(list) {
                 </td>
                 <td style="padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">${sj.no_surat_jalan}</td>
                 <td style="padding: 6px 8px; color: var(--text-muted);">${sj.tanggal_masuk.substring(0, 10)}</td>
-                <td style="text-align: right; padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--warn-fg);">Rp ${new Intl.NumberFormat('id-ID').format(sj.sisa_utang)}</td>
+                <td style="text-align: right; padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--warn-fg);">Rp ${new Intl.NumberFormat('en-US').format(sj.sisa_utang)}</td>
             </tr>`;
     });
 
@@ -1324,7 +1324,7 @@ function recalcPayTotal() {
     });
     document.getElementById('payJumlah').value = total;
     const badge = document.getElementById('badgeTotalUnpaid');
-    if (badge) badge.textContent = `Dibayar: Rp ${new Intl.NumberFormat('id-ID').format(total)}`;
+    if (badge) badge.textContent = `Dibayar: Rp ${new Intl.NumberFormat('en-US').format(total)}`;
     const all = document.getElementById('chkPayAll');
     const boxes = document.querySelectorAll('.chk-pay-sj');
     if (all) all.checked = boxes.length > 0 && [...boxes].every(c => c.checked);
@@ -1374,8 +1374,8 @@ async function submitPaymentAp(e) {
 async function viewSjHistory(noSj, totalBeli, sisaUtang) {
     const modal = document.getElementById('modalRiwayatBayarSj');
     document.getElementById('histSjSubtitle').textContent = `Surat Jalan: ${noSj}`;
-    document.getElementById('histSjTotalTagihan').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalBeli)}`;
-    document.getElementById('histSjSisaUtang').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(sisaUtang)}`;
+    document.getElementById('histSjTotalTagihan').textContent = `Rp ${new Intl.NumberFormat('en-US').format(totalBeli)}`;
+    document.getElementById('histSjSisaUtang').textContent = `Rp ${new Intl.NumberFormat('en-US').format(sisaUtang)}`;
 
     const tbody = document.getElementById('histSjTableBody');
     tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);"><i data-lucide="loader-2" class="animate-spin" style="width: 16px; height: 16px; display: inline-block;"></i> Memuat data cicilan...</td></tr>';
@@ -1397,10 +1397,10 @@ async function viewSjHistory(noSj, totalBeli, sisaUtang) {
                         <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">${h.no_bukti_keluar}</td>
                         <td>${h.tanggal_bayar.substring(0, 10)}</td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--ok-fg);">
-                            Rp ${new Intl.NumberFormat('id-ID').format(h.nominal_alokasi)}
+                            Rp ${new Intl.NumberFormat('en-US').format(h.nominal_alokasi)}
                         </td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);">
-                            Rp ${new Intl.NumberFormat('id-ID').format(h.sisa_utang_setelah)}
+                            Rp ${new Intl.NumberFormat('en-US').format(h.sisa_utang_setelah)}
                         </td>
                         <td>
                             <div style="font-size: 11px; font-weight: 700;">${h.metode_bayar}</div>
@@ -1540,7 +1540,7 @@ function addInvoiceItemRow(deskripsi = '', qty = '', satuan = '', harga = '') {
             <input type="number" class="form-control item-harga" value="${harga}" min="0" step="any" required style="font-size: 11.5px; text-align: right; font-family: 'JetBrains Mono', monospace; padding: 4px 8px;" oninput="calcInvoiceTotals()">
         </td>
         <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);" class="item-subtotal-text">
-            Rp ${new Intl.NumberFormat('id-ID').format(subtotal)}
+            Rp ${new Intl.NumberFormat('en-US').format(subtotal)}
         </td>
         <td style="text-align: center; padding: 6px 8px;">
             <button type="button" class="btn btn-outline btn-sm" onclick="removeInvoiceItemRow('${rowId}')" style="padding: 2px 6px; color: var(--bad-fg); border-color: var(--border-hover);">
@@ -1568,10 +1568,10 @@ function calcInvoiceTotals() {
         const harga = parseFloat(r.querySelector('.item-harga').value) || 0;
         const sub = Math.round(qty * harga * 100) / 100;
         grandTotal += sub;
-        r.querySelector('.item-subtotal-text').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(sub)}`;
+        r.querySelector('.item-subtotal-text').textContent = `Rp ${new Intl.NumberFormat('en-US').format(sub)}`;
     });
 
-    document.getElementById('labelGrandTotalInvoice').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(grandTotal)}`;
+    document.getElementById('labelGrandTotalInvoice').textContent = `Rp ${new Intl.NumberFormat('en-US').format(grandTotal)}`;
 }
 
 async function submitCreateInvoice(e) {
@@ -1703,7 +1703,7 @@ async function viewInvoiceDetail(id) {
             document.getElementById('detInvSj').textContent = inv.no_surat_jalan || 'Non-SJ (Operasional)';
             document.getElementById('detInvDebit').textContent = `[${inv.kode_akun_debit}] ${inv.nama_akun_debit}`;
             document.getElementById('detInvKredit').textContent = `[${inv.kode_akun_kredit}] ${inv.nama_akun_kredit}`;
-            document.getElementById('detInvSisa').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(inv.sisa_utang)}`;
+            document.getElementById('detInvSisa').textContent = `Rp ${new Intl.NumberFormat('en-US').format(inv.sisa_utang)}`;
 
             // Render Items
             const itemsTbody = document.getElementById('detInvItemsTbody');
@@ -1717,8 +1717,8 @@ async function viewInvoiceDetail(id) {
                             <td><strong>${it.deskripsi}</strong></td>
                             <td style="text-align: center;">${it.qty}</td>
                             <td>${it.satuan}</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">Rp ${new Intl.NumberFormat('id-ID').format(it.harga_satuan)}</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">Rp ${new Intl.NumberFormat('id-ID').format(it.subtotal)}</td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">Rp ${new Intl.NumberFormat('en-US').format(it.harga_satuan)}</td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">Rp ${new Intl.NumberFormat('en-US').format(it.subtotal)}</td>
                         </tr>
                     `;
                 });
@@ -1739,12 +1739,12 @@ async function viewInvoiceDetail(id) {
                             <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">${p.no_bukti_keluar}
                                 ${p.status_pembayaran === 'BATAL'
                                     ? `<div><span style="display:inline-block;padding:1px 6px;background:var(--border);color:var(--text-muted);font-size:10.5px;border-radius:4px;font-family:inherit;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);font-weight:500;font-family:inherit;">${p.alasan_batal || ''}</div>`
-                                    : `<div><a href="javascript:void(0)" onclick="closeDetailInvoiceModal(); batalDokumen('batal_bayar_ap', { id: ${p.pembayaran_id} }, 'pembayaran ${p.no_bukti_keluar} (Rp ${new Intl.NumberFormat('id-ID').format(p.total_pembayaran)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;font-family:inherit;">Batalkan pembayaran</a></div>`}
+                                    : `<div><a href="javascript:void(0)" onclick="closeDetailInvoiceModal(); batalDokumen('batal_bayar_ap', { id: ${p.pembayaran_id} }, 'pembayaran ${p.no_bukti_keluar} (Rp ${new Intl.NumberFormat('en-US').format(p.total_pembayaran)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;font-family:inherit;">Batalkan pembayaran</a></div>`}
                             </td>
                             <td>${p.tanggal_bayar.substring(0, 10)}</td>
                             <td>${p.metode_bayar} ${p.bank_sumber ? '• ' + p.bank_sumber : ''}</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: ${p.status_pembayaran === 'BATAL' ? '#94a3b8; text-decoration: line-through' : '#047857'};">Rp ${new Intl.NumberFormat('id-ID').format(p.status_pembayaran === 'BATAL' ? p.nominal_asal : p.nominal_alokasi)}</td>
-                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);">Rp ${new Intl.NumberFormat('id-ID').format(p.sisa_utang_setelah)}</td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: ${p.status_pembayaran === 'BATAL' ? '#94a3b8; text-decoration: line-through' : '#047857'};">Rp ${new Intl.NumberFormat('en-US').format(p.status_pembayaran === 'BATAL' ? p.nominal_asal : p.nominal_alokasi)}</td>
+                            <td style="text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--warn-fg);">Rp ${new Intl.NumberFormat('en-US').format(p.sisa_utang_setelah)}</td>
                         </tr>
                     `;
                 });
@@ -1757,7 +1757,7 @@ async function viewInvoiceDetail(id) {
             if (parseFloat(inv.sisa_utang) > 0.01) {
                 document.getElementById('detInvActionBayar').innerHTML = `
                     <button type="button" class="btn btn-primary" onclick="closeDetailInvoiceModal(); openPaymentForInvoice(${inv.id}, '${inv.nama_vendor.replace(/'/g, "\\'")}', ${inv.sisa_utang}, '${inv.no_invoice}', ${inv.pemasok_id || 0});" style="font-size: 12px; font-weight: 700;">
-                        <i data-lucide="credit-card" style="width: 14px; height: 14px; display: inline-block;"></i> Bayar Faktur Ini (Sisa Rp ${new Intl.NumberFormat('id-ID').format(inv.sisa_utang)})
+                        <i data-lucide="credit-card" style="width: 14px; height: 14px; display: inline-block;"></i> Bayar Faktur Ini (Sisa Rp ${new Intl.NumberFormat('en-US').format(inv.sisa_utang)})
                     </button>
                 `;
             }

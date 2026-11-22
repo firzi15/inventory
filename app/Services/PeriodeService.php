@@ -115,7 +115,7 @@ class PeriodeService
         $st->execute([$tanggal]);
         $t = $st->fetch(PDO::FETCH_ASSOC);
         if (abs((float)$t['d'] - (float)$t['k']) > 0.01) {
-            $hasil[] = ['blok', 'Jurnal hari ini tidak seimbang (debit ' . number_format($t['d'], 0, ',', '.') . ' vs kredit ' . number_format($t['k'], 0, ',', '.') . '). Periksa sebelum menutup.'];
+            $hasil[] = ['blok', 'Jurnal hari ini tidak seimbang (debit ' . number_format($t['d'], 0, '.', ',') . ' vs kredit ' . number_format($t['k'], 0, '.', ',') . '). Periksa sebelum menutup.'];
         } else {
             $hasil[] = ['ok', 'Jurnal hari ini seimbang.'];
         }
@@ -137,7 +137,7 @@ class PeriodeService
         }
 
         $per = $persediaan ?? StockService::rekonsiliasiPersediaan();
-        if (!$per['cocok']) $hasil[] = ['peringatan', 'Nilai barang di gudang berbeda dari saldo Inventory di jurnal sebesar Rp ' . number_format(abs($per['selisih']), 0, ',', '.') . '.'];
+        if (!$per['cocok']) $hasil[] = ['peringatan', 'Nilai barang di gudang berbeda dari saldo Inventory di jurnal sebesar Rp ' . number_format(abs($per['selisih']), 0, '.', ',') . '.'];
         else $hasil[] = ['ok', 'Nilai persediaan cocok dengan jurnal.'];
 
         $awal = self::tanggalAwal();

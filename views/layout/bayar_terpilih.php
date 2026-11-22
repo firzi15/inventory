@@ -87,7 +87,7 @@ $btAp = $btJenis === 'ap';
     const JENIS = <?= json_encode($btJenis) ?>;
     const AKSI = JENIS === 'ap' ? 'save_ap_payment_terpilih' : 'save_ar_payment_terpilih';
     const NAMA_ID = JENIS === 'ap' ? 'invoice_ids[]' : 'nota_ids[]';
-    const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
+    const fmt = n => 'Rp ' + new Intl.NumberFormat('en-US').format(Math.round(n));
     const tgl = s => { const d = String(s || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '/' + d[1] + '/' + d[0] : '-'; };
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     let terpilih = [];

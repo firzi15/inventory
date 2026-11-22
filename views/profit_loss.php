@@ -522,7 +522,7 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 <script>
 const rlFilter = <?= json_encode(['dari' => $dari, 'sampai' => $sampai, 'mitra' => $dlMitra, 'jenis' => $dlJenis, 'item' => $dlItem, 'pemasok' => $dlPemasok, 'cari' => $dlCari]) ?>;
-const rlRp = n => (n < 0 ? '-' : '') + 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.abs(Math.round(n)));
+const rlRp = n => (n < 0 ? '-' : '') + 'Rp ' + new Intl.NumberFormat('en-US').format(Math.abs(Math.round(n)));
 const rlKg = n => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' kg';
 const rlEsc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const rlTgl = s => { const d = String(s).slice(0, 10).split('-'); return d[2] + '/' + d[1] + '/' + d[0]; };

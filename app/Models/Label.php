@@ -470,7 +470,7 @@ class Label {
     /**
      * Ambil seluruh data penerimaan / label dengan filter lengkap dan pagination
      */
-    public static function getFiltered(array $filters = [], int $limit = 25, int $offset = 0): array {
+    public static function getFiltered(array $filters = [], int $limit = 25, int $offset = 0, string $orderBy = 'l.id DESC'): array {
         $db = Database::getConnection();
         $where = ["1=1"];
         $params = [];
@@ -587,7 +587,7 @@ class Label {
                 WHERE t.jenis_transaksi = 'MUTASI' OR t.no_bast IS NOT NULL OR t.alur_pergerakan IS NOT NULL
             ) last_trx ON last_trx.label_id = l.id AND last_trx.rn = 1
             WHERE {$whereClause}
-            ORDER BY l.id DESC
+            ORDER BY {$orderBy}
             LIMIT ? OFFSET ?
         ";
 
@@ -832,7 +832,7 @@ class Label {
     /**
      * Mengambil daftar penerimaan yang dikelompokkan per Surat Jalan / Batch Barcode
      */
-    public static function getGroupedPenerimaan(array $filters = [], int $limit = 20, int $offset = 0): array {
+    public static function getGroupedPenerimaan(array $filters = [], int $limit = 20, int $offset = 0, string $orderBy = 'MAX(l.id) DESC'): array {
         $db = Database::getConnection();
         $where = ["l.no_surat_jalan IS NOT NULL AND TRIM(l.no_surat_jalan) != ''"];
         $params = [];
@@ -920,7 +920,7 @@ class Label {
             JOIN jenis_barang j ON i.jenis_id = j.id
             WHERE {$whereClause}
             GROUP BY l.no_surat_jalan
-            ORDER BY MAX(l.id) DESC
+            ORDER BY {$orderBy}
             LIMIT ? OFFSET ?
         ";
 

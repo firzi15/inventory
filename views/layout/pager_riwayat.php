@@ -6,6 +6,7 @@
 if (!function_exists('renderPagerRiwayat')) {
     function renderPagerRiwayat(int $hal, int $halMax, string $info, string $urlDasar, string $param): void
     {
+        $urlDasar .= \App\Core\Urut::kueri(); // urutan kolom yang sedang dipakai ikut ke halaman lain
         $halMax = max(1, $halMax);
         $hal = min(max(1, $hal), $halMax);
         $tautan = function (int $h, string $label, bool $aktif = false, bool $mati = false) use ($urlDasar, $param): string {

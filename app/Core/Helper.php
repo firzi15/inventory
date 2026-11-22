@@ -18,7 +18,7 @@ class Helper {
 
     public static function formatRupiah(float|int|string|null $val, string $prefix = 'Rp '): string {
         if ($val === null || $val === '') return $prefix . '0';
-        return $prefix . number_format((float)$val, 0, ',', '.');
+        return $prefix . number_format((float)$val, 0, '.', ',');
     }
 
     public static function formatDateTime(?string $dateStr): string {

@@ -44,7 +44,7 @@ foreach ($labels as $lbl) {
     $grandNilai = ($grandNilai ?? 0.0) + (float)($lbl['total_nilai'] ?? 0);
 }
 $grandNilai = $grandNilai ?? 0.0;
-$rp = fn($n) => 'Rp ' . number_format((float)$n, 0, ',', '.');
+$rp = fn($n) => 'Rp ' . number_format((float)$n, 0, '.', ',');
 $isMultiItem = count($uniqueItems) > 1;
 
 // Ukuran lembar dan pembagian baris per lembar (satuan mm)

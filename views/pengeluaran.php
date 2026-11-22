@@ -9,6 +9,7 @@
  */
 
 use App\Core\Helper;
+use App\Core\Urut;
 use App\Models\Mitra;
 use App\Models\Pemasok;
 use App\Models\Label;
@@ -90,7 +91,11 @@ if ($hMitra > 0) $hFilters['mitra_id'] = $hMitra;
 if (!empty($hStartDate)) $hFilters['start_date'] = $hStartDate;
 if (!empty($hEndDate)) $hFilters['end_date'] = $hEndDate;
 
-$historyOutbound = Transaksi::getHistoryPengeluaran($hFilters, $hPerPage, $hOffset);
+$urutSjKeluar = Urut::sql('sj_keluar', [
+    'sj' => 'no_surat_jalan_keluar', 'waktu' => 't.created_at', 'pemasok' => 'p.nama_pemasok', 'mitra' => 'm.nama_mitra',
+    'kemasan' => 't.total_label', 'netto' => 't.total_kg', 'petugas' => 'u.nama_lengkap', 'status' => 't.jenis_transaksi',
+], 't.id DESC');
+$historyOutbound = Transaksi::getHistoryPengeluaran($hFilters, $hPerPage, $hOffset, $urutSjKeluar);
 $totalHistory = Transaksi::countHistoryPengeluaran($hFilters);
 $totalHistoryPages = max(1, ceil($totalHistory / $hPerPage));
 
@@ -109,7 +114,13 @@ $filterParams = [
     'search'     => $search
 ];
 
-$allGoods = Label::getFiltered($filterParams, $perPage, $offset);
+$urutBrgKeluar = Urut::sql('brg_keluar', [
+    'barcode' => 'l.id_label', 'pemasok' => 'p.nama_pemasok', 'produk' => 'i.nama_item', 'netto' => 'l.berat_netto',
+    'mitra' => "COALESCE(last_trx.nama_mitra_tujuan, m.nama_mitra)",
+    'sj' => "COALESCE(NULLIF(last_trx.no_bast, ''), last_trx.no_transaksi, l.no_surat_jalan)",
+    'waktu' => 'COALESCE(last_trx.waktu_mutasi, l.updated_at)', 'status' => 'l.status',
+], 'l.id DESC');
+$allGoods = Label::getFiltered($filterParams, $perPage, $offset, $urutBrgKeluar);
 $totalCount = Label::countFiltered($filterParams);
 $totalPages = max(1, ceil($totalCount / $perPage));
 
@@ -125,6 +136,7 @@ function renderOutboundFilterBar(array $c, array $pemasokList, array $mitraList)
         <input type="hidden" name="page" value="pengeluaran">
         <input type="hidden" name="tab" value="riwayat">
         <input type="hidden" name="subtab" value="<?= htmlspecialchars($c['subtab']) ?>">
+        <?= Urut::hidden() ?>
         <div style="flex: 1; min-width: 220px;">
             <label class="form-label">Cari</label>
             <input type="text" name="<?= $c['search_name'] ?>" class="form-control" placeholder="<?= htmlspecialchars($c['placeholder']) ?>" value="<?= htmlspecialchars($c['search_val']) ?>">
@@ -372,14 +384,15 @@ require_once __DIR__ . '/layout/header.php';
             <thead>
                 <tr>
                     <th style="width: 35px; text-align: center;">No</th>
-                    <th style="width: 185px;">No. Surat Jalan / DO</th>
-                    <th style="width: 130px;">Waktu Keluar</th>
-                    <th style="width: 175px;">Pemasok Asal</th>
-                    <th style="width: 175px;">Mitra Penerima</th>
-                    <th style="text-align: right;">Kemasan</th>
-                    <th style="text-align: right;">Total Netto</th>
-                    <th>Petugas</th>
-                    <th>Status</th>
+                    <?php $tsj = ['tab' => 'riwayat', 'subtab' => 'sj']; ?>
+                    <?= Urut::th('No. Surat Jalan / DO', 'sj_keluar', 'sj', 'hp', 'style="width: 185px;"', $tsj) ?>
+                    <?= Urut::th('Waktu Keluar', 'sj_keluar', 'waktu', 'hp', 'style="width: 130px;"', $tsj) ?>
+                    <?= Urut::th('Pemasok Asal', 'sj_keluar', 'pemasok', 'hp', 'style="width: 175px;"', $tsj) ?>
+                    <?= Urut::th('Mitra Penerima', 'sj_keluar', 'mitra', 'hp', 'style="width: 175px;"', $tsj) ?>
+                    <?= Urut::th('Kemasan', 'sj_keluar', 'kemasan', 'hp', 'style="text-align: right;"', $tsj) ?>
+                    <?= Urut::th('Total Netto', 'sj_keluar', 'netto', 'hp', 'style="text-align: right;"', $tsj) ?>
+                    <?= Urut::th('Petugas', 'sj_keluar', 'petugas', 'hp', '', $tsj) ?>
+                    <?= Urut::th('Status', 'sj_keluar', 'status', 'hp', '', $tsj) ?>
                     <th style="text-align: center; width: 160px;">Aksi</th>
                 </tr>
             </thead>
@@ -470,14 +483,15 @@ require_once __DIR__ . '/layout/header.php';
             <thead>
                 <tr>
                     <th style="width: 40px; text-align: center;">No</th>
-                    <th>ID Barcode Kemasan</th>
-                    <th>Pemasok Asal</th>
-                    <th>Nama Barang / Produk</th>
-                    <th style="text-align: right;">Netto (Kg)</th>
-                    <th>Mitra Penerima</th>
-                    <th>No. Surat Jalan Keluar</th>
-                    <th>Waktu Keluar</th>
-                    <th style="text-align: center; width: 120px;">Status</th>
+                    <?php $tbr = ['tab' => 'riwayat', 'subtab' => 'barang']; ?>
+                    <?= Urut::th('ID Barcode Kemasan', 'brg_keluar', 'barcode', 'p', '', $tbr) ?>
+                    <?= Urut::th('Pemasok Asal', 'brg_keluar', 'pemasok', 'p', '', $tbr) ?>
+                    <?= Urut::th('Nama Barang / Produk', 'brg_keluar', 'produk', 'p', '', $tbr) ?>
+                    <?= Urut::th('Netto (Kg)', 'brg_keluar', 'netto', 'p', 'style="text-align: right;"', $tbr) ?>
+                    <?= Urut::th('Mitra Penerima', 'brg_keluar', 'mitra', 'p', '', $tbr) ?>
+                    <?= Urut::th('No. Surat Jalan Keluar', 'brg_keluar', 'sj', 'p', '', $tbr) ?>
+                    <?= Urut::th('Waktu Keluar', 'brg_keluar', 'waktu', 'p', '', $tbr) ?>
+                    <?= Urut::th('Status', 'brg_keluar', 'status', 'p', 'style="text-align: center; width: 120px;"', $tbr) ?>
                 </tr>
             </thead>
             <tbody>
@@ -810,7 +824,7 @@ require_once __DIR__ . '/layout/header.php';
                         ? `<div style="font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 3px;">Pilih mitra penerima untuk melihat tarif jual</div>`
                         : hrgMitra <= 0 
                         ? `<div style="font-size: 10.5px; color: var(--bad-fg); font-weight: 700; margin-top: 3px;">⚠️ Tarif Jual: Rp 0 (Belum diatur di Master)</div>`
-                        : `<div style="font-size: 10.5px; color: var(--ok-fg); font-weight: 600; margin-top: 2px;">Tarif: Rp ${new Intl.NumberFormat('id-ID').format(hrgMitra)}/kg • Subtotal: Rp ${new Intl.NumberFormat('id-ID').format(netto * hrgMitra)}</div>`
+                        : `<div style="font-size: 10.5px; color: var(--ok-fg); font-weight: 600; margin-top: 2px;">Tarif: Rp ${new Intl.NumberFormat('en-US').format(hrgMitra)}/kg • Subtotal: Rp ${new Intl.NumberFormat('en-US').format(netto * hrgMitra)}</div>`
                     }
                 </td>
                 <td>
@@ -1216,7 +1230,7 @@ require_once __DIR__ . '/layout/header.php';
     }
 
     // Format angka rincian; "Rp 1.234.567" dikenali sebagai angka saat diekspor ke Excel
-    const fmtRpRincian = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+    const fmtRpRincian = n => 'Rp ' + Math.round(n).toLocaleString('en-US');
     const fmtKgRincian = n => n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kg';
     let rincianKeluarNoSj = '';
     function eksporRincianKeluar() {

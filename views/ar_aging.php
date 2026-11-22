@@ -937,7 +937,7 @@ function closeHistoryModal() {
 }
 
 function formatNumberRp(num) {
-    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num || 0);
+    return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num || 0);
 }
 
 function escapeHtml(text) {

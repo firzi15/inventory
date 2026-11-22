@@ -166,7 +166,7 @@ require_once __DIR__ . '/layout/header.php';
         const warna = { ok: '#15803d', peringatan: '#b45309', blok: '#b91c1c' };
         const adaBlok = info.cek.some(c => c[0] === 'blok');
         const adaPeringatan = info.cek.some(c => c[0] === 'peringatan');
-        const rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+        const rp = n => 'Rp ' + Math.round(n).toLocaleString('en-US');
         let html = '<div style="text-align:left;font-size:13px;">';
         html += '<div style="margin-bottom:10px;">Laba bersih ' + esc(info.nama) + ': <strong>' + rp(info.ringkas.laba) + '</strong> (penjualan ' + rp(info.ringkas.penjualan) + ')</div>';
         info.cek.forEach(c => {

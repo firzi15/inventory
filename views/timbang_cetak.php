@@ -54,7 +54,11 @@ if (!empty($filterWeighed)) $filterParams['weighed_status'] = $filterWeighed;
 if (!empty($searchQuery)) $filterParams['search'] = $searchQuery;
 
 $totalPenerimaan = Label::countFiltered($filterParams);
-$penerimaanList = Label::getFiltered($filterParams, $perPage, $offset);
+$urutTerimaBox = \App\Core\Urut::sql('terima_box', [
+    'barcode' => 'l.id_label', 'pemasok' => 'p.nama_pemasok', 'produk' => 'i.nama_item', 'netto' => 'l.berat_netto',
+    'sj' => 'l.no_surat_jalan', 'waktu' => 'l.created_at',
+], 'l.id DESC');
+$penerimaanList = Label::getFiltered($filterParams, $perPage, $offset, $urutTerimaBox);
 $totalPages = max(1, (int)ceil($totalPenerimaan / $perPage));
 
 // Ambil data penerimaan yang dikelompokkan per Surat Jalan dengan Pagination
@@ -62,7 +66,11 @@ $grpPageNumber = max(1, (int)($_GET['p_grp'] ?? 1));
 $grpPerPage = 15;
 $grpOffset = ($grpPageNumber - 1) * $grpPerPage;
 $totalGrouped = Label::countGroupedPenerimaan($filterParams);
-$groupedPenerimaan = Label::getGroupedPenerimaan($filterParams, $grpPerPage, $grpOffset);
+$urutTerimaSj = \App\Core\Urut::sql('terima_sj', [
+    'sj' => 'l.no_surat_jalan', 'waktu' => 'MAX(l.created_at)', 'pemasok' => 'MAX(p.nama_pemasok)', 'produk' => 'MAX(i.nama_item)',
+    'jumlah' => 'COUNT(*)', 'netto' => 'SUM(COALESCE(l.berat_netto, 0))',
+], 'MAX(l.id) DESC');
+$groupedPenerimaan = Label::getGroupedPenerimaan($filterParams, $grpPerPage, $grpOffset, $urutTerimaSj);
 $totalGroupedPages = max(1, (int)ceil($totalGrouped / $grpPerPage));
 $itemsList = Item::getAll();
 
@@ -967,6 +975,8 @@ require_once __DIR__ . '/layout/header.php';
     <form method="GET" action="index.php#detailsRiwayatPenerimaan" id="formFilterRiwayat" class="card" style="padding: 14px 16px; margin-bottom: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
         <input type="hidden" name="page" value="timbang_cetak">
         <input type="hidden" name="tab" value="<?= htmlspecialchars($activeTab) ?>">
+        <?php if (($_GET['mode'] ?? '') === 'detail'): ?><input type="hidden" name="mode" value="detail"><?php endif; ?>
+        <?= \App\Core\Urut::hidden() ?>
         <div style="flex: 1; min-width: 220px;">
             <label class="form-label">Cari</label>
             <input type="text" name="search" class="form-control" placeholder="No. surat jalan, barcode, produk, pemasok..." value="<?= htmlspecialchars($searchQuery) ?>">
@@ -998,8 +1008,9 @@ require_once __DIR__ . '/layout/header.php';
     <!-- Pilihan tampilan: Per Surat Jalan vs Rincian Satuan -->
     <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
         <div style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" class="btn btn-primary btn-sm" id="btnViewModeGroup" onclick="switchTableViewMode('group')">Per Surat Jalan</button>
-            <button type="button" class="btn btn-outline btn-sm" id="btnViewModeDetail" onclick="switchTableViewMode('detail')">Rincian Satuan</button>
+            <?php $modeRiwayat = ($_GET['mode'] ?? '') === 'detail' ? 'detail' : 'group'; ?>
+            <button type="button" class="btn <?= $modeRiwayat === 'group' ? 'btn-primary' : 'btn-outline' ?> btn-sm" id="btnViewModeGroup" onclick="switchTableViewMode('group')">Per Surat Jalan</button>
+            <button type="button" class="btn <?= $modeRiwayat === 'detail' ? 'btn-primary' : 'btn-outline' ?> btn-sm" id="btnViewModeDetail" onclick="switchTableViewMode('detail')">Rincian Satuan</button>
         </div>
         <span style="font-size: 12.5px; color: var(--text-muted);"><?= number_format($totalPenerimaan) ?> Data</span>
     </div>
@@ -1008,16 +1019,17 @@ require_once __DIR__ . '/layout/header.php';
     <!-- ========================================================================= -->
     <!-- TABEL 1: MODE KELOMPOK BATCH SURAT JALAN (10 PCS / LEMBAR A4)            -->
     <!-- ========================================================================= -->
-    <div class="table-responsive" id="containerViewGrouped">
+    <div class="table-responsive" id="containerViewGrouped" style="<?= $modeRiwayat === 'detail' ? 'display: none;' : '' ?>">
         <table class="table-custom" data-no-tools>
             <thead>
                 <tr>
-                    <th>No. Surat Jalan</th>
-                    <th>Waktu</th>
-                    <th>Pemasok</th>
-                    <th>Nama Produk</th>
-                    <th style="text-align: right;">Jumlah Barcode</th>
-                    <th style="text-align: right;">Netto</th>
+                    <?php $U = '\App\Core\Urut'; $tTr = ['page' => 'timbang_cetak', 'tab' => $activeTab, 'mode' => 'group']; ?>
+                    <?= $U::th('No. Surat Jalan', 'terima_sj', 'sj', 'p_grp', '', $tTr) ?>
+                    <?= $U::th('Waktu', 'terima_sj', 'waktu', 'p_grp', '', $tTr) ?>
+                    <?= $U::th('Pemasok', 'terima_sj', 'pemasok', 'p_grp', '', $tTr) ?>
+                    <?= $U::th('Nama Produk', 'terima_sj', 'produk', 'p_grp', '', $tTr) ?>
+                    <?= $U::th('Jumlah Barcode', 'terima_sj', 'jumlah', 'p_grp', 'style="text-align: right;"', $tTr) ?>
+                    <?= $U::th('Netto', 'terima_sj', 'netto', 'p_grp', 'style="text-align: right;"', $tTr) ?>
                     <th>Rentang ID Barcode</th>
                     <th>Status</th>
                     <th style="text-align: center;" class="no-print">Aksi</th>
@@ -1079,16 +1091,17 @@ require_once __DIR__ . '/layout/header.php';
     <!-- ========================================================================= -->
     <!-- TABEL 2: MODE RINCIAN PER 1 PCS BARCODE                                  -->
     <!-- ========================================================================= -->
-    <div class="table-responsive" id="containerViewDetail" style="display: none;">
+    <div class="table-responsive" id="containerViewDetail" style="<?= $modeRiwayat === 'detail' ? '' : 'display: none;' ?>">
         <table class="table-custom" id="allPenerimaanTable" data-no-tools>
             <thead>
                 <tr>
-                    <th style="width: 155px;">ID Barcode</th>
-                    <th>Pemasok</th>
-                    <th>Nama Produk</th>
-                    <th style="text-align: right;">Netto (Kg)</th>
-                    <th>No. Surat Jalan</th>
-                    <th>Waktu Penerimaan</th>
+                    <?php $tTd = ['page' => 'timbang_cetak', 'tab' => $activeTab, 'mode' => 'detail']; ?>
+                    <?= $U::th('ID Barcode', 'terima_box', 'barcode', 'p', 'style="width: 155px;"', $tTd) ?>
+                    <?= $U::th('Pemasok', 'terima_box', 'pemasok', 'p', '', $tTd) ?>
+                    <?= $U::th('Nama Produk', 'terima_box', 'produk', 'p', '', $tTd) ?>
+                    <?= $U::th('Netto (Kg)', 'terima_box', 'netto', 'p', 'style="text-align: right;"', $tTd) ?>
+                    <?= $U::th('No. Surat Jalan', 'terima_box', 'sj', 'p', '', $tTd) ?>
+                    <?= $U::th('Waktu Penerimaan', 'terima_box', 'waktu', 'p', '', $tTd) ?>
                     <th style="text-align: center; width: 100px;" class="no-print">Aksi</th>
                 </tr>
             </thead>
@@ -1140,6 +1153,7 @@ require_once __DIR__ . '/layout/header.php';
         if (!empty($filterEndDate)) $baseUrl .= "&filter_end_date=" . urlencode($filterEndDate);
         if (!empty($filterWeighed)) $baseUrl .= "&filter_weighed=" . urlencode($filterWeighed);
         if (!empty($searchQuery)) $baseUrl .= "&search=" . urlencode($searchQuery);
+        if ($modeRiwayat === 'detail') $baseUrl .= "&mode=detail";
     ?>
     <?php
     require_once __DIR__ . '/layout/pager_riwayat.php';
@@ -1604,7 +1618,7 @@ require_once __DIR__ . '/layout/header.php';
         const foot = document.getElementById('inboundTotalFoot');
         if (foot) {
             foot.style.display = totalBox >= 1 ? '' : 'none';
-            const rp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(parseFloat(n || 0)));
+            const rp = (n) => 'Rp ' + new Intl.NumberFormat('en-US').format(Math.round(parseFloat(n || 0)));
             const esc = (t) => String(t == null ? '' : t).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
             const mono = "text-align: right; white-space: nowrap; font-family: JetBrains Mono, monospace;";
             let html = '';
@@ -1652,7 +1666,7 @@ require_once __DIR__ . '/layout/header.php';
                     const row = document.createElement('tr');
                     const hrg = parseFloat(b.harga_beli_per_kg || 0);
                     const nominal = parseFloat(b.total_nilai || 0);
-                    const fmtRp = (n) => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
+                    const fmtRp = (n) => 'Rp ' + new Intl.NumberFormat('en-US').format(Math.round(n));
                     row.innerHTML = `
                         <td style="color: var(--text-muted); font-size: 12px; text-align: center; padding-left: 4px; padding-right: 4px;">${index++}</td>
                         <td style="white-space: nowrap;">
@@ -1900,7 +1914,7 @@ require_once __DIR__ . '/layout/header.php';
 
     // Helper formatting
     function formatRupiah(num) {
-        return new Intl.NumberFormat('id-ID').format(num);
+        return new Intl.NumberFormat('en-US').format(num);
     }
 
     function setBulkQty(q, btnEl) {
@@ -2179,6 +2193,20 @@ require_once __DIR__ . '/layout/header.php';
             if (containerGroup) containerGroup.style.display = 'none';
             if (containerDetail) containerDetail.style.display = 'block';
         }
+        // Mode tampilan ikut di filter dan tautan halaman agar tidak kembali ke Per Surat Jalan
+        const form = document.getElementById('formFilterRiwayat');
+        if (form) {
+            let inp = form.querySelector('input[name="mode"]');
+            if (mode === 'detail') {
+                if (!inp) { inp = document.createElement('input'); inp.type = 'hidden'; inp.name = 'mode'; form.appendChild(inp); }
+                inp.value = 'detail';
+            } else if (inp) inp.remove();
+        }
+        document.querySelectorAll('#detailsRiwayatPenerimaan .sj-halaman a[href]').forEach(a => {
+            const u = new URL(a.getAttribute('href'), window.location.href);
+            if (mode === 'detail') u.searchParams.set('mode', 'detail'); else u.searchParams.delete('mode');
+            a.setAttribute('href', 'index.php' + u.search + u.hash);
+        });
         if (window.lucide) window.lucide.createIcons();
     }
 
@@ -3525,7 +3553,7 @@ require_once __DIR__ . '/layout/header.php';
             if (!tbody) return;
 
             // Baris total: jumlah box, netto, dan nominal (berat x harga beli). Box yang dibatalkan (VOID) tidak dihitung nominalnya.
-            const rpTerima = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+            const rpTerima = n => 'Rp ' + Math.round(n).toLocaleString('en-US');
             const foot = document.getElementById('modalSJTableFoot');
             if (foot) {
                 const n = (labels || []).length;
@@ -4276,7 +4304,7 @@ require_once __DIR__ . '/layout/header.php';
             const riwayatLink = e.target.closest('#detailsRiwayatPenerimaan a');
             if (riwayatLink && riwayatLink.getAttribute('href')) {
                 const href = riwayatLink.getAttribute('href');
-                if (href.startsWith('index.php') && (href.includes('filter_') || href.includes('search=') || href.includes('p=') || href.includes('p_grp='))) {
+                if (href.startsWith('index.php') && (href.includes('filter_') || href.includes('search=') || href.includes('p=') || href.includes('p_grp=') || href.includes('urut_'))) {
                     e.preventDefault();
                     window.loadRiwayatAjax(href);
                     return;

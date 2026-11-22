@@ -202,7 +202,7 @@ require_once __DIR__ . '/layout/header.php';
 
 <script>
 let rekonTanggal = '', rekonTotalSistem = 0;
-const rupiah = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
+const rupiah = n => 'Rp ' + new Intl.NumberFormat('en-US').format(Math.round(n));
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 async function ambilDetail(tanggal) {

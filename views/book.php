@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom' } },
-            scales: { y: { ticks: { callback: function (v) { return 'Rp ' + Number(v).toLocaleString('id-ID'); } } } }
+            scales: { y: { ticks: { callback: function (v) { return 'Rp ' + Number(v).toLocaleString('en-US'); } } } }
         }
     });
 });

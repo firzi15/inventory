@@ -286,7 +286,7 @@ class Transaksi {
      * Mengambil riwayat transaksi pengeluaran barang (Surat Jalan Outbound)
      * Menampilkan dari stok pemasok mana, dikeluarkan ke mitra mana, total kemasan, bobot, dan profit
      */
-    public static function getHistoryPengeluaran(array $filters = [], int $limit = 20, int $offset = 0): array {
+    public static function getHistoryPengeluaran(array $filters = [], int $limit = 20, int $offset = 0, string $orderBy = 't.id DESC'): array {
         $db = Database::getConnection();
         $where = ["t.jenis_transaksi IN ('PENGELUARAN','PENGELUARAN_BATAL')"];
         $params = [];
@@ -338,7 +338,7 @@ class Transaksi {
             LEFT JOIN pemasok p ON t.pemasok_id = p.id
             LEFT JOIN users u ON t.user_id = u.id
             WHERE {$whereClause}
-            ORDER BY t.id DESC
+            ORDER BY {$orderBy}
             LIMIT ? OFFSET ?
         ";
 

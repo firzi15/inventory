@@ -355,7 +355,7 @@ class Piutang {
             if ($totalSisaMitra <= 0.01) {
                 throw new Exception("Mitra ini tidak punya piutang terbuka, setoran tidak dapat dicatat.");
             }
-            throw new Exception("Setoran (Rp " . number_format($jumlahBayar, 0, ',', '.') . ") melebihi total sisa piutang mitra (Rp " . number_format($totalSisaMitra, 0, ',', '.') . ").");
+            throw new Exception("Setoran (Rp " . number_format($jumlahBayar, 0, '.', ',') . ") melebihi total sisa piutang mitra (Rp " . number_format($totalSisaMitra, 0, '.', ',') . ").");
         }
 
         // Generate No Bukti Bayar Unik: CR-YYYYMMDD-XXXX
@@ -406,7 +406,7 @@ class Piutang {
                 }
 
                 if ($totalAlokasiReq > $jumlahBayar + 0.01) {
-                    throw new Exception("Total alokasi manual (Rp " . number_format($totalAlokasiReq, 0, ',', '.') . ") melebihi jumlah uang yang disetor (Rp " . number_format($jumlahBayar, 0, ',', '.') . ").");
+                    throw new Exception("Total alokasi manual (Rp " . number_format($totalAlokasiReq, 0, '.', ',') . ") melebihi jumlah uang yang disetor (Rp " . number_format($jumlahBayar, 0, '.', ',') . ").");
                 }
 
                 foreach ($data['alokasi_manual'] as $trxId => $nom) {
@@ -527,7 +527,7 @@ class Piutang {
         usort($notas, fn($a, $b) => [$a['jatuh_tempo'], $a['created_at'], (int)$a['id']] <=> [$b['jatuh_tempo'], $b['created_at'], (int)$b['id']]);
         $totalSisa = round(array_sum(array_map(fn($n) => (float)$n['sisa_piutang'], $notas)), 2);
         if ($jumlah > $totalSisa + 0.01) {
-            throw new Exception("Nominal (Rp " . number_format($jumlah, 0, ',', '.') . ") melebihi total sisa nota terpilih (Rp " . number_format($totalSisa, 0, ',', '.') . ").");
+            throw new Exception("Nominal (Rp " . number_format($jumlah, 0, '.', ',') . ") melebihi total sisa nota terpilih (Rp " . number_format($totalSisa, 0, '.', ',') . ").");
         }
 
         $alokasi = [];

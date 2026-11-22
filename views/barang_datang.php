@@ -323,7 +323,7 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 
 <script>
-const fmtRp = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(n));
+const fmtRp = n => 'Rp ' + new Intl.NumberFormat('en-US').format(Math.round(n));
 const fmtKg = n => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' kg';
 const escH = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
