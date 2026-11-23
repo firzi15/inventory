@@ -48,12 +48,12 @@ $rp = fn($n) => 'Rp ' . number_format((float)$n, 0, '.', ',');
 $isMultiItem = count($uniqueItems) > 1;
 
 // Ukuran lembar dan pembagian baris per lembar (satuan mm)
-// Ukuran kertas: setengah form 9½ x 5½ inci (bawaan), A4 penuh, atau Letter 11 inci
-$kertas = strtolower($_GET['kertas'] ?? 'setengah');
-if (!in_array($kertas, ['a4', 'setengah', 'penuh'], true)) $kertas = 'setengah';
+// Ukuran kertas: HVS A4 lembaran (bawaan, printer Epson lembaran), setengah form continuous 9½ x 5½ inci, atau continuous 11 inci
+$kertas = strtolower($_GET['kertas'] ?? 'a4');
+if (!in_array($kertas, ['a4', 'setengah', 'penuh'], true)) $kertas = 'a4';
 [$lebarMm, $tinggiMm, $mAtas, $mSisi] = ['a4' => [210, 297, 8, 10], 'setengah' => [241.3, 139.7, 12, 20.6], 'penuh' => [215.9, 279.4, 8, 10]][$kertas];
 $lembarTinggi = $tinggiMm > 200;
-$labelKertas = ['a4' => 'A4 (210 x 297 mm)', 'setengah' => 'Setengah form (9½ x 5½ inci)', 'penuh' => 'Letter 8½ x 11 inci'][$kertas];
+$labelKertas = ['a4' => 'HVS A4 (210 x 297 mm)', 'setengah' => 'continuous setengah form (9½ x 5½ inci)', 'penuh' => 'continuous 11 inci'][$kertas];
 // Setengah form: margin atas lebih besar (nama perusahaan tidak terpotong), isi digeser ke kiri; margin bawah tipis
 $mBawah = $kertas === 'setengah' ? 4 : $mAtas;
 $mKiri = $kertas === 'setengah' ? 3 : $mSisi;
@@ -240,11 +240,23 @@ $picPemasok = ($sjData['pic_pemasok'] ?? '-') !== '-' ? $sjData['pic_pemasok'] :
     <?php else: ?>
     <style>.mono, table.rincian td.mono, .baris .v.mono, .kop .kode .no { font-family: Arial, Helvetica, sans-serif !important; }</style>
     <?php endif; ?>
+    <style>
+        .pilih-kertas { font: inherit; font-size: 12.5px; padding: 7px 10px; border: 1px solid #000000; border-radius: 4px; background: #ffffff; color: #000000; }
+    </style>
+    <?php if ($kertas === 'a4'): // HVS A4 lembaran: tidak ada garis sobekan, cukup garis tipis biasa ?>
+    <style>.dasar { border-top: 1px solid #000000 !important; }</style>
+    <?php endif; ?>
 </head>
 <body>
 
     <div class="print-actions">
         <a href="index.php?page=surat_jalan&tab=penerimaan" class="btn-action btn-back">← Kembali ke Surat Jalan</a>
+        <select class="pilih-kertas" onchange="gantiKertas(this.value)" title="Ukuran kertas cetak">
+            <option value="a4" <?= $kertas === 'a4' ? 'selected' : '' ?>>HVS A4 (printer lembaran)</option>
+            <option value="setengah" <?= $kertas === 'setengah' ? 'selected' : '' ?>>Continuous setengah (9½ x 5½ inci)</option>
+            <option value="penuh" <?= $kertas === 'penuh' ? 'selected' : '' ?>>Continuous penuh (11 inci)</option>
+        </select>
+        <script>function gantiKertas(k) { var u = new URL(location.href); u.searchParams.set('kertas', k); location.href = u.toString(); }</script>
         <span class="info">Kertas: <?= $labelKertas ?>, <?= $jumlahLembar ?> lembar<?= $jumlahLembar > 1 ? ' (tabel bersambung)' : '' ?></span>
         <button onclick="window.print()" class="btn-action btn-print">Cetak Dokumen Penerimaan</button>
     </div>

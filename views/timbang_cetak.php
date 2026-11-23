@@ -229,6 +229,18 @@ require_once __DIR__ . '/layout/header.php';
 </div>
 <?php endif; ?>
 
+<!-- Ukuran stiker barcode untuk semua tombol cetak barcode di halaman ini (disimpan di browser ini) -->
+<div class="no-print" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: -6px 0 12px;">
+    <label for="pilihUkuranStiker" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="printer" style="width: 14px; height: 14px;"></i>Ukuran stiker barcode
+    </label>
+    <select id="pilihUkuranStiker" class="form-control" style="width: auto; height: 34px; font-size: 12.5px; font-weight: 700;" onchange="pilihUkuranStiker(this.value)">
+        <option value="70x50">70 x 50 mm</option>
+        <option value="150x100">150 x 100 mm</option>
+    </select>
+</div>
+<script>document.addEventListener('DOMContentLoaded', function () { var s = document.getElementById('pilihUkuranStiker'); if (s) s.value = ukuranStiker(); });</script>
+
 <!-- Hidden fallback container untuk template barcode SVG -->
 <div id="barcodeSvgContainer" style="display: none;">
     <?= BarcodeService::generateCode128Svg($sampleBarcode, 120, 2.0) ?>
@@ -2115,6 +2127,45 @@ require_once __DIR__ . '/layout/header.php';
                 }
             `;
         }
+        terapkanUkuranStiker(mode);
+    }
+
+    // Ukuran stiker barcode: 70x50 (bawaan, aturan di atas tidak diubah) atau 150x100.
+    // Mode 150x100 hanya menimpa saat cetak: halaman 150x100 mm dan isi stiker 70x50 yang sama diperbesar 2,1x di tengah.
+    function ukuranStiker() {
+        try { return localStorage.getItem('ukuranStiker') === '150x100' ? '150x100' : '70x50'; } catch (e) { return '70x50'; }
+    }
+    function pilihUkuranStiker(v) {
+        try { localStorage.setItem('ukuranStiker', v === '150x100' ? '150x100' : '70x50'); } catch (e) {}
+        const sel = document.getElementById('pilihUkuranStiker');
+        if (sel) sel.value = ukuranStiker();
+    }
+    function terapkanUkuranStiker(mode) {
+        let el = document.getElementById('gayaStiker150');
+        if (mode !== 'single' || ukuranStiker() !== '150x100') { if (el) el.remove(); return; }
+        // Ukuran halaman: Chrome memakai @page pertama, jadi aturan dinamis (dibuat ulang tiap cetak) yang diubah ukurannya
+        const fmt = document.getElementById('dynamicPrintPageFormat');
+        if (fmt) fmt.innerHTML = fmt.innerHTML.replace(/size:\s*70mm 50mm/, 'size: 150mm 100mm');
+        if (!el) { el = document.createElement('style'); el.id = 'gayaStiker150'; }
+        document.head.appendChild(el); // selalu paling akhir agar menimpa aturan 70x50
+        el.innerHTML = `
+            @media print {
+                body.print-mode-single-thermal .app-layout,
+                body.print-mode-single-thermal .app-main-container,
+                body.print-mode-single-thermal .main-wrapper,
+                body.print-mode-single-thermal #bulkPrintContainer,
+                body.print-mode-single-thermal .print-area,
+                .app-layout, .app-main-container, .main-wrapper, #bulkPrintContainer, .print-area { max-width: 150mm !important; }
+                .bulk-print-sheet.single-thermal-sheet {
+                    width: 150mm !important;
+                    height: 100mm !important;
+                    padding: 0 !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+                .bulk-print-sheet.single-thermal-sheet > * { zoom: 2.1; }
+            }
+        `;
     }
 
     // Print all labels inside #bulkPrintContainer (Mode Sheet A4: 10 pcs/lembar)
@@ -2359,8 +2410,37 @@ require_once __DIR__ . '/layout/header.php';
         reprintBarcodeDirect(d.barcode, d.kodeMitra, d.namaItem, d.beratKg, d.noSj, d.lokasiName, d.hrgPerKg);
     }
 
+    // Di Riwayat Penerimaan, setiap kali cetak ditanya dulu ukuran stikernya (70x50 atau 150x100).
+    // Alur timbang tidak ditanya agar tetap cepat; di sana memakai pilihan Ukuran stiker barcode di atas halaman.
+    function riwayatPenerimaanTampil() {
+        const s = document.getElementById('sectionRiwayatPenerimaan');
+        return !!(s && s.offsetParent !== null);
+    }
+    async function tanyaUkuranStiker() {
+        if (!riwayatPenerimaanTampil() || typeof Swal === 'undefined') return true;
+        const kini = ukuranStiker();
+        const r = await Swal.fire({
+            title: 'Ukuran stiker barcode',
+            text: 'Pilih ukuran kertas stiker yang terpasang di printer.',
+            icon: 'question',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: '70 x 50 mm',
+            denyButtonText: '150 x 100 mm',
+            cancelButtonText: 'Batal',
+            denyButtonColor: '#3085d6',
+            focusConfirm: kini === '70x50',
+            focusDeny: kini === '150x100',
+            didOpen: () => { const c = Swal.getContainer(); if (c) c.style.zIndex = '10050'; }, // di atas modal rincian
+        });
+        if (r.isConfirmed) { pilihUkuranStiker('70x50'); return true; }
+        if (r.isDenied) { pilihUkuranStiker('150x100'); return true; }
+        return false;
+    }
+
     // Cetak Kelompok Surat Jalan
     async function reprintGroupSJ(noSj, status = 'all') {
+        if (!(await tanyaUkuranStiker())) return;
         try {
             const resp = await fetch('index.php?action=get_labels_for_reprint&type=group_sj&no_surat_jalan=' + encodeURIComponent(noSj) + '&status=' + encodeURIComponent(status));
             const data = await resp.json();
@@ -2404,6 +2484,7 @@ require_once __DIR__ . '/layout/header.php';
 
     // Cetak Satuan Langsung (Thermal Roll 70x50 mm)
     async function reprintBarcodeDirect(barcodeOrObj, kodeMitra, namaItem, beratKg, noSj, lokasiName, hrgPerKg) {
+        if (!(await tanyaUkuranStiker())) return;
         try {
             let lbl = null;
 
