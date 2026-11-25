@@ -1601,7 +1601,7 @@ require_once __DIR__ . '/layout/header.php';
             }
         }
 
-        // Kode jenis + jumlah box jenis itu dalam surat jalan (pojok kiri bawah), mis. PRD01-7; kode jenis dari segmen kedua ID barcode
+        // Kode jenis + jumlah box produk itu dalam surat jalan (pojok kiri bawah), mis. PRD01-7; kode jenis dari segmen kedua ID barcode
         let kodeUrut = '';
         const urutJenis = parseInt(lbl.urut_jenis, 10);
         if (urutJenis > 0) {
