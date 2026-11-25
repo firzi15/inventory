@@ -706,7 +706,7 @@ class Label {
     }
 
     /**
-     * Nomor urut box per produk (item) di dalam satu surat jalan, untuk pojok kiri bawah stiker (mis. 03).
+     * Jumlah box per jenis barang di dalam satu surat jalan, untuk pojok kiri bawah stiker (mis. PRD01-7 = 7 box jenis PRD01).
      * Urutan mengikuti urutan box dibuat; box yang dibatalkan (VOID) tidak dihitung. Label tanpa surat jalan tidak diberi nomor.
      * Menambahkan kolom urut_jenis ke setiap label.
      */
@@ -714,16 +714,14 @@ class Label {
         $db = Database::getConnection();
         $peta = [];
         $sjList = array_unique(array_filter(array_map(fn($l) => trim((string)($l['no_surat_jalan'] ?? '')), $labels)));
-        $st = $db->prepare("SELECT l.id, l.item_id FROM labels l
+        $st = $db->prepare("SELECT l.id, i.jenis_id FROM labels l JOIN items i ON i.id = l.item_id
                             WHERE l.no_surat_jalan = ? AND l.status <> 'VOID' ORDER BY l.id");
         foreach ($sjList as $sj) {
             $st->execute([$sj]);
+            $baris = $st->fetchAll(PDO::FETCH_ASSOC);
             $hitung = [];
-            foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
-                $j = (int)$r['item_id'];
-                $hitung[$j] = ($hitung[$j] ?? 0) + 1;
-                $peta[(int)$r['id']] = $hitung[$j];
-            }
+            foreach ($baris as $r) $hitung[(int)$r['jenis_id']] = ($hitung[(int)$r['jenis_id']] ?? 0) + 1;
+            foreach ($baris as $r) $peta[(int)$r['id']] = $hitung[(int)$r['jenis_id']];
         }
         foreach ($labels as &$l) $l['urut_jenis'] = $peta[(int)($l['id'] ?? 0)] ?? null;
         unset($l);

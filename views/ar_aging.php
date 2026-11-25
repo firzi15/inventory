@@ -16,7 +16,7 @@ if (!in_array($activeTab, ['matriks', 'nota', 'riwayat_setoran'])) {
 
 $mitraList = Mitra::getAll();
 $selectedMitraId = (int)($_GET['mitra_id'] ?? 0);
-$tampil = ($_GET['tampil'] ?? 'nota') === 'mitra' ? 'mitra' : 'nota';
+$tampil = 'mitra'; // matriks AR Aging selalu per mitra
 $kpi = Piutang::getSummaryKpi($selectedMitraId);
 $agingMitra = Piutang::getAgingSummaryPerMitra($selectedMitraId);
 
@@ -137,15 +137,8 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div style="width: 180px;">
-                    <label class="form-label" style="font-size: 11.5px; font-weight: 700;">Tampilan:</label>
-                    <select name="tampil" class="form-control" onchange="this.form.submit()" style="height: 38px;">
-                        <option value="nota" <?= $tampil === 'nota' ? 'selected' : '' ?>>Per Nota</option>
-                        <option value="mitra" <?= $tampil === 'mitra' ? 'selected' : '' ?>>Per Mitra</option>
-                    </select>
-                </div>
                 <?php if ($selectedMitraId > 0): ?>
-                    <div><a href="index.php?page=ar_aging&tab=matriks&tampil=<?= $tampil ?>" class="btn btn-outline" style="height: 38px; display: inline-flex; align-items: center;">Reset Filter</a></div>
+                    <div><a href="index.php?page=ar_aging&tab=matriks" class="btn btn-outline" style="height: 38px; display: inline-flex; align-items: center;">Reset Filter</a></div>
                 <?php endif; ?>
             </form>
             <?php if ($tampil === 'nota'):

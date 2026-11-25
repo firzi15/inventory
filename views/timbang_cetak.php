@@ -1601,10 +1601,13 @@ require_once __DIR__ . '/layout/header.php';
             }
         }
 
-        // Nomor urut box per produk dalam surat jalan (pojok kiri bawah), mis. 03
+        // Kode jenis + jumlah box jenis itu dalam surat jalan (pojok kiri bawah), mis. PRD01-7; kode jenis dari segmen kedua ID barcode
         let kodeUrut = '';
         const urutJenis = parseInt(lbl.urut_jenis, 10);
-        if (urutJenis > 0) kodeUrut = String(urutJenis).padStart(2, '0');
+        if (urutJenis > 0) {
+            const segJenis = barcodeText.split('-')[1] || '';
+            kodeUrut = (segJenis ? segJenis + '-' : '') + urutJenis;
+        }
 
         return `
             <div class="square-sheet-card" style="box-sizing: border-box; width: 64mm; height: 46mm; border: 2px solid #000; background: #fff; color: #000; font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; page-break-inside: avoid; margin: 0; padding: 0;">
@@ -1634,7 +1637,7 @@ require_once __DIR__ . '/layout/header.php';
                             ${displayBarcodeNo}
                         </div>
                     </div>
-                    <!-- Baris bawah (tinggi tetap agar tata letak stiker sama): nomor urut box per produk di kiri -->
+                    <!-- Baris bawah (tinggi tetap agar tata letak stiker sama): kode jenis + jumlah box di kiri -->
                     <div style="height: 9px; padding-bottom: 0.5mm; flex-shrink: 0; display: flex; align-items: flex-end;">
                         <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: #000; line-height: 9px; letter-spacing: 0.2px;">${kodeUrut}</span>
                     </div>

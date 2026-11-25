@@ -27,7 +27,7 @@ $vendorNonPemasokList = VendorNonPemasok::getAllActive();
 $tipeBiayaList        = TipeBiaya::getAllActive();
 $akunFaktur           = \App\Services\CoaService::akunFaktur();
 $selectedPemasokId = (int)($_GET['pemasok_id'] ?? 0);
-$tampil = ($_GET['tampil'] ?? 'sj') === 'pemasok' ? 'pemasok' : 'sj';
+$tampil = 'pemasok'; // matriks AP Aging selalu per vendor
 $kpi          = Utang::getSummaryKpi($selectedPemasokId);
 $kpiInvoice   = PurchaseInvoice::getSummaryKpi($selectedPemasokId);
 $agingPemasok = Utang::getAgingSummaryPerPemasok($selectedPemasokId);
@@ -390,15 +390,8 @@ require_once __DIR__ . '/layout/header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div style="width: 180px;">
-                    <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">Tampilan</label>
-                    <select name="tampil" class="form-control" style="font-size: 12.5px;" onchange="this.form.submit()">
-                        <option value="sj" <?= $tampil === 'sj' ? 'selected' : '' ?>>Per Surat Jalan</option>
-                        <option value="pemasok" <?= $tampil === 'pemasok' ? 'selected' : '' ?>>Per Pemasok</option>
-                    </select>
-                </div>
                 <?php if ($selectedPemasokId > 0): ?>
-                    <a href="index.php?page=ap_aging&tab=matriks&tampil=<?= $tampil ?>" class="btn btn-outline" style="font-size: 12px; padding: 8px 12px;">Reset</a>
+                    <a href="index.php?page=ap_aging&tab=matriks" class="btn btn-outline" style="font-size: 12px; padding: 8px 12px;">Reset</a>
                 <?php endif; ?>
             </form>
             <?php if ($tampil === 'sj'):
