@@ -154,6 +154,7 @@ if ($action) {
                 
                 $createdLabel['barcode_svg'] = BarcodeService::generateCode128Svg($createdLabel['id_label'], 65, 1.6);
                 $createdLabel['qr_svg'] = BarcodeService::generateQrSvg($createdLabel['id_label'], 120);
+                $createdLabel = Label::isiUrutJenis([$createdLabel])[0];
 
                 Helper::jsonResponse([
                     'success' => true,
@@ -278,7 +279,7 @@ if ($action) {
                     if ($m && !empty($m['kode_mitra'])) $kode = $m['kode_mitra'];
                 }
 
-                $nextSj = Transaksi::generateNextSuratJalanKeluar($kode ?: 'OUT');
+                $nextSj = Transaksi::generateNextSuratJalanKeluar($kode ?: 'OUT', \App\Core\WaktuTransaksi::tanggalNomor($_GET['tanggal'] ?? ''));
                 Helper::jsonResponse([
                     'success' => true,
                     'no_surat_jalan' => $nextSj,
@@ -321,8 +322,10 @@ if ($action) {
                     throw new Exception("Mitra penerima barang wajib dipilih!");
                 }
 
+                $waktuKeluar = \App\Core\WaktuTransaksi::baca($payload['waktu'] ?? '', 'mencatat pengeluaran');
+
                 // Pemasok tidak lagi dipilih: asal tiap box dibaca dari labelnya, satu dokumen boleh campur pemasok
-                $result = Transaksi::processPengeluaran($mitraId, $barcodes, [], $noReferensi, $keterangan, $userId, $namaPenerima, $terminHari);
+                $result = Transaksi::processPengeluaran($mitraId, $barcodes, [], $noReferensi, $keterangan, $userId, $namaPenerima, $terminHari, $waktuKeluar);
                 Helper::jsonResponse($result);
                 break;
 
@@ -396,7 +399,7 @@ if ($action) {
             // G. Generate Nomor Surat Jalan Otomatis
             case 'gen_surat_jalan':
                 $kode = trim($_GET['kode'] ?? 'PMS-01');
-                $noSj = Label::generateNextSuratJalan($kode);
+                $noSj = Label::generateNextSuratJalan($kode, \App\Core\WaktuTransaksi::tanggalNomor($_GET['tanggal'] ?? ''));
                 Helper::jsonResponse([
                     'success' => true,
                     'no_surat_jalan' => $noSj
@@ -744,13 +747,15 @@ if ($action) {
                 if ($itemId <= 0) throw new Exception("Nama Barang / Produk wajib dipilih.");
                 if ($beratNetto <= 0) throw new Exception("Bobot timbangan harus lebih besar dari 0 KG.");
                 if (empty($noSj)) throw new Exception("Nomor Surat Jalan wajib diisi.");
+                $waktuTerima = \App\Core\WaktuTransaksi::baca($_POST['waktu'] ?? '', 'mencatat penerimaan');
 
                 $label = \App\Models\Label::createWeighedBox([
                     'pemasok_id'     => $pemasokId,
                     'item_id'        => $itemId,
                     'berat_netto'    => $beratNetto,
                     'no_surat_jalan' => $noSj,
-                    'operator_id'    => $userId
+                    'operator_id'    => $userId,
+                    'waktu'          => $waktuTerima
                 ]);
 
                 $sessionSummary = \App\Models\Label::getInboundSessionSummary($noSj);

@@ -15,6 +15,17 @@ class AccurateApiService {
     /**
      * Masukkan transaksi pengeluaran umum ke antrean sinkronisasi Accurate
      */
+    /** Tanggal dokumen untuk Accurate (d/m/Y) = tanggal transaksi (bisa dimundurkan user), bukan tanggal antrean dibuat. */
+    private static function tanggalTransaksi(int $transaksiId): string {
+        try {
+            $st = \App\Core\Database::getConnection()->prepare("SELECT created_at FROM transaksi_stok WHERE id = ?");
+            $st->execute([$transaksiId]);
+            $t = $st->fetchColumn();
+            if ($t) return date('d/m/Y', strtotime($t));
+        } catch (\Throwable $e) {}
+        return date('d/m/Y');
+    }
+
     public static function enqueuePengeluaran(int $transaksiId, array $mitra, array $labels, float $totalKg, string $noReferensi): void {
         $db = Database::getConnection();
 
@@ -32,7 +43,7 @@ class AccurateApiService {
         }
 
         $payload = [
-            'transDate'          => date('d/m/Y'),
+            'transDate'          => self::tanggalTransaksi($transaksiId),
             'adjustmentType'     => 'REDUCE',
             'description'        => sprintf('Sinkronisasi Pengeluaran Barcode Gudang [%s] Ref: %s (Total: %.2f kg)', $mitra['nama_mitra'], $noReferensi, $totalKg),
             'detailItem'         => $detailList,

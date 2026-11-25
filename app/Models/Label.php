@@ -53,9 +53,9 @@ class Label {
      * Menghasilkan Nomor Surat Jalan Otomatis: SJ-[KodeMitra]-[YYMMDD]-[Urut 4 digit]
      * Contoh: SJ-M01-261022-0001
      */
-    public static function generateNextSuratJalan(string $kodeMitra): string {
+    public static function generateNextSuratJalan(string $kodeMitra, ?string $tanggal = null): string {
         $db = Database::getConnection();
-        $dateStr = date('ymd');
+        $dateStr = $tanggal ? date('ymd', strtotime($tanggal)) : date('ymd');
         $cleanKode = strtoupper(trim($kodeMitra));
         $prefix = sprintf('SJ-%s-%s-', $cleanKode, $dateStr);
 
@@ -250,7 +250,7 @@ class Label {
             }
         }
 
-        return $results;
+        return self::isiUrutJenis($results);
     }
 
     /**
@@ -280,8 +280,11 @@ class Label {
             throw new Exception("Nomor Surat Jalan wajib diisi.");
         }
 
+        // Waktu penerimaan pilihan user (sudah divalidasi WaktuTransaksi); kosong = sekarang. ID barcode ikut tanggalnya.
+        $waktu = !empty($data['waktu']) ? (string)$data['waktu'] : date('Y-m-d H:i:s');
+
         $kodePrefix = preg_replace('/[^A-Z0-9]/', '', strtoupper($pemasok['kode_pemasok']));
-        $idLabel = self::generateNextLabelId($kodePrefix, $item['kode_jenis']);
+        $idLabel = self::generateNextLabelId($kodePrefix, $item['kode_jenis'], $waktu);
 
         // Ambil harga beli pemasok jika ada master_harga_pemasok
         $hargaBeliPerKg = 0.00;
@@ -295,7 +298,7 @@ class Label {
         }
 
         $totalNilai = round($netto * $hargaBeliPerKg, 2);
-        $tglProd = date('Y-m-d');
+        $tglProd = substr($waktu, 0, 10);
         $operatorId = !empty($data['operator_id']) ? (int)$data['operator_id'] : (int)($_SESSION['user_login']['id'] ?? 3);
 
         self::pastikanKolomHargaBeli($db);
@@ -303,8 +306,8 @@ class Label {
         $sql = "
             INSERT INTO labels (
                 id_label, pemasok_id, mitra_id, item_id, lokasi_id, berat_bruto, berat_tara, berat_netto,
-                harga_per_kg, harga_beli_per_kg, total_nilai, batch_no, no_surat_jalan, tgl_produksi, status, is_timbang_selesai, operator_timbang_id, catatan
-            ) VALUES (?, ?, NULL, ?, NULL, ?, 0, ?, ?, ?, ?, ?, ?, ?, 'AKTIF', 1, ?, ?)
+                harga_per_kg, harga_beli_per_kg, total_nilai, batch_no, no_surat_jalan, tgl_produksi, status, is_timbang_selesai, operator_timbang_id, catatan, created_at
+            ) VALUES (?, ?, NULL, ?, NULL, ?, 0, ?, ?, ?, ?, ?, ?, ?, 'AKTIF', 1, ?, ?, ?)
         ";
         $stmt = $db->prepare($sql);
         $stmt->execute([
@@ -320,7 +323,8 @@ class Label {
             $noSj,
             $tglProd,
             $operatorId,
-            "Penerimaan Timbang Langsung"
+            "Penerimaan Timbang Langsung",
+            $waktu
         ]);
 
         $lbl = self::findByBarcode($idLabel);
@@ -329,7 +333,7 @@ class Label {
         $lbl['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
         $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($idLabel, 120);
 
-        return $lbl;
+        return self::isiUrutJenis([$lbl])[0];
     }
 
     /**
@@ -437,7 +441,7 @@ class Label {
         $compactCode = self::getCompactBarcode($updated['id_label']);
         $updated['barcode_svg'] = \App\Services\BarcodeService::generateCode128Svg($compactCode, 120, 2.0);
         $updated['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($updated['id_label'], 120);
-        return $updated;
+        return self::isiUrutJenis([$updated])[0];
     }
 
     /**
@@ -699,6 +703,31 @@ class Label {
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Nomor urut box per jenis barang di dalam satu surat jalan, untuk pojok kiri bawah stiker (mis. PRD01-03).
+     * Urutan mengikuti urutan box dibuat; box yang dibatalkan (VOID) tidak dihitung. Label tanpa surat jalan tidak diberi nomor.
+     * Menambahkan kolom urut_jenis ke setiap label.
+     */
+    public static function isiUrutJenis(array $labels): array {
+        $db = Database::getConnection();
+        $peta = [];
+        $sjList = array_unique(array_filter(array_map(fn($l) => trim((string)($l['no_surat_jalan'] ?? '')), $labels)));
+        $st = $db->prepare("SELECT l.id, i.jenis_id FROM labels l JOIN items i ON i.id = l.item_id
+                            WHERE l.no_surat_jalan = ? AND l.status <> 'VOID' ORDER BY l.id");
+        foreach ($sjList as $sj) {
+            $st->execute([$sj]);
+            $hitung = [];
+            foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                $j = (int)$r['jenis_id'];
+                $hitung[$j] = ($hitung[$j] ?? 0) + 1;
+                $peta[(int)$r['id']] = $hitung[$j];
+            }
+        }
+        foreach ($labels as &$l) $l['urut_jenis'] = $peta[(int)($l['id'] ?? 0)] ?? null;
+        unset($l);
+        return $labels;
     }
 
     /**
@@ -1056,7 +1085,7 @@ class Label {
             $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($lbl['id_label'], 120);
         }
 
-        return $rows;
+        return self::isiUrutJenis($rows);
     }
 
     /**
@@ -1081,7 +1110,7 @@ class Label {
             $results[] = $label;
         }
 
-        return $results;
+        return self::isiUrutJenis($results);
     }
 
     /**
@@ -1136,7 +1165,7 @@ class Label {
             $lbl['qr_svg'] = \App\Services\BarcodeService::generateQrSvg($lbl['id_label'], 120);
         }
 
-        return $rows;
+        return self::isiUrutJenis($rows);
     }
 
     /**

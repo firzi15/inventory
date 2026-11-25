@@ -20,9 +20,9 @@ class Transaksi {
      * Menghasilkan Nomor Surat Jalan Pengeluaran / DO Otomatis dan Berurutan (Continue)
      * Format: SJ-OUT-[KODEPMS/MITRA]-[YYMMDD]-[Urut 4 Digit]
      */
-    public static function generateNextSuratJalanKeluar(?string $kodePemasokAtauMitra = null): string {
+    public static function generateNextSuratJalanKeluar(?string $kodePemasokAtauMitra = null, ?string $tanggal = null): string {
         $db = Database::getConnection();
-        $dateStr = date('ymd');
+        $dateStr = $tanggal ? date('ymd', strtotime($tanggal)) : date('ymd');
         $cleanKode = !empty($kodePemasokAtauMitra) ? strtoupper(preg_replace('/[^A-Z0-9]/', '', $kodePemasokAtauMitra)) : '';
 
         $prefix = $cleanKode 
@@ -57,7 +57,7 @@ class Transaksi {
      * Dikeluarkan dari stok pemasok di gudang ke mitra bisnis penerima,
      * sekaligus mencatat harga beli pemasok, harga jual mitra, dan margin keuntungan (profit/loss).
      */
-    public static function processPengeluaran($pemasokIdOrMitraId, $mitraIdOrBarcodes, $barcodeList = [], string $noReferensi = '', string $keterangan = '', int $userId = 4, string $namaPenerima = '', ?int $terminHari = null): array {
+    public static function processPengeluaran($pemasokIdOrMitraId, $mitraIdOrBarcodes, $barcodeList = [], string $noReferensi = '', string $keterangan = '', int $userId = 4, string $namaPenerima = '', ?int $terminHari = null, ?string $waktu = null): array {
         $db = Database::getConnection();
         $db->beginTransaction();
 
@@ -160,12 +160,23 @@ class Transaksi {
             $kodeRefAsal = $pemasok['kode_pemasok'] ?? $mitra['kode_mitra'];
 
             // Jika no_referensi kosong, otomatis generate
+            // Waktu pengeluaran pilihan user (sudah divalidasi WaktuTransaksi); kosong = sekarang. Nomor dokumen ikut tanggalnya.
+            $waktu = $waktu ?: date('Y-m-d H:i:s');
+            $stmtMasuk = $db->prepare("SELECT id_label, created_at FROM labels WHERE id = ?");
+            foreach ($verifiedLabels as $vl) {
+                $stmtMasuk->execute([(int)$vl['id']]);
+                $m = $stmtMasuk->fetch(PDO::FETCH_ASSOC);
+                if ($m && $m['created_at'] > $waktu) {
+                    throw new Exception("Waktu keluar (" . date('d/m/Y H:i', strtotime($waktu)) . ") lebih awal dari waktu box {$m['id_label']} diterima (" . date('d/m/Y H:i', strtotime($m['created_at'])) . ").");
+                }
+            }
+
             if (empty($noReferensi)) {
-                $noReferensi = self::generateNextSuratJalanKeluar($kodeRefAsal);
+                $noReferensi = self::generateNextSuratJalanKeluar($kodeRefAsal, $waktu);
             }
 
             // 2. Buat Nomor Transaksi Unik: TRX-OUT-[YYMMDD]-[Urut 4 digit]
-            $datePrefix = 'TRX-OUT-' . date('ymd') . '-';
+            $datePrefix = 'TRX-OUT-' . date('ymd', strtotime($waktu)) . '-';
             $stmtSeq = $db->prepare("SELECT no_transaksi FROM transaksi_stok WHERE no_transaksi LIKE ? ORDER BY no_transaksi DESC LIMIT 1");
             $stmtSeq->execute([$datePrefix . '%']);
             $lastTrx = $stmtSeq->fetch();
@@ -181,8 +192,8 @@ class Transaksi {
                 INSERT INTO transaksi_stok (
                     no_transaksi, jenis_transaksi, alur_pergerakan, no_bast, pemasok_id, mitra_id, mitra_tujuan_id,
                     total_kg, total_label, total_nilai_beli, total_nilai_jual, total_profit,
-                    user_id, nama_penyerah, nama_penerima, no_referensi_eksternal, keterangan, status_accurate
-                ) VALUES (?, 'PENGELUARAN', 'GUDANG_KE_MITRA', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
+                    user_id, nama_penyerah, nama_penerima, no_referensi_eksternal, keterangan, status_accurate, created_at
+                ) VALUES (?, 'PENGELUARAN', 'GUDANG_KE_MITRA', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
             ");
             $stmtTrx->execute([
                 $noTransaksi,
@@ -199,7 +210,8 @@ class Transaksi {
                 $namaPenyerah,
                 $namaPenerima,
                 $noReferensi,
-                $keterangan
+                $keterangan,
+                $waktu
             ]);
             $transaksiId = $db->lastInsertId();
 

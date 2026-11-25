@@ -249,6 +249,19 @@ require_once __DIR__ . '/layout/header.php';
                     </div>
                 </div>
 
+                <!-- Waktu pengeluaran: kosong = sekarang; boleh dimundurkan (mis. kerja lewat tengah malam), nomor SJ ikut tanggalnya -->
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label" for="waktu_keluar" style="margin: 0 0 4px; font-weight: 700; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
+                        <span>Waktu Pengeluaran</span>
+                    </label>
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                        <input type="datetime-local" id="waktu_keluar" class="form-control" style="height: 40px; font-weight: 700; max-width: 230px;" onfocus="this.max = waktuSekarangLokal()" onchange="onWaktuKeluarChanged()" title="Terisi waktu sekarang. Ubah ke tanggal kemarin bila kerja lewat tengah malam.">
+                        <button type="button" class="btn btn-outline btn-sm" style="height: 40px; width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="geserHariWaktu('waktu_keluar', -1); onWaktuKeluarChanged()" title="Mundur 1 hari"><i data-lucide="minus" style="width: 14px; height: 14px;"></i></button>
+                        <button type="button" class="btn btn-outline btn-sm" style="height: 40px; width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="geserHariWaktu('waktu_keluar', 1); onWaktuKeluarChanged()" title="Maju 1 hari (paling jauh waktu sekarang)"><i data-lucide="plus" style="width: 14px; height: 14px;"></i></button>
+                        <span id="waktu_keluar_info" style="font-size: 12px; font-weight: 700; color: var(--warn-fg);"></span>
+                    </div>
+                </div>
+
                 <!-- Termin pembayaran nota -->
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label class="form-label" for="termin_hari" style="margin: 0 0 4px; font-weight: 700;">Jatuh Tempo Nota</label>
@@ -952,6 +965,7 @@ require_once __DIR__ . '/layout/header.php';
             nama_penerima: namaPenerima,
             keterangan: ket,
             termin_hari: document.getElementById('termin_hari') ? document.getElementById('termin_hari').value : '',
+            waktu: nilaiWaktuKirim('waktu_keluar'),
             barcodes: Array.from(scannedLabels.keys())
         };
 
@@ -1039,6 +1053,66 @@ require_once __DIR__ . '/layout/header.php';
     // Ringkasan asal pemasok dari box yang discan, dan nomor surat jalan mengikuti: satu pemasok -> kode pemasok,
     // campur pemasok -> kode mitra penerima. Nomor hanya diambil ulang bila kodenya berganti.
     let kodeSjTerakhir = null;
+    // Waktu transaksi (input datetime-local): batas atas = sekarang menurut jam komputer
+    function waktuSekarangLokal() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    // Isian waktu terisi waktu sekarang dan ikut berjalan (tiap 30 detik) sampai user mengubahnya sendiri.
+    // Selama belum diubah, server memakai waktu saat disimpan; setelah diubah, waktu pilihan user yang dipakai.
+    function pasangWaktuOtomatis(id) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        inp.dataset.manual = '0';
+        inp.value = waktuSekarangLokal();
+        if (!inp._jam) inp._jam = setInterval(() => { if (inp.dataset.manual !== '1') inp.value = waktuSekarangLokal(); }, 30000);
+        perbaruiTombolPlus(id);
+    }
+    function tandaiWaktuManual(id) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        if (!inp.value) pasangWaktuOtomatis(id); // dikosongkan = kembali ke waktu sekarang
+        else inp.dataset.manual = '1';
+        perbaruiTombolPlus(id);
+    }
+    // Tombol + nonaktif bila isian masih waktu sekarang (otomatis) atau sudah tanggal hari ini: tidak bisa maju lagi
+    function perbaruiTombolPlus(id) {
+        const inp = document.getElementById(id);
+        const btn = inp && inp.parentNode.querySelector("[title^='Maju 1 hari']");
+        if (!btn) return;
+        const mati = inp.dataset.manual !== '1' || (inp.value || '').slice(0, 10) >= waktuSekarangLokal().slice(0, 10);
+        btn.disabled = mati;
+        btn.style.opacity = mati ? '0.4' : '';
+        btn.style.cursor = mati ? 'not-allowed' : '';
+    }
+    // Tombol - / + di samping isian waktu: geser tanggal 1 hari dengan jam yang sama, tidak melewati waktu sekarang
+    function geserHariWaktu(id, delta) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        const d = new Date(inp.value || waktuSekarangLokal());
+        if (isNaN(d)) return;
+        d.setDate(d.getDate() + delta);
+        const p = n => String(n).padStart(2, '0');
+        const v = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+        // sampai hari ini atau lewat: kembali ke waktu sekarang (otomatis)
+        inp.value = v.slice(0, 10) >= waktuSekarangLokal().slice(0, 10) ? '' : v;
+    }
+    function nilaiWaktuKirim(id) {
+        const inp = document.getElementById(id);
+        return inp && inp.dataset.manual === '1' ? inp.value : '';
+    }
+    document.addEventListener('DOMContentLoaded', () => { pasangWaktuOtomatis('waktu_keluar'); });
+    // Waktu pengeluaran berubah: nomor surat jalan diambil ulang dengan tanggal pilihan
+    function onWaktuKeluarChanged() {
+        tandaiWaktuManual('waktu_keluar');
+        const inp = document.getElementById('waktu_keluar');
+        const info = document.getElementById('waktu_keluar_info');
+        const tgl = inp && inp.value ? inp.value.slice(0, 10) : '';
+        if (info) info.textContent = tgl && tgl !== waktuSekarangLokal().slice(0, 10) ? 'Dicatat ke tanggal ' + tgl.split('-').reverse().join('/') : '';
+        kodeSjTerakhir = null;
+        ambilNomorSj(false);
+    }
     async function ambilNomorSj(tampilkan) {
         const set = new Map();
         scannedLabels.forEach(l => { if (l.pemasok_id) set.set(String(l.pemasok_id), l); });
@@ -1051,7 +1125,8 @@ require_once __DIR__ . '/layout/header.php';
         if (!kode) return;
         if (!tampilkan && kode === kodeSjTerakhir) return;
         try {
-            const resp = await fetch(`index.php?action=get_next_outbound_sj&kode=${encodeURIComponent(kode)}`);
+            const tglPilih = (document.getElementById('waktu_keluar')?.value || '').slice(0, 10);
+            const resp = await fetch(`index.php?action=get_next_outbound_sj&kode=${encodeURIComponent(kode)}&tanggal=${encodeURIComponent(tglPilih)}`);
             const data = await resp.json();
             if (data.success && data.no_surat_jalan) {
                 kodeSjTerakhir = kode;

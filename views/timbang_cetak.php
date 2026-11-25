@@ -230,14 +230,30 @@ require_once __DIR__ . '/layout/header.php';
 <?php endif; ?>
 
 <!-- Ukuran stiker barcode untuk semua tombol cetak barcode di halaman ini (disimpan di browser ini) -->
-<div class="no-print" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: -6px 0 12px;">
-    <label for="pilihUkuranStiker" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
-        <i data-lucide="printer" style="width: 14px; height: 14px;"></i>Ukuran stiker barcode
-    </label>
-    <select id="pilihUkuranStiker" class="form-control" style="width: auto; height: 34px; font-size: 12.5px; font-weight: 700;" onchange="pilihUkuranStiker(this.value)">
-        <option value="70x50">70 x 50 mm</option>
-        <option value="150x100">150 x 100 mm</option>
-    </select>
+<div class="no-print" style="display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; margin: -6px 0 12px;">
+    <?php if ($activeTab === 'timbang_cetak'): ?>
+    <!-- Waktu penerimaan: kosong = sekarang; isi tanggal kemarin bila kerja lewat tengah malam (nomor SJ ikut tanggalnya) -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <label for="onestop_waktu" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+            <i data-lucide="calendar-clock" style="width: 14px; height: 14px;"></i>Waktu penerimaan
+        </label>
+        <input type="datetime-local" id="onestop_waktu" class="form-control" style="width: auto; height: 34px; font-size: 12.5px; font-weight: 700; padding: 0 8px;" onfocus="this.max = waktuSekarangLokal()" onchange="onOneStopWaktuChanged()" title="Terisi waktu sekarang. Ubah ke tanggal kemarin bila kerja lewat tengah malam.">
+        <button type="button" class="btn btn-outline btn-sm" style="height: 34px; width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="geserHariWaktu('onestop_waktu', -1); onOneStopWaktuChanged()" title="Mundur 1 hari"><i data-lucide="minus" style="width: 14px; height: 14px;"></i></button>
+        <button type="button" class="btn btn-outline btn-sm" style="height: 34px; width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="geserHariWaktu('onestop_waktu', 1); onOneStopWaktuChanged()" title="Maju 1 hari (paling jauh waktu sekarang)"><i data-lucide="plus" style="width: 14px; height: 14px;"></i></button>
+        <span id="onestop_waktu_info" style="font-size: 12px; font-weight: 700; color: var(--warn-fg);"></span>
+    </div>
+    <?php else: ?>
+    <div></div>
+    <?php endif; ?>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="pilihUkuranStiker" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+            <i data-lucide="printer" style="width: 14px; height: 14px;"></i>Ukuran stiker barcode
+        </label>
+        <select id="pilihUkuranStiker" class="form-control" style="width: auto; height: 34px; font-size: 12.5px; font-weight: 700;" onchange="pilihUkuranStiker(this.value)">
+            <option value="70x50">70 x 50 mm</option>
+            <option value="150x100">150 x 100 mm</option>
+        </select>
+    </div>
 </div>
 <script>document.addEventListener('DOMContentLoaded', function () { var s = document.getElementById('pilihUkuranStiker'); if (s) s.value = ukuranStiker(); });</script>
 
@@ -414,6 +430,7 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <!-- KOLOM KANAN: LIVE SUMMARY SURAT JALAN & DAFTAR KERANJANG TERAKHIR -->
+        <div class="no-print" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
         <div class="card no-print" style="box-shadow: var(--shadow-md);">
             <div class="card-header" style="border-bottom: 1.5px solid var(--border);">
                 <div>
@@ -477,6 +494,7 @@ require_once __DIR__ . '/layout/header.php';
                     <span id="labelBtnFinishSession">Cetak Surat Jalan</span>
                 </button>
             </div>
+        </div>
         </div>
     </div>
 </div>
@@ -1273,6 +1291,67 @@ require_once __DIR__ . '/layout/header.php';
         } catch (e) {}
     }
 
+    // Waktu transaksi (input datetime-local): batas atas = sekarang menurut jam komputer
+    function waktuSekarangLokal() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    // Isian waktu terisi waktu sekarang dan ikut berjalan (tiap 30 detik) sampai user mengubahnya sendiri.
+    // Selama belum diubah, server memakai waktu saat disimpan; setelah diubah, waktu pilihan user yang dipakai.
+    function pasangWaktuOtomatis(id) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        inp.dataset.manual = '0';
+        inp.value = waktuSekarangLokal();
+        if (!inp._jam) inp._jam = setInterval(() => { if (inp.dataset.manual !== '1') inp.value = waktuSekarangLokal(); }, 30000);
+        perbaruiTombolPlus(id);
+    }
+    function tandaiWaktuManual(id) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        if (!inp.value) pasangWaktuOtomatis(id); // dikosongkan = kembali ke waktu sekarang
+        else inp.dataset.manual = '1';
+        perbaruiTombolPlus(id);
+    }
+    // Tombol + nonaktif bila isian masih waktu sekarang (otomatis) atau sudah tanggal hari ini: tidak bisa maju lagi
+    function perbaruiTombolPlus(id) {
+        const inp = document.getElementById(id);
+        const btn = inp && inp.parentNode.querySelector("[title^='Maju 1 hari']");
+        if (!btn) return;
+        const mati = inp.dataset.manual !== '1' || (inp.value || '').slice(0, 10) >= waktuSekarangLokal().slice(0, 10);
+        btn.disabled = mati;
+        btn.style.opacity = mati ? '0.4' : '';
+        btn.style.cursor = mati ? 'not-allowed' : '';
+    }
+    // Tombol - / + di samping isian waktu: geser tanggal 1 hari dengan jam yang sama, tidak melewati waktu sekarang
+    function geserHariWaktu(id, delta) {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        const d = new Date(inp.value || waktuSekarangLokal());
+        if (isNaN(d)) return;
+        d.setDate(d.getDate() + delta);
+        const p = n => String(n).padStart(2, '0');
+        const v = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+        // sampai hari ini atau lewat: kembali ke waktu sekarang (otomatis)
+        inp.value = v.slice(0, 10) >= waktuSekarangLokal().slice(0, 10) ? '' : v;
+    }
+    function nilaiWaktuKirim(id) {
+        const inp = document.getElementById(id);
+        return inp && inp.dataset.manual === '1' ? inp.value : '';
+    }
+    document.addEventListener('DOMContentLoaded', () => { pasangWaktuOtomatis('onestop_waktu'); });
+    // Waktu penerimaan berubah: nomor surat jalan ikut tanggalnya, dan beri tanda bila tanggalnya bukan hari ini
+    function onOneStopWaktuChanged() {
+        tandaiWaktuManual('onestop_waktu');
+        const inp = document.getElementById('onestop_waktu');
+        const info = document.getElementById('onestop_waktu_info');
+        const tgl = inp && inp.value ? inp.value.slice(0, 10) : '';
+        const hariIni = waktuSekarangLokal().slice(0, 10);
+        if (info) info.textContent = tgl && tgl !== hariIni ? 'Dicatat ke tanggal ' + tgl.split('-').reverse().join('/') : '';
+        onOneStopPemasokChanged();
+    }
+
     // Ubah Nomor Surat Jalan saat Pemasok Berubah
     async function onOneStopPemasokChanged() {
         const selPemasok = document.getElementById('onestop_pemasok_id');
@@ -1283,7 +1362,8 @@ require_once __DIR__ . '/layout/header.php';
         const kode = opt ? (opt.dataset.kode || 'PMS01') : 'PMS01';
 
         try {
-            const resp = await fetch('index.php?action=gen_surat_jalan&kode=' + encodeURIComponent(kode));
+            const tglPilih = (document.getElementById('onestop_waktu')?.value || '').slice(0, 10);
+            const resp = await fetch('index.php?action=gen_surat_jalan&kode=' + encodeURIComponent(kode) + '&tanggal=' + encodeURIComponent(tglPilih));
             const data = await resp.json();
             if (data && data.success && data.no_surat_jalan) {
                 inpSj.value = data.no_surat_jalan;
@@ -1427,6 +1507,7 @@ require_once __DIR__ . '/layout/header.php';
             fd.append('no_surat_jalan', noSj);
             fd.append('item_id', itemId);
             fd.append('berat_netto', beratNetto.toFixed(2));
+            fd.append('waktu', nilaiWaktuKirim('onestop_waktu'));
 
             const resp = await fetch('index.php?action=save_weighed_box', {
                 method: 'POST',
@@ -1520,6 +1601,14 @@ require_once __DIR__ . '/layout/header.php';
             }
         }
 
+        // Nomor urut box per jenis dalam surat jalan (pojok kiri bawah), mis. PRD01-03; kode jenis diambil dari segmen kedua ID barcode
+        let kodeUrut = '';
+        const urutJenis = parseInt(lbl.urut_jenis, 10);
+        if (urutJenis > 0) {
+            const segJenis = barcodeText.split('-')[1] || '';
+            kodeUrut = (segJenis ? segJenis + '-' : '') + String(urutJenis).padStart(2, '0');
+        }
+
         return `
             <div class="square-sheet-card" style="box-sizing: border-box; width: 64mm; height: 46mm; border: 2px solid #000; background: #fff; color: #000; font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; page-break-inside: avoid; margin: 0; padding: 0;">
                 <div style="padding: 1.2mm 2.2mm; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; flex-shrink: 0; box-sizing: border-box;">
@@ -1548,8 +1637,10 @@ require_once __DIR__ . '/layout/header.php';
                             ${displayBarcodeNo}
                         </div>
                     </div>
-                    <!-- Ruang kosong (pengganti Tgl./Lembar) agar tata letak & ukuran stiker tetap sama -->
-                    <div style="height: 9px; padding-bottom: 0.5mm; flex-shrink: 0;"></div>
+                    <!-- Baris bawah (tinggi tetap agar tata letak stiker sama): nomor urut box per jenis di kiri -->
+                    <div style="height: 9px; padding-bottom: 0.5mm; flex-shrink: 0; display: flex; align-items: flex-end;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: #000; line-height: 9px; letter-spacing: 0.2px;">${kodeUrut}</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -1869,8 +1960,14 @@ require_once __DIR__ . '/layout/header.php';
                     window.open(data.print_bast_url, '_blank');
                 }
 
-                // Perbarui ke Surat Jalan berikutnya untuk truk baru
-                if (inpSj && data.next_surat_jalan) {
+                // Perbarui ke Surat Jalan berikutnya untuk truk baru (waktu kembali ke sekarang)
+                const pakaiWaktuLain = nilaiWaktuKirim('onestop_waktu') !== '';
+                pasangWaktuOtomatis('onestop_waktu');
+                const infoWaktu = document.getElementById('onestop_waktu_info');
+                if (infoWaktu) infoWaktu.textContent = '';
+                if (pakaiWaktuLain) {
+                    onOneStopPemasokChanged();
+                } else if (inpSj && data.next_surat_jalan) {
                     inpSj.value = data.next_surat_jalan;
                     onOneStopSjChanged();
                 }
