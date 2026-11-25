@@ -6,7 +6,8 @@ use PDO;
 
 /**
  * AR Ledger: mutasi piutang per mitra dalam satu periode.
- * Saldo Awal = nota sebelum periode - setoran sebelum periode
+ * Saldo Awal = nota sebelum periode - setoran sebelum periode, ditambah saldo awal sebelum aplikasi dipakai
+ *              (nota alur SALDO_AWAL dan setoran SALDO-AWAL-*) yang selalu masuk kolom ini, bukan Debit/Kredit
  * Debit      = nota pengeluaran ke mitra di dalam periode (piutang baru)
  * Kredit     = setoran mitra di dalam periode
  * Saldo Akhir = Saldo Awal + Debit - Kredit
@@ -20,7 +21,7 @@ class ArLedgerService
     {
         $db = Database::getConnection();
         $p = [':n1' => $dari, ':n2' => $dari, ':n3' => $sampai, ':n4' => $dari, ':n5' => $sampai,
-              ':s1' => $dari, ':s2' => $dari, ':s3' => $sampai, ':s4' => $dari, ':s5' => $sampai];
+              ':s1' => $dari, ':s2' => $dari, ':s3' => $sampai, ':s4' => $dari, ':s5' => $sampai, ':n6' => $sampai, ':s6' => $sampai];
         $whereMitra = '';
         if ($mitraId > 0) { $whereMitra = ' WHERE m.id = :mitra'; $p[':mitra'] = $mitraId; }
         $st = $db->prepare("
@@ -31,16 +32,16 @@ class ArLedgerService
             FROM mitra m
             LEFT JOIN (
                 SELECT mitra_id,
-                       SUM(IF(DATE(created_at) < :n1, total_nilai_jual, 0)) AS sebelum,
-                       SUM(IF(DATE(created_at) BETWEEN :n2 AND :n3, total_nilai_jual, 0)) AS periode,
-                       SUM(IF(DATE(created_at) BETWEEN :n4 AND :n5, 1, 0)) AS jml
+                       SUM(IF(DATE(created_at) < :n1 OR (alur_pergerakan = 'SALDO_AWAL' AND DATE(created_at) <= :n6), total_nilai_jual, 0)) AS sebelum,
+                       SUM(IF(alur_pergerakan <> 'SALDO_AWAL' AND DATE(created_at) BETWEEN :n2 AND :n3, total_nilai_jual, 0)) AS periode,
+                       SUM(IF(alur_pergerakan <> 'SALDO_AWAL' AND DATE(created_at) BETWEEN :n4 AND :n5, 1, 0)) AS jml
                 FROM transaksi_stok WHERE jenis_transaksi = 'PENGELUARAN' GROUP BY mitra_id
             ) n ON n.mitra_id = m.id
             LEFT JOIN (
                 SELECT mitra_id,
-                       SUM(IF(tanggal_bayar < :s1, jumlah_bayar, 0)) AS sebelum,
-                       SUM(IF(tanggal_bayar BETWEEN :s2 AND :s3, jumlah_bayar, 0)) AS periode,
-                       SUM(IF(tanggal_bayar BETWEEN :s4 AND :s5 AND status = 'AKTIF', 1, 0)) AS jml
+                       SUM(IF(tanggal_bayar < :s1 OR (no_bukti_bayar LIKE 'SALDO-AWAL-%' AND tanggal_bayar <= :s6), jumlah_bayar, 0)) AS sebelum,
+                       SUM(IF(no_bukti_bayar NOT LIKE 'SALDO-AWAL-%' AND tanggal_bayar BETWEEN :s2 AND :s3, jumlah_bayar, 0)) AS periode,
+                       SUM(IF(no_bukti_bayar NOT LIKE 'SALDO-AWAL-%' AND tanggal_bayar BETWEEN :s4 AND :s5 AND status = 'AKTIF', 1, 0)) AS jml
                 FROM ar_pembayaran GROUP BY mitra_id
             ) s ON s.mitra_id = m.id
             $whereMitra
@@ -82,14 +83,14 @@ class ArLedgerService
                    CONCAT(total_label, ' box, ', REPLACE(FORMAT(total_kg, 2), ',', ''), ' kg') AS keterangan,
                    total_nilai_jual AS debit, 0 AS kredit
             FROM transaksi_stok
-            WHERE jenis_transaksi = 'PENGELUARAN' AND mitra_id = ? AND DATE(created_at) BETWEEN ? AND ?");
+            WHERE jenis_transaksi = 'PENGELUARAN' AND alur_pergerakan <> 'SALDO_AWAL' AND mitra_id = ? AND DATE(created_at) BETWEEN ? AND ?");
         $n->execute([$mitraId, $dari, $sampai]);
         $s = $db->prepare("
             SELECT tanggal_bayar AS tanggal, CONCAT(tanggal_bayar, ' 23:59:59') AS urut, 'SETORAN' AS jenis, no_bukti_bayar AS dokumen,
                    IF(metode_bayar = 'TRANSFER_BANK', CONCAT('Transfer', IF(bank_tujuan IS NULL OR bank_tujuan = '', '', CONCAT(' ', bank_tujuan))), 'Tunai') AS keterangan,
                    0 AS debit, jumlah_bayar AS kredit
             FROM ar_pembayaran
-            WHERE mitra_id = ? AND status = 'AKTIF' AND tanggal_bayar BETWEEN ? AND ?");
+            WHERE mitra_id = ? AND status = 'AKTIF' AND no_bukti_bayar NOT LIKE 'SALDO-AWAL-%' AND tanggal_bayar BETWEEN ? AND ?");
         $s->execute([$mitraId, $dari, $sampai]);
 
         $baris = array_merge($n->fetchAll(PDO::FETCH_ASSOC), $s->fetchAll(PDO::FETCH_ASSOC));
