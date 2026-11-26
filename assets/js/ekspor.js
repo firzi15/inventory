@@ -14,9 +14,8 @@
     }
 
     function tabelTarget(id) {
-        if (id) {
-            var t = document.getElementById(id);
-            return t ? [t] : [];
+        if (id) { // satu id atau beberapa id dipisah koma
+            return String(id).split(',').map(function (x) { return document.getElementById(x.trim()); }).filter(Boolean);
         }
         return Array.prototype.filter.call(areaKonten().querySelectorAll('table'), function (t) {
             return !t.closest('.modal-backdrop') && !t.closest('[data-no-export]') && !t.hasAttribute('data-no-export')
@@ -25,7 +24,8 @@
     }
 
     function judulTabel(t, i) {
-        var teks = '';
+        var teks = t.getAttribute('data-judul') || '';
+        if (teks) return bersihTeks(teks);
         var kartu = t.closest('.card');
         if (kartu && kartu.firstElementChild && !kartu.firstElementChild.contains(t)) {
             teks = kartu.firstElementChild.textContent || '';

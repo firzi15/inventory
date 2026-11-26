@@ -154,10 +154,11 @@ require_once __DIR__ . '/layout/header.php';
                 <h3 id="kartuJudul" style="margin: 0; font-size: 16px; font-weight: 800;">Kartu Piutang</h3>
                 <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Periode <?= $labelPeriode ?></p>
             </div>
-            <button type="button" onclick="document.getElementById('modalKartu').style.display='none'" style="border: none; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
+            <div style="display: flex; align-items: center; gap: 8px;"><?php $emTabel = 'tblKartu'; $emJudul = "document.getElementById('kartuJudul').textContent + ' " . $dari . " sd " . $sampai . "'"; include __DIR__ . '/layout/ekspor_modal.php'; ?>
+            <button type="button" onclick="document.getElementById('modalKartu').style.display='none'" style="border: none; background: transparent; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button></div>
         </div>
         <div class="table-responsive" style="max-height: 460px; overflow-y: auto;">
-            <table class="table-custom" data-no-tools style="font-size: 12.5px;">
+            <table id="tblKartu" data-judul="Kartu Piutang" class="table-custom" data-no-tools style="font-size: 12.5px;">
                 <thead><tr><th>Tanggal</th><th>Dokumen</th><th>Keterangan</th><th style="text-align:right;">Debit</th><th style="text-align:right;">Kredit</th><th style="text-align:right;">Saldo</th></tr></thead>
                 <tbody id="kartuBody"></tbody>
             </table>

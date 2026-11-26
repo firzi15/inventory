@@ -636,7 +636,8 @@ require_once __DIR__ . '/layout/header.php';
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main);" id="histModalTitle">Riwayat Setoran Nota</h3>
                 <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);" id="histModalSubtitle">Rincian cicilan uang masuk yang memotong nota surat jalan ini</p>
             </div>
-            <button type="button" onclick="closeHistoryModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted);">✕</button>
+            <div style="display: flex; align-items: center; gap: 8px;"><?php $emTabel = 'tblHistNota'; $emJudul = "document.getElementById('histModalTitle').textContent"; include __DIR__ . '/layout/ekspor_modal.php'; ?>
+            <button type="button" onclick="closeHistoryModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text-muted);">✕</button></div>
         </div>
 
         <div style="padding: 20px;">
@@ -878,7 +879,7 @@ async function viewNotaHistory(trxId, noSj, totalBelanja, sisaPiutang) {
 
         if (data.success && data.history.length > 0) {
             let html = `
-                <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+                <table id="tblHistNota" data-judul="Riwayat Setoran" style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
                     <thead>
                         <tr style="background: var(--bg-muted); border-bottom: 1px solid var(--border); text-align: left;">
                             <th style="padding: 6px 8px; width: 30px; text-align: center;">#</th>
@@ -901,7 +902,7 @@ async function viewNotaHistory(trxId, noSj, totalBelanja, sisaPiutang) {
                             <div style="font-size: 10.5px; color: var(--text-muted);">${escapeHtml(h.nama_kasir || 'Kasir')}</div>
                             ${h.status_pembayaran === 'BATAL'
                                 ? `<div><span style="display:inline-block;padding:1px 6px;background:var(--border);color:var(--text-muted);font-size:10.5px;border-radius:4px;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);">${escapeHtml(h.alasan_batal || '')}</div>`
-                                : `<div><a href="javascript:void(0)" onclick="closeHistoryModal(); batalDokumen('batal_setoran_ar', { id: ${h.pembayaran_id} }, 'setoran ${escapeHtml(h.no_bukti_bayar)} (Rp ${formatNumberRp(h.total_setoran_induk)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;">Batalkan setoran</a></div>`}
+                                : `<div class="no-print"><a href="javascript:void(0)" onclick="closeHistoryModal(); batalDokumen('batal_setoran_ar', { id: ${h.pembayaran_id} }, 'setoran ${escapeHtml(h.no_bukti_bayar)} (Rp ${formatNumberRp(h.total_setoran_induk)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;">Batalkan setoran</a></div>`}
                         </td>
                         <td style="padding: 6px 8px;">${h.tanggal_bayar}</td>
                         <td style="padding: 6px 8px;">${escapeHtml(h.metode_bayar)}</td>

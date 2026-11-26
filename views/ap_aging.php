@@ -856,7 +856,8 @@ require_once __DIR__ . '/layout/header.php';
                 <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-main);">Riwayat Cicilan Pembayaran Surat Jalan</h3>
                 <p id="histSjSubtitle" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">-</p>
             </div>
-            <button type="button" onclick="closeHistSjModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button>
+            <div style="display: flex; align-items: center; gap: 8px;"><?php $emTabel = 'tblHistSj'; $emJudul = "'Riwayat Cicilan ' + document.getElementById('histSjSubtitle').textContent"; include __DIR__ . '/layout/ekspor_modal.php'; ?>
+            <button type="button" onclick="closeHistSjModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button></div>
         </div>
 
         <div id="histSjSummary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; background: var(--bg-muted); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
@@ -871,7 +872,7 @@ require_once __DIR__ . '/layout/header.php';
         </div>
 
         <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
-            <table class="table-custom" style="font-size: 12px;">
+            <table id="tblHistSj" data-judul="Riwayat Cicilan" class="table-custom" data-no-tools style="font-size: 12px;">
                 <thead>
                     <tr>
                         <th style="width: 35px; text-align: center;">No</th>
@@ -1053,7 +1054,8 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
                 <p id="detInvVendor" style="margin: 2px 0 0 0; font-size: 12.5px; color: var(--text-muted); font-weight: 700;">-</p>
             </div>
-            <button type="button" onclick="closeDetailInvoiceModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button>
+            <div style="display: flex; align-items: center; gap: 8px;"><?php $emTabel = 'tblDetInvItem,tblDetInvBayar'; $emJudul = "'Faktur ' + document.getElementById('detInvNo').textContent + ' ' + document.getElementById('detInvVendor').textContent"; include __DIR__ . '/layout/ekspor_modal.php'; ?>
+            <button type="button" onclick="closeDetailInvoiceModal()" style="border: none; background: transparent; font-size: 20px; color: var(--text-muted); cursor: pointer; padding: 4px;">&times;</button></div>
         </div>
 
         <!-- RINGKASAN METADATA & JURNAL COA -->
@@ -1093,7 +1095,7 @@ require_once __DIR__ . '/layout/header.php';
         <div style="margin-bottom: 16px;">
             <div style="font-size: 12.5px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Rincian Barang / Biaya Faktur</div>
             <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
-                <table class="table-custom" style="font-size: 11.5px; width: 100%;">
+                <table id="tblDetInvItem" data-judul="Rincian Barang / Biaya Faktur" class="table-custom" data-no-tools style="font-size: 11.5px; width: 100%;">
                     <thead>
                         <tr style="background: var(--bg-muted);">
                             <th style="width: 35px; text-align: center;">No</th>
@@ -1115,7 +1117,7 @@ require_once __DIR__ . '/layout/header.php';
         <div>
             <div style="font-size: 12.5px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Riwayat Alokasi Pembayaran Kas Keluar</div>
             <div class="table-responsive" style="max-height: 160px; overflow-y: auto;">
-                <table class="table-custom" style="font-size: 11.5px; width: 100%;">
+                <table id="tblDetInvBayar" data-judul="Riwayat Pembayaran" class="table-custom" data-no-tools style="font-size: 11.5px; width: 100%;">
                     <thead>
                         <tr style="background: var(--bg-muted);">
                             <th style="width: 35px; text-align: center;">No</th>
@@ -1732,7 +1734,7 @@ async function viewInvoiceDetail(id) {
                             <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--aktif-fg);">${p.no_bukti_keluar}
                                 ${p.status_pembayaran === 'BATAL'
                                     ? `<div><span style="display:inline-block;padding:1px 6px;background:var(--border);color:var(--text-muted);font-size:10.5px;border-radius:4px;font-family:inherit;">Dibatalkan</span></div><div style="font-size:10.5px;color:var(--text-muted);font-weight:500;font-family:inherit;">${p.alasan_batal || ''}</div>`
-                                    : `<div><a href="javascript:void(0)" onclick="closeDetailInvoiceModal(); batalDokumen('batal_bayar_ap', { id: ${p.pembayaran_id} }, 'pembayaran ${p.no_bukti_keluar} (Rp ${new Intl.NumberFormat('en-US').format(p.total_pembayaran)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;font-family:inherit;">Batalkan pembayaran</a></div>`}
+                                    : `<div class="no-print"><a href="javascript:void(0)" onclick="closeDetailInvoiceModal(); batalDokumen('batal_bayar_ap', { id: ${p.pembayaran_id} }, 'pembayaran ${p.no_bukti_keluar} (Rp ${new Intl.NumberFormat('en-US').format(p.total_pembayaran)})')" style="font-size:11px;color:var(--bad-fg);font-weight:700;font-family:inherit;">Batalkan pembayaran</a></div>`}
                             </td>
                             <td>${p.tanggal_bayar.substring(0, 10)}</td>
                             <td>${p.metode_bayar} ${p.bank_sumber ? '• ' + p.bank_sumber : ''}</td>
