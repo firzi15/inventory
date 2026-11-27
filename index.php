@@ -1091,7 +1091,9 @@ if ($action) {
                 $unpaid = \App\Models\Piutang::getUnpaidNotasByMitra($mitraId);
                 Helper::jsonResponse([
                     'success' => true,
-                    'list'    => $unpaid
+                    'list'    => $unpaid,
+                    'saldo_titipan' => \App\Models\Piutang::saldoTitipan($mitraId),
+                    'riwayat_titipan' => \App\Models\Piutang::riwayatTitipan($mitraId)
                 ]);
                 exit;
 

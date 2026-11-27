@@ -289,7 +289,20 @@ class Piutang {
                     SELECT SUM(nominal_alokasi) 
                     FROM ar_alokasi_pembayaran 
                     WHERE transaksi_stok_id = ts.id
-                ), 0) as total_bayar
+                ), 0) as total_bayar,
+                COALESCE((
+                    SELECT SUM(a.nominal_alokasi)
+                    FROM ar_alokasi_pembayaran a
+                    JOIN jurnal j ON j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id AND j.status = 'POSTED'
+                    WHERE a.transaksi_stok_id = ts.id
+                ), 0) as bayar_titipan,
+                (
+                    SELECT GROUP_CONCAT(DISTINCT p.no_bukti_bayar ORDER BY p.id SEPARATOR ', ')
+                    FROM ar_alokasi_pembayaran a
+                    JOIN jurnal j ON j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id AND j.status = 'POSTED'
+                    JOIN ar_pembayaran p ON p.id = a.pembayaran_id
+                    WHERE a.transaksi_stok_id = ts.id AND a.nominal_alokasi > 0
+                ) as titipan_dari
             FROM transaksi_stok ts
             WHERE ts.jenis_transaksi = 'PENGELUARAN'
               AND ts.mitra_id = :mitra_id
@@ -321,6 +334,94 @@ class Piutang {
     }
 
     /**
+     * Saldo titipan (uang muka) mitra: uang setoran aktif yang belum dialokasikan ke nota mana pun.
+     * Dengan $mitraId: float. Tanpa $mitraId: [mitra_id => saldo] untuk mitra yang punya titipan.
+     */
+    public static function saldoTitipan(int $mitraId = 0) {
+        $pdo = Database::getConnection();
+        $sql = "SELECT p.mitra_id, SUM(p.jumlah_bayar - COALESCE(a.alok, 0)) AS saldo
+                FROM ar_pembayaran p
+                LEFT JOIN (SELECT pembayaran_id, SUM(nominal_alokasi) AS alok FROM ar_alokasi_pembayaran GROUP BY pembayaran_id) a ON a.pembayaran_id = p.id
+                WHERE p.status = 'AKTIF'" . ($mitraId > 0 ? " AND p.mitra_id = " . (int)$mitraId : "") . "
+                GROUP BY p.mitra_id HAVING saldo > 0.009";
+        $peta = [];
+        foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $peta[(int)$r['mitra_id']] = round((float)$r['saldo'], 2);
+        }
+        return $mitraId > 0 ? ($peta[$mitraId] ?? 0.0) : $peta;
+    }
+
+    /**
+     * Riwayat titipan mitra (terbaru dulu): MASUK = lebih bayar dari setoran, KELUAR = dipotong ke nota.
+     * Tiap baris: jenis, tanggal, no_bukti_bayar, no_surat_jalan (KELUAR), nominal.
+     */
+    public static function riwayatTitipan(int $mitraId, int $limit = 10): array {
+        $pdo = Database::getConnection();
+        $st = $pdo->prepare("
+            SELECT * FROM (
+                SELECT 'MASUK' AS jenis, p.tanggal_bayar AS tanggal, p.id AS urut, p.no_bukti_bayar, NULL AS no_surat_jalan,
+                       p.jumlah_bayar - COALESCE((SELECT SUM(a.nominal_alokasi) FROM ar_alokasi_pembayaran a
+                            WHERE a.pembayaran_id = p.id AND NOT EXISTS (SELECT 1 FROM jurnal j WHERE j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id)), 0) AS nominal
+                FROM ar_pembayaran p WHERE p.mitra_id = ? AND p.status = 'AKTIF'
+                UNION ALL
+                SELECT 'KELUAR', j.tanggal, a.id, p.no_bukti_bayar, COALESCE(ts.no_referensi_eksternal, ts.no_bast, ts.no_transaksi), a.nominal_alokasi
+                FROM ar_alokasi_pembayaran a
+                JOIN jurnal j ON j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id AND j.status = 'POSTED'
+                JOIN ar_pembayaran p ON p.id = a.pembayaran_id
+                JOIN transaksi_stok ts ON ts.id = a.transaksi_stok_id
+                WHERE p.mitra_id = ? AND a.nominal_alokasi > 0
+            ) x WHERE nominal > 0.009
+            ORDER BY tanggal DESC, jenis ASC, urut DESC
+            LIMIT " . max(1, (int)$limit));
+        $st->execute([$mitraId, $mitraId]);
+        return array_map(function ($r) { $r['nominal'] = round((float)$r['nominal'], 2); return $r; }, $st->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /**
+     * Potong saldo titipan mitra ke nota yang belum lunas (titipan terlama -> nota terlama).
+     * Tiap potongan = baris ar_alokasi_pembayaran biasa + jurnal AR_TITIPAN (D 2100 Uang Muka / K 1100 Piutang),
+     * sumber_id jurnal = id baris alokasi. Dipanggil di dalam transaksi yang sedang berjalan.
+     */
+    public static function potongTitipan(int $mitraId, ?string $tanggal = null): array {
+        $pdo = Database::getConnection();
+        if ($mitraId <= 0 || self::saldoTitipan($mitraId) <= 0.009) return [];
+        $tanggal = $tanggal ?: date('Y-m-d');
+
+        $st = $pdo->prepare("
+            SELECT p.id, p.no_bukti_bayar, p.tanggal_bayar,
+                   p.jumlah_bayar - COALESCE((SELECT SUM(a.nominal_alokasi) FROM ar_alokasi_pembayaran a WHERE a.pembayaran_id = p.id), 0) AS sisa
+            FROM ar_pembayaran p
+            WHERE p.mitra_id = ? AND p.status = 'AKTIF'
+            ORDER BY p.tanggal_bayar, p.id
+        ");
+        $st->execute([$mitraId]);
+        $titipan = array_values(array_filter($st->fetchAll(PDO::FETCH_ASSOC), fn($t) => (float)$t['sisa'] > 0.009));
+        if (!$titipan) return [];
+
+        $ins = $pdo->prepare("INSERT INTO ar_alokasi_pembayaran (pembayaran_id, transaksi_stok_id, nominal_alokasi, sisa_piutang_setelah) VALUES (?, ?, ?, ?)");
+        $hasil = [];
+        $ti = 0;
+        foreach (self::getUnpaidNotasByMitra($mitraId) as $n) {
+            $sisaNota = (float)$n['sisa_piutang'];
+            while ($sisaNota > 0.009 && $ti < count($titipan)) {
+                $x = round(min($sisaNota, (float)$titipan[$ti]['sisa']), 2);
+                $sisaNota = round($sisaNota - $x, 2);
+                $titipan[$ti]['sisa'] = round((float)$titipan[$ti]['sisa'] - $x, 2);
+                $ins->execute([(int)$titipan[$ti]['id'], (int)$n['id'], $x, $sisaNota]);
+                $alokId = (int)$pdo->lastInsertId();
+                // tanggal jurnal: tanggal nota, tapi tidak sebelum uang titipannya diterima
+                \App\Services\JurnalService::post(max($tanggal, (string)$titipan[$ti]['tanggal_bayar']), 'AR_TITIPAN', $alokId, $titipan[$ti]['no_bukti_bayar'],
+                    'Potong titipan ' . $titipan[$ti]['no_bukti_bayar'] . ' ke ' . $n['no_surat_jalan'],
+                    [['2100', $x, 0], ['1100', 0, $x]]);
+                $hasil[] = ['no_bukti_bayar' => $titipan[$ti]['no_bukti_bayar'], 'transaksi_stok_id' => (int)$n['id'], 'no_surat_jalan' => $n['no_surat_jalan'], 'nominal' => $x];
+                if ((float)$titipan[$ti]['sisa'] <= 0.009) $ti++;
+            }
+            if ($ti >= count($titipan)) break;
+        }
+        return $hasil;
+    }
+
+    /**
      * Membukukan Setoran Kas/Bank & Mengalokasikan ke Nota Piutang (FIFO atau Manual)
      */
     public static function recordPayment(array $data, int $userId = 1): array {
@@ -335,28 +436,38 @@ class Piutang {
         $keterangan  = trim($data['keterangan'] ?? '');
         $modeAlokasi = strtoupper(trim($data['mode_alokasi'] ?? 'FIFO'));
 
+        // Centang "Pakai titipan": saldo titipan mitra dipakai dulu untuk nota terlama, baru uang setoran membayar sisanya
+        $pakaiTitipan = !empty($data['pakai_titipan']);
+
         if ($mitraId <= 0) {
             throw new Exception("Mitra pembayar wajib dipilih.");
         }
-        if ($jumlahBayar <= 0) {
+        if ($jumlahBayar < 0 || ($jumlahBayar == 0 && !($pakaiTitipan && self::saldoTitipan($mitraId) > 0.009))) {
             throw new Exception("Jumlah uang setoran harus lebih besar dari 0.");
         }
         if (!in_array($metodeBayar, ['TUNAI', 'TRANSFER_BANK'])) {
             $metodeBayar = 'TUNAI';
         }
 
-        // Aturan bisnis: setoran tidak boleh melebihi total sisa piutang mitra (belum ada uang muka)
-        $totalSisaMitra = 0.0;
-        foreach (self::getUnpaidNotasByMitra($mitraId) as $notaCek) {
-            $totalSisaMitra += (float)$notaCek['sisa_piutang'];
-        }
-        $totalSisaMitra = round($totalSisaMitra, 2);
-        if ($jumlahBayar > $totalSisaMitra + 0.01) {
-            if ($totalSisaMitra <= 0.01) {
-                throw new Exception("Mitra ini tidak punya piutang terbuka, setoran tidak dapat dicatat.");
+        // Hanya memakai titipan tanpa uang baru: tidak ada setoran yang dicatat, cukup potong titipan ke nota
+        if ($jumlahBayar == 0) {
+            $pdo->beginTransaction();
+            try {
+                $potong = self::potongTitipan($mitraId, $tglBayar);
+                $pdo->commit();
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
             }
-            throw new Exception("Setoran (Rp " . number_format($jumlahBayar, 0, '.', ',') . ") melebihi total sisa piutang mitra (Rp " . number_format($totalSisaMitra, 0, '.', ',') . ").");
+            if (!$potong) throw new Exception("Tidak ada nota terutang yang bisa dipotong dari titipan.");
+            return [
+                'success' => true, 'pembayaran_id' => 0, 'no_bukti_bayar' => '-', 'jumlah_bayar' => 0,
+                'allocated_count' => count(array_unique(array_column($potong, 'transaksi_stok_id'))), 'allocated_notas' => [],
+                'titipan_dipakai' => round(array_sum(array_column($potong, 'nominal')), 2), 'sisa_deposit' => 0
+            ];
         }
+
+        // Setoran boleh melebihi piutang: kelebihannya menjadi saldo titipan mitra (akun 2100)
 
         // Generate No Bukti Bayar Unik: CR-YYYYMMDD-XXXX
         $dateCode = date('Ymd', strtotime($tglBayar));
@@ -373,6 +484,9 @@ class Piutang {
 
         $pdo->beginTransaction();
         try {
+            // 0. Titipan lama dipakai dulu (sebelum setoran baru dicatat, supaya setoran ini tidak ikut terhitung titipan)
+            $potongTitipan = $pakaiTitipan ? self::potongTitipan($mitraId, $tglBayar) : [];
+
             // 1. Simpan Header Setoran ke `ar_pembayaran`
             $stmtInsert = $pdo->prepare("
                 INSERT INTO ar_pembayaran 
@@ -444,9 +558,7 @@ class Piutang {
                 // ALOKASI OTOMATIS (FIFO): Urutkan nota tertua lebih dahulu
                 $unpaidNotas = self::getUnpaidNotasByMitra($mitraId);
 
-                if (empty($unpaidNotas)) {
-                    // Jika mitra tidak memiliki nota terutang, setoran tetap dicatat di ar_pembayaran sebagai saldo titipan/deposit
-                } else {
+                if (!empty($unpaidNotas)) {
                     foreach ($unpaidNotas as $nota) {
                         if ($sisaUangSetoran <= 0.001) break;
 
@@ -479,6 +591,9 @@ class Piutang {
                 }
             }
 
+            // Sisa yang tidak teralokasi = saldo titipan
+            $sisaUangSetoran = round($jumlahBayar - array_sum(array_column($allocatedNotas, 'nominal_alokasi')), 2);
+
             \App\Services\JurnalService::postArPayment((int)$pembayaranId);
 
             $pdo->commit();
@@ -488,8 +603,9 @@ class Piutang {
                 'pembayaran_id'     => $pembayaranId,
                 'no_bukti_bayar'    => $noBukti,
                 'jumlah_bayar'      => $jumlahBayar,
-                'allocated_count'   => count($allocatedNotas),
+                'allocated_count'   => count(array_unique(array_merge(array_column($allocatedNotas, 'transaksi_stok_id'), array_column($potongTitipan, 'transaksi_stok_id')))),
                 'allocated_notas'   => $allocatedNotas,
+                'titipan_dipakai'   => round(array_sum(array_column($potongTitipan, 'nominal')), 2),
                 'sisa_deposit'      => max(0, round($sisaUangSetoran, 2))
             ];
         } catch (Exception $e) {

@@ -10,7 +10,7 @@ class Migrasi
     private static bool $done = false;
 
     /** Naikkan angka ini setiap menambah langkah migrasi baru supaya semua server menjalankannya sekali lagi. */
-    private const VERSI = 1;
+    private const VERSI = 2; // v2: akun COA 2100 Uang Muka Pelanggan (titipan setoran mitra)
 
     private static function berkasPenanda(): string
     {
@@ -31,6 +31,7 @@ class Migrasi
             $db->query("SELECT status, jumlah_asal FROM ap_pembayaran LIMIT 0");
             $db->query("SELECT status, jumlah_asal FROM ar_pembayaran LIMIT 0");
             $db->query("SELECT id FROM log_harga LIMIT 0");
+            if (!$db->query("SELECT 1 FROM coa_akun WHERE kode = '2100'")->fetchColumn()) return false;
             return true;
         } catch (\Throwable $e) {
             return false;

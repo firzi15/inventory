@@ -158,8 +158,15 @@ class JurnalService
         $p = $st->fetch(PDO::FETCH_ASSOC);
         if (!$p) return null;
         $n = (float)$p['jumlah_bayar'];
+        // Bagian yang langsung memotong nota -> 1100 Piutang; sisanya titipan -> 2100 Uang Muka Pelanggan.
+        // Potongan titipan belakangan (jurnal AR_TITIPAN sendiri) tidak dihitung di sini.
+        $al = $db->prepare("SELECT COALESCE(SUM(a.nominal_alokasi), 0) FROM ar_alokasi_pembayaran a
+                            WHERE a.pembayaran_id = ? AND NOT EXISTS (SELECT 1 FROM jurnal j WHERE j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id)");
+        $al->execute([$pembayaranId]);
+        $kePiutang = min($n, round((float)$al->fetchColumn(), 2));
+        $keTitipan = round($n - $kePiutang, 2);
         return self::post($p['tanggal_bayar'], 'AR_SETOR', $pembayaranId, $p['no_bukti_bayar'],
-            'Setoran ' . ($p['nama_mitra'] ?? ''), [['1000', $n, 0], ['1100', 0, $n]]);
+            'Setoran ' . ($p['nama_mitra'] ?? ''), [['1000', $n, 0], ['1100', 0, $kePiutang], ['2100', 0, $keTitipan]]);
     }
 
     public static function postPengeluaran(int $transaksiId): ?int

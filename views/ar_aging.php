@@ -566,14 +566,26 @@ require_once __DIR__ . '/layout/header.php';
                 </div>
             </div>
 
+            <!-- Saldo titipan mitra (muncul bila ada) -->
+            <div id="infoSaldoTitipan" style="display: none; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 12.5px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 800;">
+                    <span>Saldo titipan mitra</span>
+                    <span id="infoSaldoTitipanNilai" style="font-family: 'JetBrains Mono', monospace;">Rp 0</span>
+                </div>
+                <label style="display: flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 700; cursor: pointer;">
+                    <input type="checkbox" name="pakai_titipan" id="pay_pakai_titipan" value="1" checked onchange="renderUnpaidNotasTable(); calculateAllocationPreview();">
+                    Pakai titipan untuk bayar nota di bawah
+                </label>
+            </div>
+
             <!-- 5. Jumlah Uang yang Disetor -->
             <div style="margin-bottom: 16px;">
-                <label class="form-label" for="pay_jumlah_bayar" style="font-weight: 800; font-size: 13px; color: var(--ok-fg);">
+                <label class="form-label" for="pay_jumlah_bayar" style="font-weight: 800; font-size: 13px; color: var(--text-main);">
                     Jumlah Uang yang Disetorkan (Rp) *
                 </label>
                 <div style="position: relative;">
-                    <span style="position: absolute; left: 14px; top: 10px; font-weight: 800; color: var(--ok-fg); font-size: 16px;">Rp</span>
-                    <input type="number" step="100" name="jumlah_bayar" id="pay_jumlah_bayar" class="form-control" required min="100" placeholder="0" oninput="calculateAllocationPreview()" style="height: 44px; padding-left: 45px; font-size: 18px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--ok-fg);">
+                    <span style="position: absolute; left: 14px; top: 10px; font-weight: 800; color: var(--text-main); font-size: 16px;">Rp</span>
+                    <input type="number" step="100" name="jumlah_bayar" id="pay_jumlah_bayar" class="form-control" required min="0" placeholder="0" oninput="calculateAllocationPreview()" style="height: 44px; padding-left: 45px; font-size: 18px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--text-main);">
                 </div>
                 <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
                     Contoh: Ketik <code>700000</code> untuk setoran Rp 700.000.
@@ -605,6 +617,18 @@ require_once __DIR__ . '/layout/header.php';
                 <div id="wrapperNotaList" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
                     <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">
                         Pilih mitra di atas untuk menampilkan daftar nota pengeluaran yang belum lunas.
+                    </div>
+                </div>
+
+                <!-- Ringkasan pembayaran (rata kanan, seperti total faktur) -->
+                <div id="ringkasSetoran" style="display: none; justify-content: flex-end; margin-top: 8px;">
+                    <div style="width: 360px; max-width: 100%; font-size: 12.5px;">
+                        <div style="display: flex; justify-content: space-between;"><span>Total tagihan</span><span id="rsTagihan" style="font-family: 'JetBrains Mono', monospace;">Rp 0</span></div>
+                        <div id="rsBarisTitipan" style="display: flex; justify-content: space-between;"><span>1. Dipotong titipan</span><span id="rsTitipan" style="font-family: 'JetBrains Mono', monospace;">-</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span id="rsLabelSetoran">Dibayar dari setoran</span><span id="rsSetoran" style="font-family: 'JetBrains Mono', monospace;">-</span></div>
+                        <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; font-weight: 800;"><span>Sisa tagihan</span><span id="rsSisa" style="font-family: 'JetBrains Mono', monospace;">Rp 0</span></div>
+                        <div id="rsBarisLebih" style="display: none; justify-content: space-between; color: var(--text-muted);"><span>Sisa uang setoran &rarr; masuk titipan</span><span id="rsLebih" style="font-family: 'JetBrains Mono', monospace;">Rp 0</span></div>
+                        <div id="rsBarisSaldo" style="display: none; justify-content: space-between; color: var(--text-muted);"><span>Saldo titipan setelah ini</span><span id="rsSaldo" style="font-family: 'JetBrains Mono', monospace;">Rp 0</span></div>
                     </div>
                 </div>
             </div>
@@ -699,7 +723,10 @@ async function onMitraChangeForPayment(focusTrxId = 0, focusAmount = 0) {
     if (!mitraId) {
         wrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">Pilih mitra di atas untuk menampilkan daftar nota pengeluaran yang belum lunas.</div>';
         labelTotal.textContent = 'Pilih mitra terlebih dahulu';
+        document.getElementById('infoSaldoTitipan').style.display = 'none';
         currentUnpaidNotas = [];
+        currentSaldoTitipan = 0;
+        calculateAllocationPreview();
         return;
     }
 
@@ -711,13 +738,18 @@ async function onMitraChangeForPayment(focusTrxId = 0, focusAmount = 0) {
 
         if (data.success) {
             currentUnpaidNotas = data.list || [];
+            const titipan = parseFloat(data.saldo_titipan) || 0;
+            currentSaldoTitipan = titipan;
             renderUnpaidNotasTable(focusTrxId);
+            document.getElementById('infoSaldoTitipan').style.display = titipan > 0 ? 'block' : 'none';
+            document.getElementById('infoSaldoTitipanNilai').textContent = `Rp ${formatNumberRp(titipan)}`;
 
             let totalSisa = 0;
             currentUnpaidNotas.forEach(n => totalSisa += parseFloat(n.sisa_piutang));
             labelTotal.textContent = `Total Sisa Piutang: Rp ${formatNumberRp(totalSisa)}`;
-            // Setoran tidak boleh melebihi total sisa piutang
-            document.getElementById('pay_jumlah_bayar').max = totalSisa;
+            // Setoran boleh melebihi piutang: kelebihan menjadi saldo titipan mitra
+            document.getElementById('pay_jumlah_bayar').removeAttribute('max');
+            calculateAllocationPreview();
 
             if (focusAmount > 0) {
                 document.getElementById('pay_jumlah_bayar').value = focusAmount;
@@ -731,14 +763,24 @@ async function onMitraChangeForPayment(focusTrxId = 0, focusAmount = 0) {
     }
 }
 
+// Saldo titipan mitra yang dipilih (dari server) dan apakah dipakai untuk bayar nota
+let currentSaldoTitipan = 0;
+function pakaiTitipan() {
+    const c = document.getElementById('pay_pakai_titipan');
+    return currentSaldoTitipan > 0 && (!c || c.checked);
+}
+
 function renderUnpaidNotasTable(focusTrxId = 0) {
     const wrapper = document.getElementById('wrapperNotaList');
     if (currentUnpaidNotas.length === 0) {
-        wrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--ok-fg); font-weight: 700; font-size: 12px;">Mitra ini tidak memiliki nota piutang yang tertunggak (Lunas). Uang setoran akan dibukukan sebagai saldo deposit.</div>';
+        wrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--ok-fg); font-weight: 700; font-size: 12px;">Mitra ini tidak memiliki nota piutang yang tertunggak (Lunas). Seluruh uang setoran akan disimpan sebagai saldo titipan.</div>';
+        calculateAllocationPreview();
         return;
     }
 
     const isManual = document.querySelector('input[name="mode_alokasi"]:checked').value === 'MANUAL';
+    const adaTitipan = currentSaldoTitipan > 0;
+    const mono = "font-family: 'JetBrains Mono', monospace;";
 
     let html = `
         <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
@@ -746,9 +788,10 @@ function renderUnpaidNotasTable(focusTrxId = 0) {
                 <tr style="background: var(--bg-muted); border-bottom: 1px solid var(--border); text-align: left;">
                     <th style="padding: 6px 8px; width: 25px; text-align: center;">#</th>
                     <th style="padding: 6px 8px;">No. Surat Jalan</th>
-                    <th style="padding: 6px 8px; width: 80px;">Umur</th>
-                    <th style="padding: 6px 8px; text-align: right; width: 105px;">Sisa Tagihan</th>
-                    <th style="padding: 6px 8px; text-align: right; width: 130px;">Alokasi Potong</th>
+                    <th style="padding: 6px 8px; text-align: right;">Sisa Tagihan</th>
+                    ${adaTitipan ? '<th style="padding: 6px 8px; text-align: right;">Potong Titipan</th>' : ''}
+                    <th style="padding: 6px 8px; text-align: right; width: 130px;">Dari Setoran</th>
+                    <th style="padding: 6px 8px; text-align: right;">Sisa Setelah</th>
                 </tr>
             </thead>
             <tbody>
@@ -760,21 +803,18 @@ function renderUnpaidNotasTable(focusTrxId = 0) {
             <tr style="border-bottom: 1px solid var(--border); ${isFocused ? 'background: var(--warn-bg);' : ''}">
                 <td style="padding: 6px 8px; text-align: center; color: var(--text-muted);">${idx + 1}</td>
                 <td style="padding: 6px 8px;">
-                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px;">${escapeHtml(n.no_surat_jalan)}</strong>
-                    <div style="font-size: 10.5px; color: var(--text-muted);">${n.created_at.substring(0, 10)} • Total: Rp ${formatNumberRp(n.total_nilai_jual)}</div>
+                    <strong style="${mono} font-size: 11.5px;">${escapeHtml(n.no_surat_jalan)}</strong>
+                    <div style="font-size: 10.5px; color: var(--text-muted);">${n.created_at.substring(0, 10)} • ${n.umur_hari} hari</div>
                 </td>
-                <td style="padding: 6px 8px; font-weight: 700; color: ${n.umur_hari > 14 ? '#b91c1c' : '#b45309'};">
-                    ${n.umur_hari} Hari
-                </td>
-                <td style="padding: 6px 8px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--warn-fg);">
-                    Rp ${formatNumberRp(n.sisa_piutang)}
-                </td>
+                <td style="padding: 6px 8px; text-align: right; ${mono}">Rp ${formatNumberRp(n.sisa_piutang)}</td>
+                ${adaTitipan ? `<td id="preview_titipan_${n.id}" style="padding: 6px 8px; text-align: right; ${mono}">-</td>` : ''}
                 <td style="padding: 6px 8px; text-align: right;">
-                    ${isManual 
-                        ? `<input type="number" step="100" class="form-control input-alok-manual" name="alokasi_manual[${n.id}]" data-trx-id="${n.id}" data-max="${n.sisa_piutang}" placeholder="0" style="height: 28px; font-size: 11px; text-align: right; font-family: 'JetBrains Mono', monospace;" oninput="validateManualAllocation()">`
-                        : `<span id="preview_alok_${n.id}" style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--ok-fg);">Rp 0</span>`
+                    ${isManual
+                        ? `<input type="number" step="100" class="form-control input-alok-manual" name="alokasi_manual[${n.id}]" data-trx-id="${n.id}" data-max="${n.sisa_piutang}" placeholder="0" style="height: 28px; font-size: 11px; text-align: right; ${mono}" oninput="validateManualAllocation()">`
+                        : `<span id="preview_alok_${n.id}" style="${mono}">-</span>`
                     }
                 </td>
+                <td id="preview_sisa_${n.id}" style="padding: 6px 8px; text-align: right; ${mono} font-weight: 800;">-</td>
             </tr>
         `;
     });
@@ -788,32 +828,75 @@ function toggleAlokasiMode() {
     calculateAllocationPreview();
 }
 
-function calculateAllocationPreview() {
-    const isManual = document.querySelector('input[name="mode_alokasi"]:checked').value === 'MANUAL';
-    if (isManual) return;
-
-    let uangSetoran = parseFloat(document.getElementById('pay_jumlah_bayar').value) || 0;
-
+/**
+ * Hitung pembagian setoran: titipan dipakai dulu ke nota terlama, uang setoran membayar sisanya
+ * (FIFO, atau sesuai isian manual), kelebihan setoran masuk titipan. Hasil per nota + ringkasan.
+ */
+function hitungLebihBayar() {
+    const setoran = parseFloat(document.getElementById('pay_jumlah_bayar').value) || 0;
+    const isManual = (document.querySelector('input[name="mode_alokasi"]:checked') || {}).value === 'MANUAL';
+    let tab = pakaiTitipan() ? currentSaldoTitipan : 0;
+    let set = setoran;
+    let tagihan = 0, pakaiTab = 0, pakaiSet = 0;
+    const perNota = {};
     currentUnpaidNotas.forEach(n => {
-        const previewEl = document.getElementById(`preview_alok_${n.id}`);
-        if (!previewEl) return;
-
-        const sisaNota = parseFloat(n.sisa_piutang);
-        const potong = Math.min(uangSetoran, sisaNota);
-
-        if (potong > 0) {
-            previewEl.textContent = `Rp ${formatNumberRp(potong)}`;
-            previewEl.style.color = '#047857';
+        let s = parseFloat(n.sisa_piutang); tagihan += s;
+        const t = Math.min(tab, s); tab -= t; s -= t; pakaiTab += t;
+        let u;
+        if (isManual) {
+            const inp = document.querySelector(`.input-alok-manual[data-trx-id="${n.id}"]`);
+            u = Math.min(parseFloat(inp ? inp.value : 0) || 0, s, set);
         } else {
-            previewEl.textContent = `Rp 0`;
-            previewEl.style.color = '#94a3b8';
+            u = Math.min(set, s);
         }
-
-        uangSetoran -= potong;
+        set -= u; s -= u; pakaiSet += u;
+        perNota[n.id] = { titipan: t, setoran: u, sisa: Math.round(s * 100) / 100 };
     });
+    const r = x => Math.round(x * 100) / 100;
+    return {
+        setoran, tagihan: r(tagihan), pakaiTab: r(pakaiTab), pakaiSet: r(pakaiSet), perNota,
+        sisaTagihan: r(tagihan - pakaiTab - pakaiSet),
+        lebih: Math.max(0, r(setoran - pakaiSet)),
+        sisaTitipanLama: r(currentSaldoTitipan - pakaiTab)
+    };
 }
 
+function calculateAllocationPreview() {
+    const h = hitungLebihBayar();
+    const isManual = (document.querySelector('input[name="mode_alokasi"]:checked') || {}).value === 'MANUAL';
+    const rp = x => `Rp ${formatNumberRp(x)}`;
+    currentUnpaidNotas.forEach(n => {
+        const p = h.perNota[n.id];
+        const elT = document.getElementById(`preview_titipan_${n.id}`);
+        if (elT) elT.textContent = p.titipan > 0 ? rp(p.titipan) : '-';
+        const elS = document.getElementById(`preview_alok_${n.id}`);
+        if (elS && !isManual) elS.textContent = p.setoran > 0 ? rp(p.setoran) : '-';
+        const elX = document.getElementById(`preview_sisa_${n.id}`);
+        if (elX) elX.textContent = p.sisa > 0.009 ? rp(p.sisa) : 'Lunas';
+    });
+
+    const box = document.getElementById('ringkasSetoran');
+    if (!document.getElementById('pay_mitra_id').value) { box.style.display = 'none'; return; }
+    box.style.display = 'flex';
+    const adaTitipan = currentSaldoTitipan > 0;
+    document.getElementById('rsTagihan').textContent = rp(h.tagihan);
+    document.getElementById('rsBarisTitipan').style.display = adaTitipan ? 'flex' : 'none';
+    document.getElementById('rsTitipan').textContent = h.pakaiTab > 0 ? '− ' + rp(h.pakaiTab) : '-';
+    document.getElementById('rsLabelSetoran').textContent = adaTitipan ? '2. Dibayar dari setoran' : 'Dibayar dari setoran';
+    document.getElementById('rsSetoran').textContent = h.pakaiSet > 0 ? '− ' + rp(h.pakaiSet) : '-';
+    document.getElementById('rsSisa').textContent = rp(h.sisaTagihan);
+    document.getElementById('rsBarisLebih').style.display = h.lebih > 0 ? 'flex' : 'none';
+    document.getElementById('rsLebih').textContent = rp(h.lebih);
+    // saldo titipan setelah disimpan; disembunyikan bila sama dengan baris sisa setoran
+    const saldoAkhir = h.sisaTitipanLama + h.lebih;
+    document.getElementById('rsBarisSaldo').style.display = (adaTitipan && !(h.lebih > 0 && h.sisaTitipanLama < 0.01)) ? 'flex' : 'none';
+    document.getElementById('rsSaldo').textContent = rp(saldoAkhir);
+}
+
+function updateRingkasLebihBayar() { calculateAllocationPreview(); }
+
 function validateManualAllocation() {
+    updateRingkasLebihBayar();
     // Memastikan total alokasi manual tidak melebihi uang setoran
     let sumManual = 0;
     const inputs = document.querySelectorAll('.input-alok-manual');
@@ -834,6 +917,15 @@ function validateManualAllocation() {
 
 async function submitPayment(e) {
     e.preventDefault();
+    const lb = hitungLebihBayar();
+    if (lb.lebih > 0) {
+        const nama = document.getElementById('pay_mitra_id').selectedOptions[0]?.textContent.trim() || 'mitra';
+        const pesan = `Setoran melebihi tagihan sebesar Rp ${formatNumberRp(lb.lebih)}.<br>Kelebihan akan disimpan sebagai saldo titipan ${nama} dan bisa dipakai untuk membayar nota berikutnya.<br><br>Lanjutkan?`;
+        const ok = window.showAppConfirm
+            ? (await window.showAppConfirm({ title: 'Setoran Melebihi Tagihan', html: pesan, icon: 'warning', confirmButtonText: 'Ya, Simpan', cancelButtonText: 'Periksa Lagi' })).isConfirmed
+            : confirm(pesan.replace(/<br>/g, ' '));
+        if (!ok) return;
+    }
     const btn = document.getElementById('btnSubmitPayment');
     const form = document.getElementById('formRecordPayment');
     const formData = new FormData(form);
@@ -849,7 +941,9 @@ async function submitPayment(e) {
         const data = await resp.json();
 
         if (data.success) {
-            alert(`${data.message}\nNomor Bukti: ${data.data.no_bukti_bayar}\nNota Terpotong: ${data.data.allocated_count} nota`);
+            alert(`${data.message}\nNomor Bukti: ${data.data.no_bukti_bayar}\nNota Terpotong: ${data.data.allocated_count} nota`
+                + (data.data.titipan_dipakai > 0 ? `\nDipotong dari titipan: Rp ${formatNumberRp(data.data.titipan_dipakai)}` : '')
+                + (data.data.sisa_deposit > 0 ? `\nMasuk saldo titipan: Rp ${formatNumberRp(data.data.sisa_deposit)}` : ''));
             closePaymentModal();
             window.location.reload();
         } else {

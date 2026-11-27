@@ -27,6 +27,24 @@ class PembatalanService
         return $alasan;
     }
 
+    /**
+     * Lepas potongan saldo titipan (alokasi yang punya jurnal AR_TITIPAN): nominal dinolkan (asal disimpan) dan jurnalnya dibalik.
+     * $kondisi memakai alias a = ar_alokasi_pembayaran. Dipanggil di dalam transaksi.
+     */
+    private static function lepasPotonganTitipan(string $kondisi, int $id, string $alasan): void
+    {
+        $db = Database::getConnection();
+        $st = $db->prepare("SELECT a.id FROM ar_alokasi_pembayaran a
+                            JOIN jurnal j ON j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id AND j.status = 'POSTED'
+                            WHERE {$kondisi} AND a.nominal_alokasi > 0");
+        $st->execute([$id]);
+        $upd = $db->prepare("UPDATE ar_alokasi_pembayaran SET nominal_asal = nominal_alokasi, nominal_alokasi = 0 WHERE id = ?");
+        foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $alokId) {
+            $upd->execute([(int)$alokId]);
+            JurnalService::reverse('AR_TITIPAN', (int)$alokId, $alasan);
+        }
+    }
+
     /** Batalkan Pengeluaran ke mitra: barang kembali ke gudang, nota dan jurnal dibalik. */
     public static function batalPengeluaran(int $transaksiId, string $alasan, int $userId): array
     {
@@ -41,7 +59,9 @@ class PembatalanService
         if ($t['jenis_transaksi'] !== 'PENGELUARAN') throw new Exception('Dokumen ini bukan pengeluaran ke mitra.');
         PeriodeService::pastikanTerbuka(substr((string)$t['created_at'], 0, 10), 'membatalkan dokumen ini');
 
-        $bayar = $db->prepare("SELECT COUNT(*) FROM ar_alokasi_pembayaran WHERE transaksi_stok_id = ? AND nominal_alokasi > 0");
+        // Potongan dari saldo titipan boleh dilepas (uangnya kembali jadi titipan); setoran langsung tetap memblokir pembatalan
+        $bayar = $db->prepare("SELECT COUNT(*) FROM ar_alokasi_pembayaran a WHERE a.transaksi_stok_id = ? AND a.nominal_alokasi > 0
+                               AND NOT EXISTS (SELECT 1 FROM jurnal j WHERE j.sumber_tipe = 'AR_TITIPAN' AND j.sumber_id = a.id AND j.status = 'POSTED')");
         $bayar->execute([$transaksiId]);
         if ((int)$bayar->fetchColumn() > 0) {
             throw new Exception("Nota {$t['no_transaksi']} sudah memiliki setoran dari mitra, jadi tidak dapat dibatalkan.");
@@ -76,6 +96,8 @@ class PembatalanService
                ->execute([$transaksiId]);
 
             JurnalService::reverse('PENGELUARAN', $transaksiId, $alasan);
+            // Potongan titipan ke nota ini dilepas: uangnya kembali menjadi saldo titipan mitra
+            self::lepasPotonganTitipan('a.transaksi_stok_id = ?', $transaksiId, $alasan);
             self::audit($userId, 'BATAL_PENGELUARAN', 'transaksi_stok', $transaksiId, $alasan);
             $db->commit();
         } catch (\Throwable $e) {
@@ -262,6 +284,8 @@ class PembatalanService
 
         $db->beginTransaction();
         try {
+            // Potongan titipan dari setoran ini ke nota-nota berikutnya ikut dibalik (jurnal AR_TITIPAN)
+            self::lepasPotonganTitipan('a.pembayaran_id = ?', $pembayaranId, $alasan);
             $db->prepare("UPDATE ar_alokasi_pembayaran SET nominal_asal = nominal_alokasi, nominal_alokasi = 0 WHERE pembayaran_id = ?")->execute([$pembayaranId]);
             $db->prepare("UPDATE ar_pembayaran SET status = 'BATAL', jumlah_asal = jumlah_bayar, jumlah_bayar = 0, alasan_batal = ?, dibatalkan_at = NOW(), dibatalkan_oleh = ? WHERE id = ?")
                ->execute([$alasan, $userId, $pembayaranId]);
