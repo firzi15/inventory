@@ -1002,6 +1002,13 @@ require_once __DIR__ . '/layout/header.php';
 <!-- ========================================================================= -->
 <div id="sectionRiwayatPenerimaan" style="<?= $activeTab === 'riwayat_penerimaan' ? 'display: block;' : 'display: none;' ?>">
 <div class="no-print" id="detailsRiwayatPenerimaan">
+    <?php // Kartu ringkasan: ikut filter (tanggal, pemasok, produk, pencarian)
+    $rkTerima = Label::ringkasFiltered($filterParams);
+    $krKartu = [
+        ['Total Netto', number_format((float)$rkTerima['netto'], 2, ',', '.') . ' kg', number_format((int)$rkTerima['box']) . ' box dari ' . number_format((int)$rkTerima['sj']) . ' surat jalan', 'var(--aktif-fg)', 'scale'],
+        ['Uang Terima (Nilai Beli)', \App\Core\Helper::formatRupiah($rkTerima['nilai_beli']), 'Netto x harga beli pemasok', 'var(--ok-fg)', 'wallet'],
+    ];
+    include __DIR__ . '/layout/kartu_ringkas.php'; ?>
     <form method="GET" action="index.php#detailsRiwayatPenerimaan" id="formFilterRiwayat" class="card" style="padding: 14px 16px; margin-bottom: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
         <input type="hidden" name="page" value="timbang_cetak">
         <input type="hidden" name="tab" value="<?= htmlspecialchars($activeTab) ?>">

@@ -369,8 +369,8 @@ class Transaksi {
     /**
      * Menghitung total riwayat transaksi pengeluaran untuk pagination
      */
-    public static function countHistoryPengeluaran(array $filters = []): int {
-        $db = Database::getConnection();
+    /** WHERE untuk countHistoryPengeluaran/ringkasHistoryPengeluaran: [klausa, parameter]. */
+    private static function whereHistoryPengeluaran(array $filters): array {
         $where = ["t.jenis_transaksi IN ('PENGELUARAN','PENGELUARAN_BATAL')"];
         $params = [];
 
@@ -407,8 +407,12 @@ class Transaksi {
             $params[] = $kw;
         }
 
-        $whereClause = implode(' AND ', $where);
+        return [implode(' AND ', $where), $params];
+    }
 
+    public static function countHistoryPengeluaran(array $filters = []): int {
+        $db = Database::getConnection();
+        [$whereClause, $params] = self::whereHistoryPengeluaran($filters);
         $sql = "
             SELECT COUNT(*) 
             FROM transaksi_stok t
@@ -419,6 +423,25 @@ class Transaksi {
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Ringkasan untuk kartu Riwayat Pengeluaran: jumlah SJ, box, total netto, nominal jual, nilai beli.
+     * Pengeluaran yang dibatalkan dan nota saldo awal (sebelum aplikasi dipakai) tidak dihitung.
+     */
+    public static function ringkasHistoryPengeluaran(array $filters = []): array {
+        $db = Database::getConnection();
+        [$whereClause, $params] = self::whereHistoryPengeluaran($filters);
+        $stmt = $db->prepare("
+            SELECT COUNT(*) AS sj, COALESCE(SUM(t.total_label), 0) AS box, COALESCE(SUM(t.total_kg), 0) AS netto,
+                   COALESCE(SUM(t.total_nilai_jual), 0) AS nominal, COALESCE(SUM(t.total_nilai_beli), 0) AS nilai_beli
+            FROM transaksi_stok t
+            LEFT JOIN mitra m ON t.mitra_id = m.id
+            LEFT JOIN pemasok p ON t.pemasok_id = p.id
+            WHERE {$whereClause} AND t.jenis_transaksi = 'PENGELUARAN' AND t.alur_pergerakan <> 'SALDO_AWAL'
+        ");
+        $stmt->execute($params);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**

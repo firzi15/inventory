@@ -61,7 +61,7 @@ $defaultOutboundSj = Transaksi::generateNextSuratJalanKeluar($firstPemasokKode);
 
 // Riwayat Surat Jalan Pengeluaran Barang
 $hSearch     = trim($_GET['h_search'] ?? '');
-$hPemasok    = isset($_GET['h_pemasok']) && $_GET['h_pemasok'] !== '' ? (int)$_GET['h_pemasok'] : null;
+$hPemasok    = null; // filter pemasok dihapus dari Riwayat Pengeluaran
 $hMitra      = isset($_GET['h_mitra']) && $_GET['h_mitra'] !== '' ? (int)$_GET['h_mitra'] : null;
 $hStartDate  = trim($_GET['h_start_date'] ?? '');
 $hEndDate    = trim($_GET['h_end_date'] ?? '');
@@ -100,7 +100,7 @@ $totalHistory = Transaksi::countHistoryPengeluaran($hFilters);
 $totalHistoryPages = max(1, ceil($totalHistory / $hPerPage));
 
 // Parameter Filter untuk Rincian Barang Keluar (Pure Barang Keluar)
-$filterPemasok  = isset($_GET['filter_pemasok']) && $_GET['filter_pemasok'] !== '' ? (int)$_GET['filter_pemasok'] : null;
+$filterPemasok  = null; // filter pemasok dihapus dari Riwayat Pengeluaran
 $filterMitra    = isset($_GET['filter_mitra']) && $_GET['filter_mitra'] !== '' ? (int)$_GET['filter_mitra'] : null;
 $search         = trim($_GET['search'] ?? '');
 $page           = max(1, (int)($_GET['p'] ?? 1));
@@ -145,15 +145,6 @@ function renderOutboundFilterBar(array $c, array $pemasokList, array $mitraList)
         <div><label class="form-label">Dari</label><input type="date" name="<?= $c['start_name'] ?>" value="<?= htmlspecialchars($c['start_val']) ?>" class="form-control"></div>
         <div><label class="form-label">Sampai</label><input type="date" name="<?= $c['end_name'] ?>" value="<?= htmlspecialchars($c['end_val']) ?>" class="form-control"></div>
         <?php endif; ?>
-        <div style="min-width: 190px;">
-            <label class="form-label">Pemasok</label>
-            <select name="<?= $c['pemasok_name'] ?>" class="form-control">
-                <option value="">Semua pemasok</option>
-                <?php foreach ($pemasokList as $pms): ?>
-                    <option value="<?= $pms['id'] ?>" <?= (int)$c['pemasok_val'] === (int)$pms['id'] ? 'selected' : '' ?>><?= htmlspecialchars('[' . $pms['kode_pemasok'] . '] ' . $pms['nama_pemasok']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
         <div style="min-width: 190px;">
             <label class="form-label">Mitra</label>
             <select name="<?= $c['mitra_name'] ?>" class="form-control">
@@ -357,7 +348,17 @@ require_once __DIR__ . '/layout/header.php';
 <div class="no-print">
 
     <!-- Filter Bar Dinamis (mengikuti tampilan aktif) -->
+    <?php
+    // Kartu ringkasan: ikut filter (tanggal, mitra, pencarian) tampilan yang aktif
+    $kartuKeluar = function (array $rk): array {
+        return [
+            ['Total Nominal', \App\Core\Helper::formatRupiah($rk['nominal']), number_format((int)$rk['sj']) . ' surat jalan, ' . number_format((int)$rk['box']) . ' box', 'var(--ok-fg)', 'wallet'],
+            ['Total Netto', number_format((float)$rk['netto'], 2, ',', '.') . ' kg', 'Nilai beli ' . \App\Core\Helper::formatRupiah($rk['nilai_beli']), 'var(--aktif-fg)', 'scale'],
+        ];
+    };
+    ?>
     <div id="filterBarSj" style="<?= $outboundSubTab === 'sj' ? '' : 'display: none;' ?>">
+    <?php $krKartu = $kartuKeluar(Transaksi::ringkasHistoryPengeluaran($hFilters)); include __DIR__ . '/layout/kartu_ringkas.php'; ?>
     <?php renderOutboundFilterBar([
         'form_id' => 'formFilterHistory', 'subtab' => 'sj',
         'search_name' => 'h_search', 'search_val' => $hSearch, 'placeholder' => 'Cari No. Surat Jalan, Penerima, Catatan...',
@@ -368,6 +369,7 @@ require_once __DIR__ . '/layout/header.php';
     ], $pemasokList, $mitraList); ?>
     </div>
     <div id="filterBarBarang" style="<?= $outboundSubTab === 'barang' ? '' : 'display: none;' ?>">
+    <?php $krKartu = $kartuKeluar(Transaksi::ringkasHistoryPengeluaran($filterMitra ? ['mitra_id' => $filterMitra] : [])); include __DIR__ . '/layout/kartu_ringkas.php'; ?>
     <?php renderOutboundFilterBar([
         'form_id' => 'formFilterOutbound', 'subtab' => 'barang',
         'search_name' => 'search', 'search_val' => $search, 'placeholder' => 'Cari barcode, produk, atau no. surat jalan...',

@@ -609,8 +609,8 @@ class Label {
     /**
      * Hitung total baris data yang cocok dengan filter untuk kalkulasi halaman pagination
      */
-    public static function countFiltered(array $filters = []): int {
-        $db = Database::getConnection();
+    /** WHERE untuk countFiltered/ringkasFiltered: [klausa, parameter]. */
+    private static function whereFiltered(array $filters): array {
         $where = ["1=1"];
         $params = [];
 
@@ -690,7 +690,12 @@ class Label {
             $params[] = $s;
         }
 
-        $whereClause = implode(' AND ', $where);
+        return [implode(' AND ', $where), $params];
+    }
+
+    public static function countFiltered(array $filters = []): int {
+        $db = Database::getConnection();
+        [$whereClause, $params] = self::whereFiltered($filters);
         $sql = "
             SELECT COUNT(*) 
             FROM labels l
@@ -703,6 +708,24 @@ class Label {
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
+    }
+
+    /** Ringkasan untuk kartu Riwayat Penerimaan: jumlah box, total netto, nilai beli (netto x harga beli pemasok). */
+    public static function ringkasFiltered(array $filters = []): array {
+        $db = Database::getConnection();
+        [$whereClause, $params] = self::whereFiltered($filters);
+        $stmt = $db->prepare("
+            SELECT COUNT(*) AS box, COUNT(DISTINCT NULLIF(l.no_surat_jalan, '')) AS sj,
+                   COALESCE(SUM(l.berat_netto), 0) AS netto,
+                   COALESCE(SUM(l.berat_netto * COALESCE(l.harga_beli_per_kg, 0)), 0) AS nilai_beli
+            FROM labels l
+            LEFT JOIN pemasok p ON l.pemasok_id = p.id
+            LEFT JOIN mitra m ON l.mitra_id = m.id
+            JOIN items i ON l.item_id = i.id
+            WHERE {$whereClause}
+        ");
+        $stmt->execute($params);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
