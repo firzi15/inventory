@@ -354,8 +354,8 @@ require_once __DIR__ . '/layout/header.php';
         return [
             ['Total Nominal', \App\Core\Helper::formatRupiah($rk['nominal']), number_format((int)$rk['sj']) . ' surat jalan, ' . number_format((int)$rk['box']) . ' box', 'var(--ok-fg)', 'wallet'],
             ['Total Netto', number_format((float)$rk['netto'], 2, ',', '.') . ' kg', 'Nilai beli ' . \App\Core\Helper::formatRupiah($rk['nilai_beli']), 'var(--aktif-fg)', 'scale'],
-            ['Rata-rata Harga / kg', (float)$rk['netto'] > 0 ? \App\Core\Helper::formatRupiah((float)$rk['nominal'] / (float)$rk['netto']) : '-',
-                'Rata-rata ' . ((int)$rk['box'] > 0 ? number_format((float)$rk['netto'] / (int)$rk['box'], 2, ',', '.') : '0') . ' kg per box', 'var(--warn-fg, #b45309)', 'trending-up'],
+            ['Rata-rata Keluar / Hari', (int)$rk['hari'] > 0 ? number_format((float)$rk['netto'] / (int)$rk['hari'], 2, ',', '.') . ' kg' : '-',
+                (int)$rk['hari'] > 0 ? '≈ ' . number_format((float)$rk['netto'] / (int)$rk['hari'] / 100, 2, ',', '.') . ' kwintal, ' . \App\Core\Helper::formatRupiah((float)$rk['nominal'] / (int)$rk['hari']) . ' / hari (' . (int)$rk['hari'] . ' hari)' : 'Belum ada pengeluaran', 'var(--warn-fg, #b45309)', 'trending-up'],
         ];
     };
     ?>

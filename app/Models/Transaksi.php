@@ -434,7 +434,8 @@ class Transaksi {
         [$whereClause, $params] = self::whereHistoryPengeluaran($filters);
         $stmt = $db->prepare("
             SELECT COUNT(*) AS sj, COALESCE(SUM(t.total_label), 0) AS box, COALESCE(SUM(t.total_kg), 0) AS netto,
-                   COALESCE(SUM(t.total_nilai_jual), 0) AS nominal, COALESCE(SUM(t.total_nilai_beli), 0) AS nilai_beli
+                   COALESCE(SUM(t.total_nilai_jual), 0) AS nominal, COALESCE(SUM(t.total_nilai_beli), 0) AS nilai_beli,
+                   COUNT(DISTINCT DATE(t.created_at)) AS hari
             FROM transaksi_stok t
             LEFT JOIN mitra m ON t.mitra_id = m.id
             LEFT JOIN pemasok p ON t.pemasok_id = p.id

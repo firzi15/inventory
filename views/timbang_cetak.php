@@ -1007,7 +1007,7 @@ require_once __DIR__ . '/layout/header.php';
     $krKartu = [
         ['Total Netto', number_format((float)$rkTerima['netto'], 2, ',', '.') . ' kg', number_format((int)$rkTerima['box']) . ' box dari ' . number_format((int)$rkTerima['sj']) . ' surat jalan', 'var(--aktif-fg)', 'scale'],
         ['Uang Terima (Nilai Beli)', \App\Core\Helper::formatRupiah($rkTerima['nilai_beli']), 'Netto x harga beli pemasok', 'var(--ok-fg)', 'wallet'],
-        ['Rata-rata Harga / kg', (float)$rkTerima['netto'] > 0 ? \App\Core\Helper::formatRupiah((float)$rkTerima['nilai_beli'] / (float)$rkTerima['netto']) : '-', 'Rata-rata ' . ((int)$rkTerima['box'] > 0 ? number_format((float)$rkTerima['netto'] / (int)$rkTerima['box'], 2, ',', '.') : '0') . ' kg per box', 'var(--warn-fg, #b45309)', 'trending-up'],
+        ['Rata-rata Masuk / Hari', (int)$rkTerima['hari'] > 0 ? number_format((float)$rkTerima['netto'] / (int)$rkTerima['hari'], 2, ',', '.') . ' kg' : '-', (int)$rkTerima['hari'] > 0 ? '≈ ' . number_format((float)$rkTerima['netto'] / (int)$rkTerima['hari'] / 100, 2, ',', '.') . ' kwintal, ' . \App\Core\Helper::formatRupiah((float)$rkTerima['nilai_beli'] / (int)$rkTerima['hari']) . ' / hari (' . (int)$rkTerima['hari'] . ' hari)' : 'Belum ada penerimaan', 'var(--warn-fg, #b45309)', 'trending-up'],
     ];
     include __DIR__ . '/layout/kartu_ringkas.php'; ?>
     <form method="GET" action="index.php#detailsRiwayatPenerimaan" id="formFilterRiwayat" class="card" style="padding: 14px 16px; margin-bottom: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">

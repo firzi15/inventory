@@ -717,7 +717,8 @@ class Label {
         $stmt = $db->prepare("
             SELECT COUNT(*) AS box, COUNT(DISTINCT NULLIF(l.no_surat_jalan, '')) AS sj,
                    COALESCE(SUM(l.berat_netto), 0) AS netto,
-                   COALESCE(SUM(l.berat_netto * COALESCE(l.harga_beli_per_kg, 0)), 0) AS nilai_beli
+                   COALESCE(SUM(l.berat_netto * COALESCE(l.harga_beli_per_kg, 0)), 0) AS nilai_beli,
+                   COUNT(DISTINCT DATE(l.created_at)) AS hari
             FROM labels l
             LEFT JOIN pemasok p ON l.pemasok_id = p.id
             LEFT JOIN mitra m ON l.mitra_id = m.id
